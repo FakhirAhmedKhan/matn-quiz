@@ -242,7 +242,7 @@ export default function HomePage() {
 
           {generatedQuiz && (
             <Card>
-              <GeneratedQuizPreview quiz={generatedQuiz} />
+              <GeneratedQuizPreview quiz={generatedQuiz} onResetQuiz={() => setGeneratedQuiz(null)} />
             </Card>
           )}
         </div>
@@ -250,3 +250,4 @@ export default function HomePage() {
     </main>
   );
 }
+

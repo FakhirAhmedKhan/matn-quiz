@@ -2,3 +2,5 @@
 export * from "./QuizMethodSelector";
 export * from "./HideCountSelector";
 export * from "./GeneratedQuizPreview";
+export * from "./AnswerRevealControls";
+export * from "./QuizActionBar";
