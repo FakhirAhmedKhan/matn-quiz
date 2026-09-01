@@ -1,9 +1,11 @@
-﻿import { render, screen } from "@testing-library/react";
+﻿import { fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
 import HomePage from "@/app/page";
 
 describe("HomePage hide count integration", () => {
+  const arabicText = "بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ";
+
   it("renders Quran input, method selector, and hide count selector", () => {
     render(<HomePage />);
 
@@ -43,15 +45,12 @@ describe("HomePage hide count integration", () => {
     expect(continueButton).toBeDisabled();
   });
 
-  it("enables Continue when Arabic text and valid hide count exist", async () => {
-    const user = userEvent.setup();
-
+  it("enables Continue when Arabic text and valid hide count exist", () => {
     render(<HomePage />);
 
-    await user.type(
-      screen.getByRole("textbox"),
-      "بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ",
-    );
+    fireEvent.change(screen.getByRole("textbox"), {
+      target: { value: arabicText },
+    });
 
     expect(
       screen.getByRole("button", { name: /continue/i }),
@@ -65,10 +64,9 @@ describe("HomePage hide count integration", () => {
 
     render(<HomePage />);
 
-    await user.type(
-      screen.getByRole("textbox"),
-      "بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ",
-    );
+    fireEvent.change(screen.getByRole("textbox"), {
+      target: { value: arabicText },
+    });
 
     await user.click(screen.getByLabelText(/increase value/i));
 
@@ -80,10 +78,9 @@ describe("HomePage hide count integration", () => {
 
     render(<HomePage />);
 
-    await user.type(
-      screen.getByRole("textbox"),
-      "بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ",
-    );
+    fireEvent.change(screen.getByRole("textbox"), {
+      target: { value: arabicText },
+    });
 
     await user.click(screen.getByLabelText(/increase value/i));
     await user.click(screen.getByLabelText(/increase value/i));
@@ -103,10 +100,9 @@ describe("HomePage hide count integration", () => {
 
     render(<HomePage />);
 
-    await user.type(
-      screen.getByRole("textbox"),
-      "بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ",
-    );
+    fireEvent.change(screen.getByRole("textbox"), {
+      target: { value: arabicText },
+    });
 
     await user.click(screen.getByLabelText(/increase value/i));
     await user.click(screen.getByRole("button", { name: /continue/i }));

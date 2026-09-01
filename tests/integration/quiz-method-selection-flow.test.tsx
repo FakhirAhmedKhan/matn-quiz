@@ -1,9 +1,11 @@
-﻿import { render, screen } from "@testing-library/react";
+﻿import { fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
 import HomePage from "@/app/page";
 
 describe("Quiz method selection flow", () => {
+  const arabicText = "بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ";
+
   it("keeps selected method visible when typing Arabic text", async () => {
     const user = userEvent.setup();
 
@@ -15,10 +17,9 @@ describe("Quiz method selection flow", () => {
       "Hide Lines",
     );
 
-    await user.type(
-      screen.getByRole("textbox"),
-      "بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ",
-    );
+    fireEvent.change(screen.getByRole("textbox"), {
+      target: { value: arabicText },
+    });
 
     expect(screen.getByTestId("selected-method")).toHaveTextContent(
       "Hide Lines",
@@ -34,10 +35,9 @@ describe("Quiz method selection flow", () => {
 
     render(<HomePage />);
 
-    await user.type(
-      screen.getByRole("textbox"),
-      "بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ",
-    );
+    fireEvent.change(screen.getByRole("textbox"), {
+      target: { value: arabicText },
+    });
 
     expect(screen.getByTestId("selected-method")).toHaveTextContent(
       "Hide Words",
@@ -55,10 +55,9 @@ describe("Quiz method selection flow", () => {
 
     await user.click(screen.getAllByRole("radio")[1]);
 
-    await user.type(
-      screen.getByRole("textbox"),
-      "بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ",
-    );
+    fireEvent.change(screen.getByRole("textbox"), {
+      target: { value: arabicText },
+    });
 
     expect(screen.getByTestId("selected-method")).toHaveTextContent(
       "Hide Lines",
@@ -74,10 +73,9 @@ describe("Quiz method selection flow", () => {
 
     render(<HomePage />);
 
-    await user.type(
-      screen.getByRole("textbox"),
-      "بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ",
-    );
+    fireEvent.change(screen.getByRole("textbox"), {
+      target: { value: arabicText },
+    });
 
     await user.click(screen.getByRole("button", { name: /continue/i }));
 

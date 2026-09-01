@@ -1,18 +1,22 @@
-﻿import { render, screen } from "@testing-library/react";
+﻿import { fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
 import HomePage from "@/app/page";
 
 describe("Hide count selection flow", () => {
+  const oneLineText = "بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ";
+
+  const twoLineText =
+    "بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ\nالْحَمْدُ لِلَّهِ رَبِّ الْعَالَمِينَ";
+
   it("allows selecting hide count for Hide Words", async () => {
     const user = userEvent.setup();
 
     render(<HomePage />);
 
-    await user.type(
-      screen.getByRole("textbox"),
-      "بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ",
-    );
+    fireEvent.change(screen.getByRole("textbox"), {
+      target: { value: oneLineText },
+    });
 
     expect(screen.getByTestId("available-hide-count")).toHaveTextContent("4");
 
@@ -30,10 +34,9 @@ describe("Hide count selection flow", () => {
 
     render(<HomePage />);
 
-    const input =
-      "بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ\nالْحَمْدُ لِلَّهِ رَبِّ الْعَالَمِينَ";
-
-    await user.type(screen.getByRole("textbox"), input);
+    fireEvent.change(screen.getByRole("textbox"), {
+      target: { value: twoLineText },
+    });
 
     await user.click(screen.getAllByRole("radio")[1]);
 
@@ -57,10 +60,9 @@ describe("Hide count selection flow", () => {
 
     render(<HomePage />);
 
-    await user.type(
-      screen.getByRole("textbox"),
-      "بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ",
-    );
+    fireEvent.change(screen.getByRole("textbox"), {
+      target: { value: oneLineText },
+    });
 
     await user.click(screen.getByRole("button", { name: /continue/i }));
 
@@ -78,10 +80,9 @@ describe("Hide count selection flow", () => {
 
     render(<HomePage />);
 
-    await user.type(
-      screen.getByRole("textbox"),
-      "بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ",
-    );
+    fireEvent.change(screen.getByRole("textbox"), {
+      target: { value: oneLineText },
+    });
 
     expect(screen.getByTestId("available-hide-count")).toHaveTextContent("4");
 
