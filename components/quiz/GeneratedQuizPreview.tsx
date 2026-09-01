@@ -30,12 +30,14 @@ import type { GeneratedQuiz } from "@/types/quiz";
 interface GeneratedQuizPreviewProps {
   quiz: GeneratedQuiz;
   onResetQuiz?: () => void;
+  onSaveQuiz?: () => void;
   className?: string;
 }
 
 export function GeneratedQuizPreview({
   quiz,
   onResetQuiz,
+  onSaveQuiz,
   className,
 }: GeneratedQuizPreviewProps) {
   const initialState = useMemo(() => createQuizStudyState(quiz), [quiz]);
@@ -71,6 +73,7 @@ export function GeneratedQuizPreview({
 
       <QuizActionBar
         quiz={quiz}
+        onSaveQuiz={onSaveQuiz}
         onResetQuiz={() => {
           setStudyState((current) => resetStudyState(current));
           onResetQuiz?.();

@@ -5,3 +5,4 @@ export * from "./GeneratedQuizPreview";
 export * from "./AnswerRevealControls";
 export * from "./QuizActionBar";
 export * from "./ArabicReadingPanel";
+export * from "./SavedQuizHistory";

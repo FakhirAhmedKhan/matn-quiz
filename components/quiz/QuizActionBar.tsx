@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { Copy, Download, RotateCcw } from "lucide-react";
+import { Copy, Download, RotateCcw, Save } from "lucide-react";
 import { useState } from "react";
 import {
   copyTextToClipboard,
@@ -20,11 +20,13 @@ import type { GeneratedQuiz } from "@/types/quiz";
 interface QuizActionBarProps {
   quiz: GeneratedQuiz;
   onResetQuiz: () => void;
+  onSaveQuiz?: () => void;
   className?: string;
 }
 
 type ActionStatus =
   | "idle"
+  | "saved"
   | "copied-quiz"
   | "copied-answers"
   | "copy-failed"
@@ -33,9 +35,15 @@ type ActionStatus =
 export function QuizActionBar({
   quiz,
   onResetQuiz,
+  onSaveQuiz,
   className,
 }: QuizActionBarProps) {
   const [status, setStatus] = useState<ActionStatus>("idle");
+
+  const handleSaveQuiz = () => {
+    onSaveQuiz?.();
+    setStatus("saved");
+  };
 
   const handleCopyQuiz = async () => {
     const copied = await copyTextToClipboard(formatGeneratedQuizAsText(quiz));
@@ -54,6 +62,7 @@ export function QuizActionBar({
 
   const statusText = {
     idle: "",
+    saved: "Quiz saved.",
     "copied-quiz": "Quiz copied.",
     "copied-answers": "Answers copied.",
     "copy-failed": "Copy is not available in this browser.",
@@ -77,6 +86,23 @@ export function QuizActionBar({
         <p className="text-sm font-semibold text-slate-950">Quiz Actions</p>
 
         <div className="flex flex-wrap gap-2">
+          {onSaveQuiz && (
+            <button
+              type="button"
+              aria-label="Save Quiz"
+              onClick={handleSaveQuiz}
+              className={cn(
+                "inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-700 px-3 py-2 text-sm font-medium text-white hover:bg-emerald-800",
+                focusRingClasses,
+                interactiveTransitionClasses,
+                pressableClasses,
+              )}
+            >
+              <Save className="h-4 w-4" />
+              Save Quiz
+            </button>
+          )}
+
           <button
             type="button"
             aria-label="Copy Quiz"
@@ -141,4 +167,3 @@ export function QuizActionBar({
     </section>
   );
 }
-

@@ -86,7 +86,7 @@ describe("Hide count selection flow", () => {
 
     expect(screen.getByTestId("available-hide-count")).toHaveTextContent("4");
 
-    await user.click(screen.getByRole("button", { name: /clear/i }));
+    await user.click(screen.getByRole("button", { name: /^clear$/i }));
 
     expect(screen.getByTestId("available-hide-count")).toHaveTextContent("0");
     expect(screen.getByTestId("hide-count-disabled-message")).toBeInTheDocument();
@@ -96,3 +96,5 @@ describe("Hide count selection flow", () => {
     ).toBeDisabled();
   });
 });
+
+

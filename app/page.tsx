@@ -6,6 +6,7 @@ import {
   HideCountSelector,
   QuranTextInput,
   QuizMethodSelector,
+  SavedQuizHistory,
 } from "@/components/quiz";
 import {
   AppContainer,
@@ -25,6 +26,13 @@ import {
   isValidHideCount,
   normalizeHideCount,
 } from "@/lib/quiz/hide-count";
+import type { SavedQuizRecord } from "@/lib/quiz/quiz-history";
+import {
+  clearQuizHistoryStorage,
+  deleteSavedQuizFromHistory,
+  loadSavedQuizHistory,
+  saveQuizToHistory,
+} from "@/lib/quiz/quiz-history-repository";
 import {
   getQuranTextInputError,
   validateQuranTextInput,
@@ -39,7 +47,9 @@ export default function HomePage() {
   const [hideCount, setHideCount] = useState(HIDE_COUNT_DEFAULT);
   const [generatedQuiz, setGeneratedQuiz] =
     useState<GeneratedQuiz | null>(null);
+  const [savedQuizzes, setSavedQuizzes] = useState<SavedQuizRecord[]>([]);
   const [generateError, setGenerateError] = useState<string | undefined>();
+  const [historyStatus, setHistoryStatus] = useState<string | undefined>();
 
   const stats = useMemo(() => getArabicTextStats(quranText), [quranText]);
 
@@ -64,6 +74,15 @@ export default function HomePage() {
 
   const canGenerate = validation.valid && hideCountValid;
 
+  const refreshSavedQuizzes = () => {
+    setSavedQuizzes(loadSavedQuizHistory());
+  };
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    refreshSavedQuizzes();
+  }, []);
+
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setHideCount((current) =>
@@ -77,18 +96,21 @@ export default function HomePage() {
     setQuranText(value);
     setGeneratedQuiz(null);
     setGenerateError(undefined);
+    setHistoryStatus(undefined);
   };
 
   const handleMethodChange = (value: QuizMethod) => {
     setQuizMethod(value);
     setGeneratedQuiz(null);
     setGenerateError(undefined);
+    setHistoryStatus(undefined);
   };
 
   const handleHideCountChange = (value: number) => {
     setHideCount(normalizeHideCount(value, quranText, quizMethod));
     setGeneratedQuiz(null);
     setGenerateError(undefined);
+    setHistoryStatus(undefined);
   };
 
   const handleGenerate = () => {
@@ -106,15 +128,72 @@ export default function HomePage() {
 
     setGeneratedQuiz(result.quiz);
     setGenerateError(undefined);
+    setHistoryStatus(undefined);
+  };
+
+  const handleSaveQuiz = () => {
+    if (!generatedQuiz) {
+      setHistoryStatus("Generate a quiz before saving.");
+      return;
+    }
+
+    const saved = saveQuizToHistory(generatedQuiz);
+
+    if (!saved) {
+      setHistoryStatus("Unable to save quiz in this browser.");
+      return;
+    }
+
+    refreshSavedQuizzes();
+    setHistoryStatus("Quiz saved to history.");
+  };
+
+  const handleOpenSavedQuiz = (record: SavedQuizRecord) => {
+    setQuranText(record.quiz.originalText);
+    setQuizMethod(record.quiz.method);
+    setHideCount(
+      normalizeHideCount(
+        record.quiz.requestedCount,
+        record.quiz.originalText,
+        record.quiz.method,
+      ),
+    );
+    setGeneratedQuiz(record.quiz);
+    setGenerateError(undefined);
+    setHistoryStatus("Saved quiz opened.");
+  };
+
+  const handleDeleteSavedQuiz = (id: string) => {
+    const deleted = deleteSavedQuizFromHistory(id);
+
+    if (!deleted) {
+      setHistoryStatus("Unable to delete saved quiz.");
+      return;
+    }
+
+    refreshSavedQuizzes();
+    setHistoryStatus("Saved quiz deleted.");
+  };
+
+  const handleClearHistory = () => {
+    const cleared = clearQuizHistoryStorage();
+
+    if (!cleared) {
+      setHistoryStatus("Unable to clear saved history.");
+      return;
+    }
+
+    setSavedQuizzes([]);
+    setHistoryStatus("Saved history cleared.");
   };
 
   return (
     <AppShell>
       <AppContainer>
         <AppHero
-          eyebrow="Phase 9.2"
+          eyebrow="Phase 10.4"
           title="Matn Quiz"
-          description="Paste Quran or Islamic matn text, choose a quiz method, choose the hide count, then generate a clean study quiz."
+          description="Paste Quran or Islamic matn text, generate a study quiz, then save and reopen quizzes on this browser."
         />
 
         <ResponsiveCardGrid>
@@ -238,16 +317,37 @@ export default function HomePage() {
                 {generateError}
               </p>
             )}
+
+            {historyStatus && (
+              <p
+                data-testid="history-status"
+                role="status"
+                aria-live="polite"
+                className="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800"
+              >
+                {historyStatus}
+              </p>
+            )}
           </ResponsiveCard>
 
           {generatedQuiz && (
             <ResponsiveCard>
               <GeneratedQuizPreview
                 quiz={generatedQuiz}
+                onSaveQuiz={handleSaveQuiz}
                 onResetQuiz={() => setGeneratedQuiz(null)}
               />
             </ResponsiveCard>
           )}
+
+          <ResponsiveCard>
+            <SavedQuizHistory
+              items={savedQuizzes}
+              onOpen={handleOpenSavedQuiz}
+              onDelete={handleDeleteSavedQuiz}
+              onClear={handleClearHistory}
+            />
+          </ResponsiveCard>
         </ResponsiveCardGrid>
       </AppContainer>
     </AppShell>

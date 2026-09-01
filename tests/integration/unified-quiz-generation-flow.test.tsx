@@ -75,7 +75,7 @@ describe("Unified quiz generation flow", () => {
 
     expect(screen.getByTestId("generated-quiz-panel")).toBeInTheDocument();
 
-    await user.click(screen.getByRole("button", { name: /clear/i }));
+    await user.click(screen.getByRole("button", { name: /^clear$/i }));
 
     expect(
       screen.queryByTestId("generated-quiz-panel"),
@@ -86,3 +86,5 @@ describe("Unified quiz generation flow", () => {
     ).toBeDisabled();
   });
 });
+
+

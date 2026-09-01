@@ -1,62 +1,44 @@
-﻿import { render, screen } from "@testing-library/react";
+﻿import { fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
 import HomePage from "@/app/page";
 
 describe("Quran text input flow", () => {
+  const arabicText = "بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ";
+
   it("allows user to paste valid Arabic text and continue", async () => {
     const user = userEvent.setup();
 
     render(<HomePage />);
 
     const textarea = screen.getByRole("textbox");
-    const continueButton = screen.getByRole("button", { name: /continue/i });
 
-    expect(continueButton).toBeDisabled();
+    fireEvent.change(textarea, {
+      target: { value: arabicText },
+    });
 
-    await user.type(
-      textarea,
-      "بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ",
+    expect(textarea).toHaveValue(arabicText);
+    expect(screen.getByTestId("character-count")).toHaveTextContent(
+      String(arabicText.length),
     );
+    expect(screen.getByRole("button", { name: /continue/i })).toBeEnabled();
 
-    expect(screen.getByTestId("arabic-word-count")).toHaveTextContent("4");
-    expect(screen.getByTestId("valid-line-count")).toHaveTextContent("1");
-    expect(continueButton).toBeEnabled();
+    await user.click(screen.getByRole("button", { name: /continue/i }));
 
-    await user.click(continueButton);
-
-    expect(screen.getByText(/text accepted/i)).toBeInTheDocument();
+    expect(screen.getByTestId("generated-quiz-panel")).toBeInTheDocument();
   });
 
-  it("shows validation error for non-Arabic text", async () => {
-    const user = userEvent.setup();
-
+  it("shows validation error for non-Arabic text", () => {
     render(<HomePage />);
 
-    await user.type(screen.getByRole("textbox"), "hello world");
+    fireEvent.change(screen.getByRole("textbox"), {
+      target: { value: "hello world" },
+    });
 
+    expect(screen.getByRole("button", { name: /continue/i })).toBeDisabled();
     expect(
       screen.getByText(/text must contain arabic characters/i),
     ).toBeInTheDocument();
-
-    expect(
-      screen.getByRole("button", { name: /continue/i }),
-    ).toBeDisabled();
-  });
-
-  it("preserves line breaks in the input value", () => {
-    render(<HomePage />);
-
-    const textarea = screen.getByRole("textbox");
-    const input =
-      "بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ\nالْحَمْدُ لِلَّهِ رَبِّ الْعَالَمِينَ";
-
-    userEvent.setup();
-
-    textarea.focus();
-    textarea.textContent = input;
-
-    expect(textarea).toBeInTheDocument();
   });
 
   it("clear button resets the input and disables continue", async () => {
@@ -64,20 +46,36 @@ describe("Quran text input flow", () => {
 
     render(<HomePage />);
 
-    await user.type(
-      screen.getByRole("textbox"),
-      "بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ",
-    );
+    const textarea = screen.getByRole("textbox");
 
-    expect(
-      screen.getByRole("button", { name: /continue/i }),
-    ).toBeEnabled();
+    fireEvent.change(textarea, {
+      target: { value: arabicText },
+    });
 
-    await user.click(screen.getByRole("button", { name: /clear/i }));
+    expect(textarea).toHaveValue(arabicText);
+    expect(screen.getByRole("button", { name: /continue/i })).toBeEnabled();
 
-    expect(screen.getByRole("textbox")).toHaveValue("");
-    expect(
-      screen.getByRole("button", { name: /continue/i }),
-    ).toBeDisabled();
+    await user.click(screen.getByRole("button", { name: /^clear$/i }));
+
+    expect(textarea).toHaveValue("");
+    expect(screen.getByRole("button", { name: /continue/i })).toBeDisabled();
+  });
+
+  it("does not show generated quiz after text is cleared", async () => {
+    const user = userEvent.setup();
+
+    render(<HomePage />);
+
+    fireEvent.change(screen.getByRole("textbox"), {
+      target: { value: arabicText },
+    });
+
+    await user.click(screen.getByRole("button", { name: /continue/i }));
+
+    expect(screen.getByTestId("generated-quiz-panel")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: /^clear$/i }));
+
+    expect(screen.queryByTestId("generated-quiz-panel")).not.toBeInTheDocument();
   });
 });
