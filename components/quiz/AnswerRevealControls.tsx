@@ -1,6 +1,14 @@
 ﻿"use client";
 
 import { Eye, EyeOff, RotateCcw } from "lucide-react";
+import {
+  focusRingClasses,
+  getAccessiblePercentageLabel,
+  getAnswerToggleAriaLabel,
+  getStudyProgressAnnouncement,
+  interactiveTransitionClasses,
+  pressableClasses,
+} from "@/lib/ui/accessibility";
 import { cn } from "@/lib/utils/cn";
 import type { StudyProgress } from "@/lib/quiz/study-session";
 
@@ -31,11 +39,15 @@ export function AnswerRevealToggle({
   return (
     <button
       type="button"
+      aria-label={getAnswerToggleAriaLabel(answerIndex, revealed)}
       aria-pressed={revealed}
       disabled={disabled}
       onClick={onToggle}
       className={cn(
-        "inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:border-emerald-300 hover:text-emerald-700 disabled:cursor-not-allowed disabled:opacity-50",
+        "inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:border-emerald-300 hover:text-emerald-700 disabled:cursor-not-allowed disabled:opacity-50",
+        focusRingClasses,
+        interactiveTransitionClasses,
+        pressableClasses,
         className,
       )}
     >
@@ -58,23 +70,58 @@ export function AnswerRevealControls({
   return (
     <section
       data-testid="answer-reveal-controls"
+      aria-label="Answer reveal controls"
       className={cn("rounded-2xl border border-slate-200 bg-slate-50 p-4", className)}
     >
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <p className="text-sm font-semibold text-slate-950">Study Progress</p>
 
-          <p data-testid="study-progress-text" className="mt-1 text-sm text-slate-600">
+          <p
+            data-testid="study-progress-text"
+            aria-live="polite"
+            className="mt-1 text-sm text-slate-600"
+          >
             {progress.revealed} of {progress.total} answers revealed · {progress.percentage}%
+          </p>
+
+          <div
+            data-testid="study-progress-bar"
+            role="progressbar"
+            aria-label="Answer reveal progress"
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-valuenow={progress.percentage}
+            aria-valuetext={getAccessiblePercentageLabel(progress.percentage)}
+            className="mt-3 h-2 overflow-hidden rounded-full bg-slate-200"
+          >
+            <div
+              data-testid="study-progress-fill"
+              className={cn(
+                "h-full rounded-full bg-emerald-600",
+                interactiveTransitionClasses,
+              )}
+              style={{ width: `${progress.percentage}%` }}
+            />
+          </div>
+
+          <p className="sr-only" aria-live="polite">
+            {getStudyProgressAnnouncement(progress)}
           </p>
         </div>
 
         <div className="flex flex-wrap gap-2">
           <button
             type="button"
+            aria-label="Reveal all answers"
             disabled={isDisabled || progress.complete}
             onClick={onRevealAll}
-            className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-700 px-3 py-2 text-sm font-medium text-white transition hover:bg-emerald-800 disabled:cursor-not-allowed disabled:opacity-50"
+            className={cn(
+              "inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-700 px-3 py-2 text-sm font-medium text-white hover:bg-emerald-800 disabled:cursor-not-allowed disabled:opacity-50",
+              focusRingClasses,
+              interactiveTransitionClasses,
+              pressableClasses,
+            )}
           >
             <Eye className="h-4 w-4" />
             Reveal All Answers
@@ -82,9 +129,15 @@ export function AnswerRevealControls({
 
           <button
             type="button"
+            aria-label="Hide all answers"
             disabled={isDisabled || progress.revealed === 0}
             onClick={onHideAll}
-            className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:border-emerald-300 hover:text-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
+            className={cn(
+              "inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:border-emerald-300 hover:text-emerald-700 disabled:cursor-not-allowed disabled:opacity-50",
+              focusRingClasses,
+              interactiveTransitionClasses,
+              pressableClasses,
+            )}
           >
             <EyeOff className="h-4 w-4" />
             Hide All Answers
@@ -92,9 +145,15 @@ export function AnswerRevealControls({
 
           <button
             type="button"
+            aria-label="Reset study"
             disabled={isDisabled || progress.revealed === 0}
             onClick={onReset}
-            className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:border-emerald-300 hover:text-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
+            className={cn(
+              "inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:border-emerald-300 hover:text-emerald-700 disabled:cursor-not-allowed disabled:opacity-50",
+              focusRingClasses,
+              interactiveTransitionClasses,
+              pressableClasses,
+            )}
           >
             <RotateCcw className="h-4 w-4" />
             Reset Study

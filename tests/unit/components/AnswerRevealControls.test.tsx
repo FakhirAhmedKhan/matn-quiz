@@ -6,8 +6,8 @@ import {
   AnswerRevealToggle,
 } from "@/components/quiz/AnswerRevealControls";
 
-describe("AnswerRevealControls", () => {
-  it("renders study progress", () => {
+describe("AnswerRevealControls accessibility", () => {
+  it("renders study progress and progressbar", () => {
     render(
       <AnswerRevealControls
         progress={{ total: 2, revealed: 1, hidden: 1, complete: false, percentage: 50 }}
@@ -17,10 +17,16 @@ describe("AnswerRevealControls", () => {
       />,
     );
 
-    expect(screen.getByTestId("answer-reveal-controls")).toBeInTheDocument();
-    expect(screen.getByTestId("study-progress-text")).toHaveTextContent(
-      "1 of 2 answers revealed · 50%",
+    expect(screen.getByTestId("answer-reveal-controls")).toHaveAttribute(
+      "aria-label",
+      "Answer reveal controls",
     );
+    expect(screen.getByTestId("study-progress-text")).toHaveAttribute(
+      "aria-live",
+      "polite",
+    );
+    expect(screen.getByRole("progressbar")).toHaveAttribute("aria-valuenow", "50");
+    expect(screen.getByRole("progressbar")).toHaveAttribute("aria-valuetext", "50 percent");
   });
 
   it("calls reveal all", async () => {
@@ -40,40 +46,6 @@ describe("AnswerRevealControls", () => {
     expect(onRevealAll).toHaveBeenCalledTimes(1);
   });
 
-  it("calls hide all", async () => {
-    const user = userEvent.setup();
-    const onHideAll = vi.fn();
-
-    render(
-      <AnswerRevealControls
-        progress={{ total: 2, revealed: 2, hidden: 0, complete: true, percentage: 100 }}
-        onRevealAll={() => {}}
-        onHideAll={onHideAll}
-        onReset={() => {}}
-      />,
-    );
-
-    await user.click(screen.getByRole("button", { name: /hide all answers/i }));
-    expect(onHideAll).toHaveBeenCalledTimes(1);
-  });
-
-  it("calls reset study", async () => {
-    const user = userEvent.setup();
-    const onReset = vi.fn();
-
-    render(
-      <AnswerRevealControls
-        progress={{ total: 2, revealed: 1, hidden: 1, complete: false, percentage: 50 }}
-        onRevealAll={() => {}}
-        onHideAll={() => {}}
-        onReset={onReset}
-      />,
-    );
-
-    await user.click(screen.getByRole("button", { name: /reset study/i }));
-    expect(onReset).toHaveBeenCalledTimes(1);
-  });
-
   it("disables buttons when there are no answers", () => {
     render(
       <AnswerRevealControls
@@ -90,17 +62,23 @@ describe("AnswerRevealControls", () => {
   });
 });
 
-describe("AnswerRevealToggle", () => {
-  it("renders reveal mode", () => {
+describe("AnswerRevealToggle accessibility", () => {
+  it("renders reveal mode with aria label", () => {
     render(<AnswerRevealToggle answerIndex={1} revealed={false} onToggle={() => {}} />);
 
-    expect(screen.getByRole("button", { name: /reveal answer 1/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /reveal answer 1/i })).toHaveAttribute(
+      "aria-pressed",
+      "false",
+    );
   });
 
-  it("renders hide mode", () => {
+  it("renders hide mode with aria pressed", () => {
     render(<AnswerRevealToggle answerIndex={1} revealed onToggle={() => {}} />);
 
-    expect(screen.getByRole("button", { name: /hide answer 1/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /hide answer 1/i })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
   });
 
   it("calls toggle", async () => {

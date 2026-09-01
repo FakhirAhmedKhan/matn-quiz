@@ -8,27 +8,28 @@ import {
   QuizMethodSelector,
 } from "@/components/quiz";
 import {
-  Badge,
-  Button,
-  Card,
-  Container,
-  SectionTitle,
-} from "@/components/ui";
+  AppContainer,
+  AppHero,
+  AppShell,
+  ResponsiveCard,
+  ResponsiveCardGrid,
+} from "@/components/layout";
+import { Button, SectionTitle } from "@/components/ui";
 import {
   DEFAULT_QUIZ_METHOD,
   HIDE_COUNT_DEFAULT,
   QUIZ_METHOD_OPTIONS,
 } from "@/lib/constants/quiz";
 import { safeGenerateQuiz } from "@/lib/quiz/generate-quiz";
-import { getArabicTextStats } from "@/lib/utils/arabic";
-import {
-  getQuranTextInputError,
-  validateQuranTextInput,
-} from "@/lib/quiz/validation";
 import {
   isValidHideCount,
   normalizeHideCount,
 } from "@/lib/quiz/hide-count";
+import {
+  getQuranTextInputError,
+  validateQuranTextInput,
+} from "@/lib/quiz/validation";
+import { getArabicTextStats } from "@/lib/utils/arabic";
 import type { GeneratedQuiz, QuizMethod } from "@/types/quiz";
 
 export default function HomePage() {
@@ -108,46 +109,45 @@ export default function HomePage() {
   };
 
   return (
-    <main className="min-h-screen bg-slate-50 py-12">
-      <Container>
-        <section className="mx-auto max-w-3xl text-center">
-          <Badge variant="primary">Phase 7.4</Badge>
+    <AppShell>
+      <AppContainer>
+        <AppHero
+          eyebrow="Phase 9.2"
+          title="Matn Quiz"
+          description="Paste Quran or Islamic matn text, choose a quiz method, choose the hide count, then generate a clean study quiz."
+        />
 
-          <h1 className="mt-5 text-4xl font-bold tracking-tight text-slate-950 sm:text-5xl">
-            Matn Quiz
-          </h1>
-
-          <p className="mt-4 text-base leading-7 text-slate-600">
-            Paste Quran or Islamic matn text, choose a quiz method, choose the hide count, then generate your quiz.
-          </p>
-        </section>
-
-        <div className="mx-auto mt-12 max-w-4xl space-y-6">
-          <Card>
+        <ResponsiveCardGrid>
+          <ResponsiveCard>
             <QuranTextInput
               value={quranText}
               onChange={handleTextChange}
               error={error}
             />
-          </Card>
+          </ResponsiveCard>
 
-          <Card>
-            <QuizMethodSelector
-              value={quizMethod}
-              onChange={handleMethodChange}
-            />
-          </Card>
+          <div
+            data-testid="responsive-two-column-section"
+            className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]"
+          >
+            <ResponsiveCard className="h-full">
+              <QuizMethodSelector
+                value={quizMethod}
+                onChange={handleMethodChange}
+              />
+            </ResponsiveCard>
 
-          <Card>
-            <HideCountSelector
-              value={hideCount}
-              text={quranText}
-              method={quizMethod}
-              onChange={handleHideCountChange}
-            />
-          </Card>
+            <ResponsiveCard className="h-full">
+              <HideCountSelector
+                value={hideCount}
+                text={quranText}
+                method={quizMethod}
+                onChange={handleHideCountChange}
+              />
+            </ResponsiveCard>
+          </div>
 
-          <Card>
+          <ResponsiveCard>
             <SectionTitle
               title="Quiz Setup Summary"
               description="These values are used by the unified quiz generator."
@@ -205,7 +205,7 @@ export default function HomePage() {
               </div>
             </div>
 
-            <div className="mt-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="mt-6 flex flex-col gap-4 rounded-2xl border border-slate-200 bg-white p-4 sm:flex-row sm:items-center sm:justify-between">
               <p className="text-sm text-slate-600">
                 Status:{" "}
                 <strong
@@ -238,16 +238,18 @@ export default function HomePage() {
                 {generateError}
               </p>
             )}
-          </Card>
+          </ResponsiveCard>
 
           {generatedQuiz && (
-            <Card>
-              <GeneratedQuizPreview quiz={generatedQuiz} onResetQuiz={() => setGeneratedQuiz(null)} />
-            </Card>
+            <ResponsiveCard>
+              <GeneratedQuizPreview
+                quiz={generatedQuiz}
+                onResetQuiz={() => setGeneratedQuiz(null)}
+              />
+            </ResponsiveCard>
           )}
-        </div>
-      </Container>
-    </main>
+        </ResponsiveCardGrid>
+      </AppContainer>
+    </AppShell>
   );
 }
-

@@ -8,6 +8,12 @@ import {
   formatGeneratedQuizAnswers,
   formatGeneratedQuizAsText,
 } from "@/lib/quiz/quiz-export";
+import {
+  focusRingClasses,
+  getActionStatusAnnouncement,
+  interactiveTransitionClasses,
+  pressableClasses,
+} from "@/lib/ui/accessibility";
 import { cn } from "@/lib/utils/cn";
 import type { GeneratedQuiz } from "@/types/quiz";
 
@@ -54,9 +60,17 @@ export function QuizActionBar({
     exported: "Text file exported.",
   }[status];
 
+  const actionButtonClasses = cn(
+    "inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:border-emerald-300 hover:text-emerald-700",
+    focusRingClasses,
+    interactiveTransitionClasses,
+    pressableClasses,
+  );
+
   return (
     <section
       data-testid="quiz-action-bar"
+      aria-label="Quiz actions"
       className={cn("rounded-2xl border border-slate-200 bg-white p-4", className)}
     >
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -65,8 +79,9 @@ export function QuizActionBar({
         <div className="flex flex-wrap gap-2">
           <button
             type="button"
+            aria-label="Copy Quiz"
             onClick={handleCopyQuiz}
-            className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:border-emerald-300 hover:text-emerald-700"
+            className={actionButtonClasses}
           >
             <Copy className="h-4 w-4" />
             Copy Quiz
@@ -74,8 +89,9 @@ export function QuizActionBar({
 
           <button
             type="button"
+            aria-label="Copy Answers"
             onClick={handleCopyAnswers}
-            className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:border-emerald-300 hover:text-emerald-700"
+            className={actionButtonClasses}
           >
             <Copy className="h-4 w-4" />
             Copy Answers
@@ -83,8 +99,9 @@ export function QuizActionBar({
 
           <button
             type="button"
+            aria-label="Export TXT"
             onClick={handleExport}
-            className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:border-emerald-300 hover:text-emerald-700"
+            className={actionButtonClasses}
           >
             <Download className="h-4 w-4" />
             Export TXT
@@ -92,8 +109,14 @@ export function QuizActionBar({
 
           <button
             type="button"
+            aria-label="Reset Quiz"
             onClick={onResetQuiz}
-            className="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-950 px-3 py-2 text-sm font-medium text-white transition hover:bg-slate-800"
+            className={cn(
+              "inline-flex items-center justify-center gap-2 rounded-xl bg-slate-950 px-3 py-2 text-sm font-medium text-white hover:bg-slate-800",
+              focusRingClasses,
+              interactiveTransitionClasses,
+              pressableClasses,
+            )}
           >
             <RotateCcw className="h-4 w-4" />
             Reset Quiz
@@ -101,9 +124,15 @@ export function QuizActionBar({
         </div>
       </div>
 
+      <p className="sr-only" aria-live="polite">
+        {getActionStatusAnnouncement(statusText)}
+      </p>
+
       {statusText && (
         <p
           data-testid="quiz-action-status"
+          role="status"
+          aria-live="polite"
           className="mt-3 rounded-xl bg-slate-50 px-3 py-2 text-sm text-slate-600"
         >
           {statusText}
@@ -112,3 +141,4 @@ export function QuizActionBar({
     </section>
   );
 }
+
