@@ -3,7 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
 import HomePage from "@/app/page";
 
-describe("HomePage", () => {
+describe("HomePage quiz method integration", () => {
   it("renders the Matn Quiz title", () => {
     render(<HomePage />);
 
@@ -12,35 +12,53 @@ describe("HomePage", () => {
     ).toBeInTheDocument();
   });
 
-  it("renders the Quran text input area", () => {
+  it("renders Quran input and quiz method selector", () => {
     render(<HomePage />);
 
     expect(screen.getByRole("textbox")).toBeInTheDocument();
+
+    const radios = screen.getAllByRole("radio");
+
+    expect(radios).toHaveLength(2);
+    expect(radios[0]).toHaveTextContent("Hide Words");
+    expect(radios[1]).toHaveTextContent("Hide Lines");
   });
 
-  it("starts with disabled Continue button", () => {
+  it("uses Hide Words as the default selected method", () => {
     render(<HomePage />);
 
-    expect(
-      screen.getByRole("button", { name: /continue/i }),
-    ).toBeDisabled();
+    expect(screen.getByTestId("selected-method")).toHaveTextContent(
+      "Hide Words",
+    );
   });
 
-  it("updates stats after Arabic text is typed", async () => {
+  it("changes selected method to Hide Lines", async () => {
     const user = userEvent.setup();
 
     render(<HomePage />);
 
-    await user.type(
-      screen.getByRole("textbox"),
-      "بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ",
-    );
+    await user.click(screen.getAllByRole("radio")[1]);
 
-    expect(screen.getByTestId("arabic-word-count")).toHaveTextContent("4");
-    expect(screen.getByTestId("valid-line-count")).toHaveTextContent("1");
+    expect(screen.getByTestId("selected-method")).toHaveTextContent(
+      "Hide Lines",
+    );
   });
 
-  it("enables Continue button for valid Arabic text", async () => {
+  it("keeps Continue disabled without Arabic text", async () => {
+    const user = userEvent.setup();
+
+    render(<HomePage />);
+
+    const continueButton = screen.getByRole("button", { name: /continue/i });
+
+    expect(continueButton).toBeDisabled();
+
+    await user.click(screen.getAllByRole("radio")[1]);
+
+    expect(continueButton).toBeDisabled();
+  });
+
+  it("enables Continue when Arabic text exists", async () => {
     const user = userEvent.setup();
 
     render(<HomePage />);
@@ -60,6 +78,8 @@ describe("HomePage", () => {
 
     render(<HomePage />);
 
+    await user.click(screen.getAllByRole("radio")[1]);
+
     await user.type(
       screen.getByRole("textbox"),
       "بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ",
@@ -67,8 +87,9 @@ describe("HomePage", () => {
 
     await user.click(screen.getByRole("button", { name: /continue/i }));
 
-    expect(
-      screen.getByText(/text accepted/i),
-    ).toBeInTheDocument();
+    expect(screen.getByText(/text accepted with/i)).toBeInTheDocument();
+    expect(screen.getByTestId("selected-method")).toHaveTextContent(
+      "Hide Lines",
+    );
   });
 });

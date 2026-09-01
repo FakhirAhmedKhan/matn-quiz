@@ -20,7 +20,7 @@ describe("Quiz method types and constants", () => {
     expect(DEFAULT_QUIZ_METHOD).toBe("HIDE_WORD");
   });
 
-  it("has exactly two quiz method options", () => {
+  it("has exactly two method options", () => {
     expect(QUIZ_METHOD_OPTIONS).toHaveLength(2);
   });
 
@@ -46,7 +46,7 @@ describe("Quiz method types and constants", () => {
     );
   });
 
-  it("validates quiz method values", () => {
+  it("validates method values", () => {
     expect(isQuizMethod("HIDE_WORD")).toBe(true);
     expect(isQuizMethod("HIDE_LINE")).toBe(true);
     expect(isQuizMethod("INVALID")).toBe(false);

@@ -11,7 +11,8 @@
     "test:watch": "vitest",
     "test:ui": "vitest --ui",
     "verify:phase1": "node scripts/verify-phase-1.cjs",
-    "verify:phase2": "node scripts/verify-phase-2.cjs"
+    "verify:phase2": "node scripts/verify-phase-2.cjs",
+    "verify:phase3": "node scripts/verify-phase-3.cjs"
   },
   "dependencies": {
     "clsx": "^2.1.1",
