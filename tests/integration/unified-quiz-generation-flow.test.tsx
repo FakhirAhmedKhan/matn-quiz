@@ -14,7 +14,7 @@ describe("Unified quiz generation flow", () => {
 
     render(<HomePage />);
 
-    fireEvent.change(screen.getByRole("textbox"), {
+    fireEvent.change(screen.getAllByRole("textbox")[0]!, {
       target: { value: wordText },
     });
 
@@ -34,7 +34,7 @@ describe("Unified quiz generation flow", () => {
 
     render(<HomePage />);
 
-    fireEvent.change(screen.getByRole("textbox"), {
+    fireEvent.change(screen.getAllByRole("textbox")[0]!, {
       target: { value: lineText },
     });
 
@@ -53,7 +53,7 @@ describe("Unified quiz generation flow", () => {
   it("does not show generated quiz before Continue is clicked", () => {
     render(<HomePage />);
 
-    fireEvent.change(screen.getByRole("textbox"), {
+    fireEvent.change(screen.getAllByRole("textbox")[0]!, {
       target: { value: wordText },
     });
 
@@ -67,7 +67,7 @@ describe("Unified quiz generation flow", () => {
 
     render(<HomePage />);
 
-    fireEvent.change(screen.getByRole("textbox"), {
+    fireEvent.change(screen.getAllByRole("textbox")[0]!, {
       target: { value: wordText },
     });
 
@@ -86,5 +86,8 @@ describe("Unified quiz generation flow", () => {
     ).toBeDisabled();
   });
 });
+
+
+
 
 

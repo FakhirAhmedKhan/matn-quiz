@@ -104,3 +104,4 @@ describe("QuizActionBar", () => {
     expect(onResetQuiz).toHaveBeenCalledTimes(1);
   });
 });
+

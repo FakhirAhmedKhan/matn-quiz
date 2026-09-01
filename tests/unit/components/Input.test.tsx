@@ -55,3 +55,4 @@ describe("Input", () => {
     expect(screen.getByText(/name is required/i)).toBeInTheDocument();
   });
 });
+

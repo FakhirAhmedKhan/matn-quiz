@@ -112,3 +112,4 @@ describe("QuizMethodSelector", () => {
     expect(onChange).not.toHaveBeenCalled();
   });
 });
+

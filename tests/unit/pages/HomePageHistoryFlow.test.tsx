@@ -26,7 +26,7 @@ describe("HomePage saved quiz history flow", () => {
 
     render(<HomePage />);
 
-    fireEvent.change(screen.getByRole("textbox"), {
+    fireEvent.change(screen.getAllByRole("textbox")[0]!, {
       target: { value: wordText },
     });
 
@@ -47,7 +47,7 @@ describe("HomePage saved quiz history flow", () => {
 
     render(<HomePage />);
 
-    fireEvent.change(screen.getByRole("textbox"), {
+    fireEvent.change(screen.getAllByRole("textbox")[0]!, {
       target: { value: wordText },
     });
 
@@ -70,7 +70,7 @@ describe("HomePage saved quiz history flow", () => {
 
     render(<HomePage />);
 
-    fireEvent.change(screen.getByRole("textbox"), {
+    fireEvent.change(screen.getAllByRole("textbox")[0]!, {
       target: { value: wordText },
     });
 
@@ -93,14 +93,14 @@ describe("HomePage saved quiz history flow", () => {
 
     render(<HomePage />);
 
-    fireEvent.change(screen.getByRole("textbox"), {
+    fireEvent.change(screen.getAllByRole("textbox")[0]!, {
       target: { value: wordText },
     });
 
     await user.click(screen.getByRole("button", { name: /continue/i }));
     await user.click(screen.getByRole("button", { name: /save quiz/i }));
 
-    fireEvent.change(screen.getByRole("textbox"), {
+    fireEvent.change(screen.getAllByRole("textbox")[0]!, {
       target: { value: lineText },
     });
 
@@ -124,14 +124,14 @@ describe("HomePage saved quiz history flow", () => {
 
     render(<HomePage />);
 
-    fireEvent.change(screen.getByRole("textbox"), {
+    fireEvent.change(screen.getAllByRole("textbox")[0]!, {
       target: { value: wordText },
     });
 
     await user.click(screen.getByRole("button", { name: /continue/i }));
     await user.click(screen.getByRole("button", { name: /save quiz/i }));
 
-    fireEvent.change(screen.getByRole("textbox"), {
+    fireEvent.change(screen.getAllByRole("textbox")[0]!, {
       target: { value: lineText },
     });
 
@@ -149,3 +149,4 @@ describe("HomePage saved quiz history flow", () => {
     );
   });
 });
+

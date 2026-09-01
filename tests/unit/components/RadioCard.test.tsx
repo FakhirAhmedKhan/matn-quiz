@@ -50,3 +50,4 @@ describe("RadioCard", () => {
     expect(onSelect).toHaveBeenCalledWith("HIDE_WORD");
   });
 });
+

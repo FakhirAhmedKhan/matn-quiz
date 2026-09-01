@@ -17,7 +17,7 @@ describe("Quiz method selection flow", () => {
       "Hide Lines",
     );
 
-    fireEvent.change(screen.getByRole("textbox"), {
+    fireEvent.change(screen.getAllByRole("textbox")[0]!, {
       target: { value: arabicText },
     });
 
@@ -35,7 +35,7 @@ describe("Quiz method selection flow", () => {
 
     render(<HomePage />);
 
-    fireEvent.change(screen.getByRole("textbox"), {
+    fireEvent.change(screen.getAllByRole("textbox")[0]!, {
       target: { value: arabicText },
     });
 
@@ -55,7 +55,7 @@ describe("Quiz method selection flow", () => {
 
     await user.click(screen.getAllByRole("radio")[1]);
 
-    fireEvent.change(screen.getByRole("textbox"), {
+    fireEvent.change(screen.getAllByRole("textbox")[0]!, {
       target: { value: arabicText },
     });
 
@@ -73,7 +73,7 @@ describe("Quiz method selection flow", () => {
 
     render(<HomePage />);
 
-    fireEvent.change(screen.getByRole("textbox"), {
+    fireEvent.change(screen.getAllByRole("textbox")[0]!, {
       target: { value: arabicText },
     });
 
@@ -88,3 +88,4 @@ describe("Quiz method selection flow", () => {
     ).not.toBeInTheDocument();
   });
 });
+

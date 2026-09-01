@@ -151,3 +151,4 @@ describe("word tokenizer", () => {
     expect(words[0]?.value).toBe(original);
   });
 });
+

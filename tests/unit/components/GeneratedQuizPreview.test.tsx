@@ -122,3 +122,4 @@ describe("GeneratedQuizPreview Arabic reading UX", () => {
     expect(screen.getByTestId("answer-display-2")).toHaveTextContent("الرَّحْمَٰنِ");
   });
 });
+

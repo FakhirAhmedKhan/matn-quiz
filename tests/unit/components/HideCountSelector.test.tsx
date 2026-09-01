@@ -171,3 +171,4 @@ describe("HideCountSelector", () => {
     expect(screen.getByTestId("hide-count-max")).toHaveTextContent("4");
   });
 });
+

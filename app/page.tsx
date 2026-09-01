@@ -7,6 +7,7 @@ import {
   QuranTextInput,
   QuizMethodSelector,
   SavedQuizHistory,
+  ShareableQuizPanel,
 } from "@/components/quiz";
 import {
   AppContainer,
@@ -33,6 +34,7 @@ import {
   loadSavedQuizHistory,
   saveQuizToHistory,
 } from "@/lib/quiz/quiz-history-repository";
+import type { ShareableQuizDocument } from "@/lib/quiz/shareable-quiz";
 import {
   getQuranTextInputError,
   validateQuranTextInput,
@@ -88,8 +90,6 @@ export default function HomePage() {
     setHideCount((current) =>
       normalizeHideCount(current, quranText, quizMethod),
     );
-    setGeneratedQuiz(null);
-    setGenerateError(undefined);
   }, [quranText, quizMethod]);
 
   const handleTextChange = (value: string) => {
@@ -148,19 +148,29 @@ export default function HomePage() {
     setHistoryStatus("Quiz saved to history.");
   };
 
-  const handleOpenSavedQuiz = (record: SavedQuizRecord) => {
-    setQuranText(record.quiz.originalText);
-    setQuizMethod(record.quiz.method);
+  const openQuizPayload = (
+    quiz: GeneratedQuiz,
+    statusMessage: string,
+  ) => {
+    setQuranText(quiz.originalText);
+    setQuizMethod(quiz.method);
     setHideCount(
-      normalizeHideCount(
-        record.quiz.requestedCount,
-        record.quiz.originalText,
-        record.quiz.method,
-      ),
+      normalizeHideCount(quiz.requestedCount, quiz.originalText, quiz.method),
     );
-    setGeneratedQuiz(record.quiz);
+    setGeneratedQuiz(quiz);
     setGenerateError(undefined);
-    setHistoryStatus("Saved quiz opened.");
+    setHistoryStatus(statusMessage);
+  };
+
+  const handleOpenSavedQuiz = (record: SavedQuizRecord) => {
+    openQuizPayload(record.quiz, "Saved quiz opened.");
+  };
+
+  const handleImportShareableQuiz = (
+    quiz: GeneratedQuiz,
+    _document: ShareableQuizDocument,
+  ) => {
+    openQuizPayload(quiz, "Imported quiz opened.");
   };
 
   const handleDeleteSavedQuiz = (id: string) => {
@@ -191,9 +201,9 @@ export default function HomePage() {
     <AppShell>
       <AppContainer>
         <AppHero
-          eyebrow="Phase 10.4"
+          eyebrow="Phase 11.4"
           title="Matn Quiz"
-          description="Paste Quran or Islamic matn text, generate a study quiz, then save and reopen quizzes on this browser."
+          description="Paste Quran or Islamic matn text, generate a study quiz, save it locally, or import/export it as shareable JSON."
         />
 
         <ResponsiveCardGrid>
@@ -339,6 +349,13 @@ export default function HomePage() {
               />
             </ResponsiveCard>
           )}
+
+          <ResponsiveCard>
+            <ShareableQuizPanel
+              quiz={generatedQuiz}
+              onImportQuiz={handleImportShareableQuiz}
+            />
+          </ResponsiveCard>
 
           <ResponsiveCard>
             <SavedQuizHistory

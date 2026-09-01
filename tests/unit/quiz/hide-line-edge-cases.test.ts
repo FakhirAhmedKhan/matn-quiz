@@ -235,3 +235,4 @@ describe("hide line engine edge cases", () => {
     expect(first).toEqual(second);
   });
 });
+

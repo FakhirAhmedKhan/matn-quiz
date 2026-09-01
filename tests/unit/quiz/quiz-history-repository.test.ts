@@ -338,3 +338,4 @@ describe("browser quiz history repository", () => {
     ).toBe(false);
   });
 });
+

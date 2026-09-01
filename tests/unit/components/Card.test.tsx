@@ -28,3 +28,4 @@ describe("Card", () => {
     expect(screen.getByRole("button", { name: /footer button/i })).toBeInTheDocument();
   });
 });
+

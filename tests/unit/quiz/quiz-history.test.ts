@@ -287,3 +287,4 @@ describe("quiz history utilities", () => {
     expect(clearSavedQuizHistory()).toEqual([]);
   });
 });
+

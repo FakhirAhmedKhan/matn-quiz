@@ -72,3 +72,4 @@ describe("Arabic text utilities", () => {
     expect(original).toBe(copy);
   });
 });
+

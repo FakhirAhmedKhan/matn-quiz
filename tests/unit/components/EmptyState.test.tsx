@@ -26,3 +26,4 @@ describe("EmptyState", () => {
     expect(screen.getByRole("button", { name: /start/i })).toBeInTheDocument();
   });
 });
+

@@ -77,3 +77,4 @@ describe("Quiz method types and constants", () => {
     expect(quiz.answers[0]?.answer).toBe("اللَّهِ");
   });
 });
+

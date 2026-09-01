@@ -12,7 +12,7 @@ describe("QuranTextInput", () => {
       />,
     );
 
-    expect(screen.getByRole("textbox")).toBeInTheDocument();
+    expect(screen.getAllByRole("textbox")[0]!).toBeInTheDocument();
   });
 
   it("renders RTL textarea", () => {
@@ -23,7 +23,7 @@ describe("QuranTextInput", () => {
       />,
     );
 
-    expect(screen.getByRole("textbox")).toHaveAttribute("dir", "rtl");
+    expect(screen.getAllByRole("textbox")[0]!).toHaveAttribute("dir", "rtl");
   });
 
   it("calls onChange when text changes", () => {
@@ -36,7 +36,7 @@ describe("QuranTextInput", () => {
       />,
     );
 
-    fireEvent.change(screen.getByRole("textbox"), {
+    fireEvent.change(screen.getAllByRole("textbox")[0]!, {
       target: {
         value: "بِسْمِ اللَّهِ",
       },
@@ -66,7 +66,7 @@ describe("QuranTextInput", () => {
     );
 
     expect(
-      screen.getByRole("button", { name: /clear/i }),
+      screen.getByRole("button", { name: /^clear$/i }),
     ).toBeInTheDocument();
   });
 
@@ -94,7 +94,7 @@ describe("QuranTextInput", () => {
       />,
     );
 
-    await user.click(screen.getByRole("button", { name: /clear/i }));
+    await user.click(screen.getByRole("button", { name: /^clear$/i }));
 
     expect(onChange).toHaveBeenCalledWith("");
   });
@@ -113,3 +113,4 @@ describe("QuranTextInput", () => {
     ).toBeInTheDocument();
   });
 });
+

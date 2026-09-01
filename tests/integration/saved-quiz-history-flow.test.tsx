@@ -15,7 +15,7 @@ describe("Saved quiz persistence integration flow", () => {
 
     render(<HomePage />);
 
-    fireEvent.change(screen.getByRole("textbox"), {
+    fireEvent.change(screen.getAllByRole("textbox")[0]!, {
       target: { value: wordText },
     });
 
@@ -37,3 +37,4 @@ describe("Saved quiz persistence integration flow", () => {
     expect(screen.queryByTestId("saved-quiz-item")).not.toBeInTheDocument();
   });
 });
+

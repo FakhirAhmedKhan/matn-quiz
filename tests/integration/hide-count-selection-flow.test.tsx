@@ -14,7 +14,7 @@ describe("Hide count selection flow", () => {
 
     render(<HomePage />);
 
-    fireEvent.change(screen.getByRole("textbox"), {
+    fireEvent.change(screen.getAllByRole("textbox")[0]!, {
       target: { value: oneLineText },
     });
 
@@ -34,7 +34,7 @@ describe("Hide count selection flow", () => {
 
     render(<HomePage />);
 
-    fireEvent.change(screen.getByRole("textbox"), {
+    fireEvent.change(screen.getAllByRole("textbox")[0]!, {
       target: { value: twoLineText },
     });
 
@@ -60,7 +60,7 @@ describe("Hide count selection flow", () => {
 
     render(<HomePage />);
 
-    fireEvent.change(screen.getByRole("textbox"), {
+    fireEvent.change(screen.getAllByRole("textbox")[0]!, {
       target: { value: oneLineText },
     });
 
@@ -80,7 +80,7 @@ describe("Hide count selection flow", () => {
 
     render(<HomePage />);
 
-    fireEvent.change(screen.getByRole("textbox"), {
+    fireEvent.change(screen.getAllByRole("textbox")[0]!, {
       target: { value: oneLineText },
     });
 
@@ -96,5 +96,8 @@ describe("Hide count selection flow", () => {
     ).toBeDisabled();
   });
 });
+
+
+
 
 

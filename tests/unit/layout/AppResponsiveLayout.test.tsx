@@ -70,3 +70,4 @@ describe("responsive layout components", () => {
     expect(screen.getByText("Card content")).toBeInTheDocument();
   });
 });
+

@@ -149,3 +149,4 @@ describe("word selection utilities", () => {
     expect(result.selectedWords[0]?.value).toBe("الرَّحْمَٰنِ");
   });
 });
+

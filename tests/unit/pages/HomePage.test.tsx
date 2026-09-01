@@ -12,7 +12,7 @@ describe("HomePage unified quiz generation integration", () => {
   it("renders Quran input, method selector, hide count selector, and summary", () => {
     render(<HomePage />);
 
-    expect(screen.getByRole("textbox")).toBeInTheDocument();
+    expect(screen.getAllByRole("textbox")[0]!).toBeInTheDocument();
 
     const radios = screen.getAllByRole("radio");
 
@@ -47,7 +47,7 @@ describe("HomePage unified quiz generation integration", () => {
 
     render(<HomePage />);
 
-    fireEvent.change(screen.getByRole("textbox"), {
+    fireEvent.change(screen.getAllByRole("textbox")[0]!, {
       target: { value: oneLineText },
     });
 
@@ -71,7 +71,7 @@ describe("HomePage unified quiz generation integration", () => {
 
     render(<HomePage />);
 
-    fireEvent.change(screen.getByRole("textbox"), {
+    fireEvent.change(screen.getAllByRole("textbox")[0]!, {
       target: { value: twoLineText },
     });
 
@@ -99,7 +99,7 @@ describe("HomePage unified quiz generation integration", () => {
 
     render(<HomePage />);
 
-    fireEvent.change(screen.getByRole("textbox"), {
+    fireEvent.change(screen.getAllByRole("textbox")[0]!, {
       target: { value: oneLineText },
     });
 
@@ -107,7 +107,7 @@ describe("HomePage unified quiz generation integration", () => {
 
     expect(screen.getByTestId("generated-quiz-panel")).toBeInTheDocument();
 
-    fireEvent.change(screen.getByRole("textbox"), {
+    fireEvent.change(screen.getAllByRole("textbox")[0]!, {
       target: { value: `${oneLineText} اللَّهِ` },
     });
 
@@ -121,7 +121,7 @@ describe("HomePage unified quiz generation integration", () => {
 
     render(<HomePage />);
 
-    fireEvent.change(screen.getByRole("textbox"), {
+    fireEvent.change(screen.getAllByRole("textbox")[0]!, {
       target: { value: oneLineText },
     });
 
@@ -141,7 +141,7 @@ describe("HomePage unified quiz generation integration", () => {
 
     render(<HomePage />);
 
-    fireEvent.change(screen.getByRole("textbox"), {
+    fireEvent.change(screen.getAllByRole("textbox")[0]!, {
       target: { value: oneLineText },
     });
 
@@ -156,3 +156,4 @@ describe("HomePage unified quiz generation integration", () => {
     ).not.toBeInTheDocument();
   });
 });
+

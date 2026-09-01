@@ -215,3 +215,4 @@ describe("hide line engine", () => {
     expect(first).toEqual(second);
   });
 });
+

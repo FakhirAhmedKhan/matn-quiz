@@ -170,3 +170,4 @@ describe("hide word engine", () => {
     expect(first).toEqual(second);
   });
 });
+

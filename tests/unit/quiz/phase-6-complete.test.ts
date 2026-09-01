@@ -53,3 +53,4 @@ describe("Phase 6 complete verification", () => {
     expect(result.hiddenCount).toBe(2);
   });
 });
+

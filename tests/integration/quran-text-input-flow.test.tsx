@@ -3,6 +3,10 @@ import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
 import HomePage from "@/app/page";
 
+function getQuranTextarea() {
+  return screen.getAllByRole("textbox")[0]!;
+}
+
 describe("Quran text input flow", () => {
   const arabicText = "بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ";
 
@@ -11,7 +15,7 @@ describe("Quran text input flow", () => {
 
     render(<HomePage />);
 
-    const textarea = screen.getByRole("textbox");
+    const textarea = getQuranTextarea();
 
     fireEvent.change(textarea, {
       target: { value: arabicText },
@@ -31,7 +35,7 @@ describe("Quran text input flow", () => {
   it("shows validation error for non-Arabic text", () => {
     render(<HomePage />);
 
-    fireEvent.change(screen.getByRole("textbox"), {
+    fireEvent.change(getQuranTextarea(), {
       target: { value: "hello world" },
     });
 
@@ -46,7 +50,7 @@ describe("Quran text input flow", () => {
 
     render(<HomePage />);
 
-    const textarea = screen.getByRole("textbox");
+    const textarea = getQuranTextarea();
 
     fireEvent.change(textarea, {
       target: { value: arabicText },
@@ -57,7 +61,7 @@ describe("Quran text input flow", () => {
 
     await user.click(screen.getByRole("button", { name: /^clear$/i }));
 
-    expect(textarea).toHaveValue("");
+    expect(getQuranTextarea()).toHaveValue("");
     expect(screen.getByRole("button", { name: /continue/i })).toBeDisabled();
   });
 
@@ -66,7 +70,7 @@ describe("Quran text input flow", () => {
 
     render(<HomePage />);
 
-    fireEvent.change(screen.getByRole("textbox"), {
+    fireEvent.change(getQuranTextarea(), {
       target: { value: arabicText },
     });
 

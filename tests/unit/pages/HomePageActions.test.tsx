@@ -30,7 +30,7 @@ describe("HomePage quiz actions", () => {
 
     render(<HomePage />);
 
-    fireEvent.change(screen.getByRole("textbox"), {
+    fireEvent.change(screen.getAllByRole("textbox")[0]!, {
       target: { value: wordText },
     });
 
@@ -45,7 +45,7 @@ describe("HomePage quiz actions", () => {
 
     render(<HomePage />);
 
-    fireEvent.change(screen.getByRole("textbox"), {
+    fireEvent.change(screen.getAllByRole("textbox")[0]!, {
       target: { value: wordText },
     });
 
@@ -58,3 +58,4 @@ describe("HomePage quiz actions", () => {
     expect(screen.queryByTestId("generated-quiz-panel")).not.toBeInTheDocument();
   });
 });
+

@@ -121,3 +121,4 @@ describe("design system polish utilities", () => {
     expect(getMethodAccentClasses("HIDE_LINE")).toContain("indigo");
   });
 });
+

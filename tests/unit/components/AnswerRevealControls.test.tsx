@@ -91,3 +91,4 @@ describe("AnswerRevealToggle accessibility", () => {
     expect(onToggle).toHaveBeenCalledTimes(1);
   });
 });
+

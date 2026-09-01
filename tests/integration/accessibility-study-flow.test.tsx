@@ -11,7 +11,7 @@ describe("Accessibility polished study flow", () => {
 
     render(<HomePage />);
 
-    fireEvent.change(screen.getByRole("textbox"), {
+    fireEvent.change(screen.getAllByRole("textbox")[0]!, {
       target: { value: wordText },
     });
 
@@ -35,3 +35,4 @@ describe("Accessibility polished study flow", () => {
     );
   });
 });
+

@@ -12,7 +12,7 @@ describe("Arabic reading UX flow", () => {
 
     render(<HomePage />);
 
-    fireEvent.change(screen.getByRole("textbox"), {
+    fireEvent.change(screen.getAllByRole("textbox")[0]!, {
       target: { value: lineText },
     });
 
@@ -33,3 +33,4 @@ describe("Arabic reading UX flow", () => {
     expect(screen.getByTestId("answer-display-1")).not.toHaveTextContent("••••");
   });
 });
+

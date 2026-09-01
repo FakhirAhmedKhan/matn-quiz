@@ -246,3 +246,4 @@ describe("SavedQuizHistory component", () => {
     expect(screen.getByRole("button", { name: /clear history/i })).toBeDisabled();
   });
 });
+

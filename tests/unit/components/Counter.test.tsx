@@ -89,3 +89,4 @@ describe("Counter", () => {
     expect(onChange).not.toHaveBeenCalled();
   });
 });
+
