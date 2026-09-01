@@ -4,6 +4,9 @@ export const QURAN_TEXT_MAX_LENGTH = 5000;
 export const QURAN_TEXT_MIN_WORDS = 1;
 export const QURAN_TEXT_MIN_LINES = 1;
 
+export const HIDE_COUNT_MIN = 1;
+export const HIDE_COUNT_DEFAULT = 1;
+
 export const QUIZ_METHODS = {
   HIDE_WORD: "HIDE_WORD",
   HIDE_LINE: "HIDE_LINE",
