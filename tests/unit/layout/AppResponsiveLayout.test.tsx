@@ -4,77 +4,135 @@ import {
   AppContainer,
   AppHero,
   AppShell,
+  MobileActionZone,
   ResponsiveCard,
   ResponsiveCardGrid,
+  ResponsiveTwoColumnSection,
 } from "@/components/layout";
 
-describe("responsive layout components", () => {
-  it("renders app shell", () => {
+describe("AppResponsiveLayout accessibility and mobile polish", () => {
+  it("renders mobile viewport shell with skip link and safe area", () => {
     render(
       <AppShell>
-        <p>Content</p>
+        <p>Shell content</p>
       </AppShell>,
     );
 
-    expect(screen.getByTestId("app-shell")).toBeInTheDocument();
-    expect(screen.getByText("Content")).toBeInTheDocument();
+    expect(screen.getByTestId("app-shell")).toHaveClass("min-h-dvh");
+    expect(screen.getByTestId("app-shell")).toHaveClass("overflow-x-hidden");
+    expect(screen.getByTestId("skip-to-content-link")).toHaveAttribute(
+      "href",
+      "#main-content",
+    );
+    expect(screen.getByTestId("app-safe-area")).toHaveClass("px-4");
+    expect(screen.getByText("Shell content")).toBeInTheDocument();
   });
 
-  it("renders app container", () => {
+  it("renders focusable main content container", () => {
     render(
       <AppContainer>
-        <p>Inside container</p>
+        <p>Container content</p>
       </AppContainer>,
     );
 
-    expect(screen.getByTestId("app-container")).toBeInTheDocument();
+    expect(screen.getByTestId("app-container")).toHaveAttribute(
+      "id",
+      "main-content",
+    );
+    expect(screen.getByTestId("app-container")).toHaveAttribute("tabindex", "-1");
     expect(screen.getByTestId("app-container")).toHaveClass("max-w-5xl");
+    expect(screen.getByTestId("app-container")).toHaveClass("focus:outline-none");
   });
 
-  it("renders app hero", () => {
+  it("renders mobile polished hero with aria label target", () => {
     render(
       <AppHero
-        eyebrow="Phase 9.2"
+        eyebrow="Phase 14.4"
         title="Matn Quiz"
-        description="Responsive layout polish"
+        description="Accessible study workspace."
       />,
     );
 
-    expect(screen.getByTestId("app-hero")).toBeInTheDocument();
-    expect(screen.getByText("Phase 9.2")).toBeInTheDocument();
-    expect(
-      screen.getByRole("heading", { name: "Matn Quiz" }),
-    ).toBeInTheDocument();
-    expect(screen.getByText("Responsive layout polish")).toBeInTheDocument();
+    expect(screen.getByTestId("app-hero")).toHaveAttribute(
+      "aria-labelledby",
+      "app-hero-title",
+    );
+    expect(screen.getByTestId("app-hero-title")).toHaveAttribute(
+      "id",
+      "app-hero-title",
+    );
+    expect(screen.getByTestId("app-hero-eyebrow")).toHaveTextContent(
+      "Phase 14.4",
+    );
+    expect(screen.getByTestId("hero-main-content-anchor")).toHaveAttribute(
+      "href",
+      "#main-content",
+    );
   });
 
-  it("renders responsive card grid", () => {
+  it("renders responsive card grid with spacing", () => {
     render(
-      <ResponsiveCardGrid>
-        <p>Grid item</p>
+      <ResponsiveCardGrid spacing="compact">
+        <p>Grid content</p>
       </ResponsiveCardGrid>,
     );
 
-    expect(screen.getByTestId("responsive-card-grid")).toBeInTheDocument();
+    expect(screen.getByTestId("responsive-card-grid")).toHaveClass("space-y-3");
     expect(screen.getByTestId("responsive-card-grid")).toHaveClass("max-w-4xl");
   });
 
-  it("renders responsive card", () => {
+  it("renders responsive card with optional aria label", () => {
     render(
-      <ResponsiveCard>
+      <ResponsiveCard spacing="spacious" ariaLabel="Quiz setup">
         <p>Card content</p>
       </ResponsiveCard>,
     );
 
-    expect(screen.getByTestId("responsive-card")).toBeInTheDocument();
-    expect(screen.getByText("Card content")).toBeInTheDocument();
+    expect(screen.getByTestId("responsive-card")).toHaveClass("rounded-3xl");
+    expect(screen.getByTestId("responsive-card")).toHaveClass("p-6");
+    expect(screen.getByTestId("responsive-card")).toHaveAttribute(
+      "aria-label",
+      "Quiz setup",
+    );
+  });
+
+  it("renders responsive two column section", () => {
+    render(
+      <ResponsiveTwoColumnSection>
+        <p>Left</p>
+        <p>Right</p>
+      </ResponsiveTwoColumnSection>,
+    );
+
+    expect(screen.getByTestId("responsive-two-column-section")).toHaveClass(
+      "grid",
+    );
+    expect(screen.getByTestId("responsive-two-column-section")).toHaveClass(
+      "lg:grid-cols-[1.2fr_0.8fr]",
+    );
+  });
+
+  it("renders non-sticky mobile action zone", () => {
+    render(
+      <MobileActionZone layout="stacked">
+        <button type="button">Action</button>
+      </MobileActionZone>,
+    );
+
+    expect(screen.getByTestId("mobile-action-zone")).toHaveClass("grid");
+    expect(screen.getByRole("button", { name: /action/i })).toBeInTheDocument();
+  });
+
+  it("renders sticky mobile action zone", () => {
+    render(
+      <MobileActionZone sticky>
+        <button type="button">Save</button>
+      </MobileActionZone>,
+    );
+
+    expect(screen.getByTestId("mobile-action-zone")).toHaveClass("sticky");
+    expect(screen.getByTestId("mobile-action-zone")).toHaveClass("bottom-0");
   });
 });
-
-
-
-
-
-
 
 

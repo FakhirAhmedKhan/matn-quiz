@@ -16,6 +16,7 @@ import {
   AppShell,
   ResponsiveCard,
   ResponsiveCardGrid,
+  ResponsiveTwoColumnSection,
 } from "@/components/layout";
 import { Button, SectionTitle } from "@/components/ui";
 import {
@@ -256,9 +257,9 @@ export default function HomePage() {
     <AppShell>
       <AppContainer>
         <AppHero
-          eyebrow="Phase 13.4"
+          eyebrow="Phase 14.5"
           title="Matn Quiz"
-          description="Paste Quran or Islamic matn text, generate a study quiz, save it locally, import/export JSON, and resume unfinished study sessions."
+          description="A mobile-friendly Quran and matn quiz workspace for generating, reviewing, saving, importing, exporting, and resuming study sessions."
         />
 
         <ResponsiveCardGrid>
@@ -270,10 +271,7 @@ export default function HomePage() {
             />
           </ResponsiveCard>
 
-          <div
-            data-testid="responsive-two-column-section"
-            className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]"
-          >
+          <ResponsiveTwoColumnSection>
             <ResponsiveCard className="h-full">
               <QuizMethodSelector
                 value={quizMethod}
@@ -289,7 +287,7 @@ export default function HomePage() {
                 onChange={handleHideCountChange}
               />
             </ResponsiveCard>
-          </div>
+          </ResponsiveTwoColumnSection>
 
           <ResponsiveCard>
             <SectionTitle
@@ -440,3 +438,5 @@ export default function HomePage() {
     </AppShell>
   );
 }
+
+

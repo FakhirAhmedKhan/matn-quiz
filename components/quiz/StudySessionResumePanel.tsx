@@ -1,6 +1,7 @@
 ﻿"use client";
 
 import { BookOpenCheck, RotateCcw, Trash2 } from "lucide-react";
+import { EmptyStatePanel } from "@/components/ui/FeedbackStatePanel";
 import {
   getPersistedStudySessionProgressSummary,
   getPersistedStudySessionSavedAtLabel,
@@ -28,10 +29,12 @@ export function StudySessionResumePanel({
   className,
 }: StudySessionResumePanelProps) {
   const hasSession = Boolean(document);
-  const hasProgress = document ? hasPersistedStudySessionProgress(document) : false;
+  const hasProgress = document
+    ? hasPersistedStudySessionProgress(document)
+    : false;
 
   const buttonClasses = cn(
-    "inline-flex items-center justify-center gap-2 rounded-xl px-3 py-2 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-50",
+    "inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-3 py-2 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-50",
     focusRingClasses,
     interactiveTransitionClasses,
     pressableClasses,
@@ -73,7 +76,9 @@ export function StudySessionResumePanel({
           className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4"
         >
           <div className="flex items-start gap-3">
-            <BookOpenCheck className="mt-0.5 h-5 w-5 shrink-0 text-emerald-700" />
+            <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-white text-emerald-700 ring-1 ring-emerald-200">
+              <BookOpenCheck className="h-5 w-5" />
+            </span>
 
             <div className="min-w-0 flex-1">
               <p
@@ -126,11 +131,12 @@ export function StudySessionResumePanel({
           </div>
         </div>
       ) : (
-        <div
-          data-testid="study-session-resume-empty"
-          className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600"
-        >
-          No unfinished study session is saved in this browser.
+        <div data-testid="study-session-resume-empty">
+          <EmptyStatePanel
+            compact
+            title="No saved study session"
+            description="No unfinished study session is saved in this browser."
+          />
         </div>
       )}
     </section>

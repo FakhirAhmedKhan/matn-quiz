@@ -72,3 +72,11 @@ describe("Quran text validation", () => {
 
 
 
+
+
+
+
+
+
+
+

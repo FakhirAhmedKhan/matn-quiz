@@ -1,15 +1,16 @@
 ﻿"use client";
 
-import { Clock3, FolderOpen, RotateCcw, Trash2 } from "lucide-react";
+import { Clock3, FolderOpen, Trash2 } from "lucide-react";
+import { EmptyStatePanel } from "@/components/ui/FeedbackStatePanel";
 import { getGeneratedQuizMethodLabel } from "@/lib/quiz/unified-quiz";
-import { getMethodAccentClasses } from "@/lib/ui/design-system";
+import type { SavedQuizRecord } from "@/lib/quiz/quiz-history";
 import {
   focusRingClasses,
   interactiveTransitionClasses,
   pressableClasses,
 } from "@/lib/ui/accessibility";
+import { getMethodAccentClasses } from "@/lib/ui/design-system";
 import { cn } from "@/lib/utils/cn";
-import type { SavedQuizRecord } from "@/lib/quiz/quiz-history";
 
 interface SavedQuizHistoryProps {
   items: SavedQuizRecord[];
@@ -28,7 +29,7 @@ interface SavedQuizHistoryItemProps {
 }
 
 export function formatSavedQuizDate(value: string): string {
-  if (!value || value.length < 16) {
+  if (!value || Number.isNaN(Date.parse(value))) {
     return "Unknown date";
   }
 
@@ -45,7 +46,7 @@ export function getSavedQuizPreview(record: SavedQuizRecord): string {
   return preview.length > 90 ? `${preview.slice(0, 90)}...` : preview;
 }
 
-export function SavedQuizHistoryItem({
+function SavedQuizHistoryItem({
   record,
   onOpen,
   onDelete,
@@ -54,11 +55,10 @@ export function SavedQuizHistoryItem({
   const methodLabel = getGeneratedQuizMethodLabel(record.quiz.method);
 
   const buttonClasses = cn(
-    "inline-flex items-center justify-center gap-2 rounded-xl px-3 py-2 text-sm font-medium",
+    "inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-3 py-2 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-50",
     focusRingClasses,
     interactiveTransitionClasses,
     pressableClasses,
-    "disabled:cursor-not-allowed disabled:opacity-50",
   );
 
   return (
@@ -66,27 +66,21 @@ export function SavedQuizHistoryItem({
       data-testid="saved-quiz-item"
       className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm shadow-slate-100"
     >
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-        <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-2">
-            <span
-              data-testid="saved-quiz-method"
-              className={cn(
-                "inline-flex rounded-full border px-3 py-1 text-xs font-semibold",
-                getMethodAccentClasses(record.quiz.method),
-              )}
-            >
-              {methodLabel}
-            </span>
-
-            <span className="inline-flex rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-600">
-              {record.quiz.hiddenCount} hidden
-            </span>
-          </div>
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0">
+          <span
+            data-testid="saved-quiz-method"
+            className={cn(
+              "inline-flex rounded-full border px-3 py-1 text-xs font-semibold",
+              getMethodAccentClasses(record.quiz.method),
+            )}
+          >
+            {methodLabel}
+          </span>
 
           <h3
             data-testid="saved-quiz-title"
-            className="mt-3 line-clamp-2 text-base font-semibold text-slate-950"
+            className="mt-3 text-base font-semibold text-slate-950"
           >
             {record.title}
           </h3>
@@ -95,20 +89,18 @@ export function SavedQuizHistoryItem({
             data-testid="saved-quiz-preview"
             dir="rtl"
             lang="ar"
-            className="arabic-text mt-3 line-clamp-2 text-right text-lg leading-loose text-slate-700"
+            className="mt-2 text-right text-sm leading-7 text-slate-600"
           >
             {getSavedQuizPreview(record)}
           </p>
 
-          <p className="mt-3 inline-flex items-center gap-2 text-xs font-medium text-slate-500">
-            <Clock3 className="h-4 w-4" />
-            <time dateTime={record.createdAt}>
-              {formatSavedQuizDate(record.createdAt)}
-            </time>
+          <p className="mt-3 inline-flex items-center gap-2 text-xs text-slate-500">
+            <Clock3 className="h-3.5 w-3.5" />
+            {formatSavedQuizDate(record.updatedAt)}
           </p>
         </div>
 
-        <div className="flex flex-wrap gap-2 lg:justify-end">
+        <div className="flex shrink-0 flex-wrap gap-2">
           <button
             type="button"
             disabled={disabled}
@@ -125,6 +117,7 @@ export function SavedQuizHistoryItem({
           <button
             type="button"
             disabled={disabled}
+            aria-label={`Delete saved quiz ${record.title}`}
             onClick={() => onDelete(record.id)}
             className={cn(
               buttonClasses,
@@ -163,40 +156,27 @@ export function SavedQuizHistory({
           </h2>
 
           <p className="mt-1 text-sm leading-6 text-slate-600">
-            Reopen quizzes saved on this browser.
+            Reopen, review, or delete quizzes saved in this browser.
           </p>
         </div>
 
         <button
           type="button"
-          disabled={disabled || !hasItems}
+          disabled={!hasItems || disabled}
           onClick={onClear}
           className={cn(
-            "inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:border-red-300 hover:text-red-700 disabled:cursor-not-allowed disabled:opacity-50",
+            "inline-flex min-h-11 w-fit items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:border-red-300 hover:text-red-700 disabled:cursor-not-allowed disabled:opacity-50",
             focusRingClasses,
             interactiveTransitionClasses,
             pressableClasses,
           )}
         >
-          <RotateCcw className="h-4 w-4" />
+          <Trash2 className="h-4 w-4" />
           Clear History
         </button>
       </div>
 
-      {!hasItems ? (
-        <div
-          data-testid="saved-quiz-empty"
-          className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-6 text-center"
-        >
-          <p className="text-sm font-semibold text-slate-950">
-            No saved quizzes yet.
-          </p>
-
-          <p className="mt-1 text-sm leading-6 text-slate-600">
-            Generate and save a quiz to see it here.
-          </p>
-        </div>
-      ) : (
+      {hasItems ? (
         <ol data-testid="saved-quiz-list" className="space-y-3">
           {items.map((record) => (
             <SavedQuizHistoryItem
@@ -208,6 +188,14 @@ export function SavedQuizHistory({
             />
           ))}
         </ol>
+      ) : (
+        <div data-testid="saved-quiz-empty">
+          <EmptyStatePanel
+            compact
+            title="No saved quizzes yet."
+            description="Generate a quiz and use Save Quiz to keep it here for later."
+          />
+        </div>
       )}
     </section>
   );

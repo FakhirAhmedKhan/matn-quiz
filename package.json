@@ -21,7 +21,8 @@
     "verify:phase10": "node scripts/verify-phase-10.cjs",
     "verify:phase11": "node scripts/verify-phase-11.cjs",
     "verify:phase12": "node scripts/verify-phase-12.cjs",
-    "verify:phase13": "node scripts/verify-phase-13.cjs"
+    "verify:phase13": "node scripts/verify-phase-13.cjs",
+    "verify:phase14": "node scripts/verify-phase-14.cjs"
   },
   "dependencies": {
     "clsx": "^2.1.1",

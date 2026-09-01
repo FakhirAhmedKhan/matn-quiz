@@ -95,6 +95,7 @@ export function GeneratedQuizPreview({
     const nextStudyState = initialStudyState ?? createQuizStudyState(quiz);
     const nextReviewState = initialReviewState ?? createQuizReviewState(quiz);
 
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setStudyState(nextStudyState);
     setReviewState(nextReviewState);
     setStudySessionId(providedStudySessionId ?? createPersistedStudySessionId());
@@ -111,6 +112,7 @@ export function GeneratedQuizPreview({
   useEffect(() => {
     if (!hasStudyOrReviewProgress(studyState, reviewState)) {
       clearPersistedStudySession();
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setAutoSaveStatus(
         initialStudyState || initialReviewState
           ? "Study session resumed."
