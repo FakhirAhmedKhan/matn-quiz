@@ -1,6 +1,7 @@
 ﻿"use client";
 
 import type { InputHTMLAttributes } from "react";
+import { useId } from "react";
 import { cn } from "@/lib/utils/cn";
 
 interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
@@ -15,9 +16,16 @@ export function Input({
   helperText,
   className,
   id,
+  name,
   ...props
 }: InputProps) {
-  const inputId = id ?? props.name;
+  const generatedId = useId();
+  const inputId = id ?? name ?? generatedId;
+  const descriptionId = error
+    ? `${inputId}-error`
+    : helperText
+      ? `${inputId}-helper`
+      : undefined;
 
   return (
     <div className="space-y-2">
@@ -32,6 +40,7 @@ export function Input({
 
       <input
         id={inputId}
+        name={name}
         className={cn(
           "h-11 w-full rounded-xl border bg-white px-4 text-sm text-slate-950 shadow-sm transition",
           "placeholder:text-slate-400",
@@ -41,13 +50,7 @@ export function Input({
           className,
         )}
         aria-invalid={Boolean(error)}
-        aria-describedby={
-          error
-            ? `${inputId}-error`
-            : helperText
-              ? `${inputId}-helper`
-              : undefined
-        }
+        aria-describedby={descriptionId}
         {...props}
       />
 

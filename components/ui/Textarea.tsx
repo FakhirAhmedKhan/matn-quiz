@@ -1,6 +1,7 @@
 ﻿"use client";
 
 import type { TextareaHTMLAttributes } from "react";
+import { useId } from "react";
 import { cn } from "@/lib/utils/cn";
 
 interface TextareaProps extends TextareaHTMLAttributes<HTMLTextAreaElement> {
@@ -17,11 +18,19 @@ export function Textarea({
   rtl = false,
   className,
   id,
+  name,
   maxLength,
   value,
   ...props
 }: TextareaProps) {
-  const textareaId = id ?? props.name;
+  const generatedId = useId();
+  const textareaId = id ?? name ?? generatedId;
+  const descriptionId = error
+    ? `${textareaId}-error`
+    : helperText
+      ? `${textareaId}-helper`
+      : undefined;
+
   const valueLength =
     typeof value === "string"
       ? value.length
@@ -42,6 +51,7 @@ export function Textarea({
 
       <textarea
         id={textareaId}
+        name={name}
         dir={rtl ? "rtl" : "ltr"}
         maxLength={maxLength}
         value={value}
@@ -55,13 +65,7 @@ export function Textarea({
           className,
         )}
         aria-invalid={Boolean(error)}
-        aria-describedby={
-          error
-            ? `${textareaId}-error`
-            : helperText
-              ? `${textareaId}-helper`
-              : undefined
-        }
+        aria-describedby={descriptionId}
         {...props}
       />
 
