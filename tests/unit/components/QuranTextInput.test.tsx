@@ -114,3 +114,10 @@ describe("QuranTextInput", () => {
   });
 });
 
+
+
+
+
+
+
+

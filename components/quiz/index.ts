@@ -7,3 +7,6 @@ export * from "./QuizActionBar";
 export * from "./ArabicReadingPanel";
 export * from "./SavedQuizHistory";
 export * from "./ShareableQuizPanel";
+export * from "./ReviewAnswerControls";
+export * from "./ReviewProgressSummary";
+export * from "./StudySessionResumePanel";

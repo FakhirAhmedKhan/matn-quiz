@@ -65,3 +65,10 @@ describe("Quran text validation", () => {
   });
 });
 
+
+
+
+
+
+
+

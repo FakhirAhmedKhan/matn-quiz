@@ -8,6 +8,7 @@ import {
   QuizMethodSelector,
   SavedQuizHistory,
   ShareableQuizPanel,
+  StudySessionResumePanel,
 } from "@/components/quiz";
 import {
   AppContainer,
@@ -35,6 +36,15 @@ import {
   saveQuizToHistory,
 } from "@/lib/quiz/quiz-history-repository";
 import type { ShareableQuizDocument } from "@/lib/quiz/shareable-quiz";
+import type {
+  PersistedStudySessionDocument,
+} from "@/lib/quiz/study-session-persistence";
+import {
+  clearPersistedStudySession,
+  loadPersistedStudySession,
+} from "@/lib/quiz/study-session-repository";
+import type { QuizReviewState } from "@/lib/quiz/review-session";
+import type { QuizStudyState } from "@/lib/quiz/study-session";
 import {
   getQuranTextInputError,
   validateQuranTextInput,
@@ -50,6 +60,13 @@ export default function HomePage() {
   const [generatedQuiz, setGeneratedQuiz] =
     useState<GeneratedQuiz | null>(null);
   const [savedQuizzes, setSavedQuizzes] = useState<SavedQuizRecord[]>([]);
+  const [persistedStudySession, setPersistedStudySession] =
+    useState<PersistedStudySessionDocument | null>(null);
+  const [resumeStudyState, setResumeStudyState] =
+    useState<QuizStudyState | undefined>();
+  const [resumeReviewState, setResumeReviewState] =
+    useState<QuizReviewState | undefined>();
+  const [resumeSessionId, setResumeSessionId] = useState<string | undefined>();
   const [generateError, setGenerateError] = useState<string | undefined>();
   const [historyStatus, setHistoryStatus] = useState<string | undefined>();
 
@@ -80,23 +97,33 @@ export default function HomePage() {
     setSavedQuizzes(loadSavedQuizHistory());
   };
 
+  const refreshPersistedStudySession = () => {
+    setPersistedStudySession(loadPersistedStudySession());
+  };
+
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     refreshSavedQuizzes();
+    refreshPersistedStudySession();
   }, []);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setHideCount((current) =>
       normalizeHideCount(current, quranText, quizMethod),
     );
   }, [quranText, quizMethod]);
+
+  const clearResumeState = () => {
+    setResumeStudyState(undefined);
+    setResumeReviewState(undefined);
+    setResumeSessionId(undefined);
+  };
 
   const handleTextChange = (value: string) => {
     setQuranText(value);
     setGeneratedQuiz(null);
     setGenerateError(undefined);
     setHistoryStatus(undefined);
+    clearResumeState();
   };
 
   const handleMethodChange = (value: QuizMethod) => {
@@ -104,6 +131,7 @@ export default function HomePage() {
     setGeneratedQuiz(null);
     setGenerateError(undefined);
     setHistoryStatus(undefined);
+    clearResumeState();
   };
 
   const handleHideCountChange = (value: number) => {
@@ -111,6 +139,7 @@ export default function HomePage() {
     setGeneratedQuiz(null);
     setGenerateError(undefined);
     setHistoryStatus(undefined);
+    clearResumeState();
   };
 
   const handleGenerate = () => {
@@ -129,6 +158,8 @@ export default function HomePage() {
     setGeneratedQuiz(result.quiz);
     setGenerateError(undefined);
     setHistoryStatus(undefined);
+    setPersistedStudySession(null);
+    clearResumeState();
   };
 
   const handleSaveQuiz = () => {
@@ -163,6 +194,7 @@ export default function HomePage() {
   };
 
   const handleOpenSavedQuiz = (record: SavedQuizRecord) => {
+    clearResumeState();
     openQuizPayload(record.quiz, "Saved quiz opened.");
   };
 
@@ -170,7 +202,30 @@ export default function HomePage() {
     quiz: GeneratedQuiz,
     _document: ShareableQuizDocument,
   ) => {
+    clearResumeState();
     openQuizPayload(quiz, "Imported quiz opened.");
+  };
+
+  const handleResumeStudySession = (document: PersistedStudySessionDocument) => {
+    const quiz = document.studyState.quiz;
+
+    setResumeStudyState(document.studyState);
+    setResumeReviewState(document.reviewState);
+    setResumeSessionId(document.sessionId);
+    openQuizPayload(quiz, "Study session resumed.");
+  };
+
+  const handleClearStudySession = () => {
+    const cleared = clearPersistedStudySession();
+
+    if (!cleared) {
+      setHistoryStatus("Unable to clear study session.");
+      return;
+    }
+
+    setPersistedStudySession(null);
+    clearResumeState();
+    setHistoryStatus("Study session cleared.");
   };
 
   const handleDeleteSavedQuiz = (id: string) => {
@@ -201,9 +256,9 @@ export default function HomePage() {
     <AppShell>
       <AppContainer>
         <AppHero
-          eyebrow="Phase 11.4"
+          eyebrow="Phase 13.4"
           title="Matn Quiz"
-          description="Paste Quran or Islamic matn text, generate a study quiz, save it locally, or import/export it as shareable JSON."
+          description="Paste Quran or Islamic matn text, generate a study quiz, save it locally, import/export JSON, and resume unfinished study sessions."
         />
 
         <ResponsiveCardGrid>
@@ -340,12 +395,27 @@ export default function HomePage() {
             )}
           </ResponsiveCard>
 
+          <ResponsiveCard>
+            <StudySessionResumePanel
+              document={persistedStudySession}
+              onResume={handleResumeStudySession}
+              onClear={handleClearStudySession}
+            />
+          </ResponsiveCard>
+
           {generatedQuiz && (
             <ResponsiveCard>
               <GeneratedQuizPreview
                 quiz={generatedQuiz}
                 onSaveQuiz={handleSaveQuiz}
-                onResetQuiz={() => setGeneratedQuiz(null)}
+                onResetQuiz={() => {
+                  setGeneratedQuiz(null);
+                  setPersistedStudySession(null);
+                  clearResumeState();
+                }}
+                initialStudyState={resumeStudyState}
+                initialReviewState={resumeReviewState}
+                studySessionId={resumeSessionId}
               />
             </ResponsiveCard>
           )}
