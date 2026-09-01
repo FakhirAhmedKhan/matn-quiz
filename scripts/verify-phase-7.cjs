@@ -6,15 +6,24 @@ const path = require("node:path");
 const root = process.cwd();
 
 const requiredFiles = [
-  "lib/quiz/line-tokenizer.ts",
-  "lib/quiz/line-selection.ts",
-  "lib/quiz/hide-line-engine.ts",
+  "types/quiz.ts",
 
-  "tests/unit/quiz/line-tokenizer.test.ts",
-  "tests/unit/quiz/line-selection.test.ts",
-  "tests/unit/quiz/hide-line-engine.test.ts",
-  "tests/unit/quiz/hide-line-edge-cases.test.ts",
-  "tests/unit/quiz/phase-6-complete.test.ts"
+  "lib/quiz/unified-quiz.ts",
+  "lib/quiz/generate-quiz.ts",
+  "lib/quiz/generate-quiz-validation.ts",
+
+  "components/quiz/GeneratedQuizPreview.tsx",
+  "components/quiz/index.ts",
+  "app/page.tsx",
+
+  "tests/unit/quiz/unified-quiz.test.ts",
+  "tests/unit/quiz/generate-quiz.test.ts",
+  "tests/unit/quiz/generate-quiz-validation.test.ts",
+  "tests/unit/quiz/phase-7-complete.test.ts",
+
+  "tests/unit/components/GeneratedQuizPreview.test.tsx",
+  "tests/unit/pages/HomePage.test.tsx",
+  "tests/integration/unified-quiz-generation-flow.test.tsx"
 ];
 
 function fail(message) {
@@ -48,7 +57,7 @@ function run(command, args) {
   }
 }
 
-console.log("\n=== Checking Phase 6 files ===");
+console.log("\n=== Checking Phase 7 files ===");
 
 for (const file of requiredFiles) {
   if (!existsSync(path.join(root, file))) {
@@ -76,15 +85,17 @@ const pm = detectPackageManager();
 
 console.log(`\nUsing package manager: ${pm}`);
 
-console.log("\n=== Running Phase 6 focused tests ===");
+console.log("\n=== Running Phase 7 focused tests ===");
 
 run(pm, [
   "test",
-  "tests/unit/quiz/line-tokenizer.test.ts",
-  "tests/unit/quiz/line-selection.test.ts",
-  "tests/unit/quiz/hide-line-engine.test.ts",
-  "tests/unit/quiz/hide-line-edge-cases.test.ts",
-  "tests/unit/quiz/phase-6-complete.test.ts"
+  "tests/unit/quiz/unified-quiz.test.ts",
+  "tests/unit/quiz/generate-quiz.test.ts",
+  "tests/unit/quiz/generate-quiz-validation.test.ts",
+  "tests/unit/quiz/phase-7-complete.test.ts",
+  "tests/unit/components/GeneratedQuizPreview.test.tsx",
+  "tests/unit/pages/HomePage.test.tsx",
+  "tests/integration/unified-quiz-generation-flow.test.tsx"
 ]);
 
 console.log("\n=== Running full project verification ===");
@@ -94,11 +105,11 @@ run(pm, ["run", "lint"]);
 run(pm, ["run", "build"]);
 
 console.log(`
-✅ Phase 6.1 line tokenizer verified
-✅ Phase 6.2 line selection verified
-✅ Phase 6.3 hide line engine verified
-✅ Phase 6.4 edge cases verified
-✅ Phase 6.5 final verification passed
+✅ Phase 7.1 unified quiz types and helpers verified
+✅ Phase 7.2 generator dispatcher verified
+✅ Phase 7.3 validation and safe generation verified
+✅ Phase 7.4 homepage generation flow verified
+✅ Phase 7.5 final verification passed
 
-Phase 6 is complete.
+Phase 7 is complete.
 `);

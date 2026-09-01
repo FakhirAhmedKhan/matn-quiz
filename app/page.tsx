@@ -1,8 +1,8 @@
 ﻿"use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { CheckCircle2 } from "lucide-react";
 import {
+  GeneratedQuizPreview,
   HideCountSelector,
   QuranTextInput,
   QuizMethodSelector,
@@ -19,6 +19,7 @@ import {
   HIDE_COUNT_DEFAULT,
   QUIZ_METHOD_OPTIONS,
 } from "@/lib/constants/quiz";
+import { safeGenerateQuiz } from "@/lib/quiz/generate-quiz";
 import { getArabicTextStats } from "@/lib/utils/arabic";
 import {
   getQuranTextInputError,
@@ -28,14 +29,16 @@ import {
   isValidHideCount,
   normalizeHideCount,
 } from "@/lib/quiz/hide-count";
-import type { QuizMethod } from "@/types/quiz";
+import type { GeneratedQuiz, QuizMethod } from "@/types/quiz";
 
 export default function HomePage() {
   const [quranText, setQuranText] = useState("");
   const [quizMethod, setQuizMethod] =
     useState<QuizMethod>(DEFAULT_QUIZ_METHOD);
   const [hideCount, setHideCount] = useState(HIDE_COUNT_DEFAULT);
-  const [submitted, setSubmitted] = useState(false);
+  const [generatedQuiz, setGeneratedQuiz] =
+    useState<GeneratedQuiz | null>(null);
+  const [generateError, setGenerateError] = useState<string | undefined>();
 
   const stats = useMemo(() => getArabicTextStats(quranText), [quranText]);
 
@@ -58,49 +61,64 @@ export default function HomePage() {
       ? getQuranTextInputError(quranText)
       : undefined;
 
-  const canContinue = validation.valid && hideCountValid;
+  const canGenerate = validation.valid && hideCountValid;
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setHideCount((current) =>
       normalizeHideCount(current, quranText, quizMethod),
     );
-    setSubmitted(false);
+    setGeneratedQuiz(null);
+    setGenerateError(undefined);
   }, [quranText, quizMethod]);
 
   const handleTextChange = (value: string) => {
     setQuranText(value);
-    setSubmitted(false);
+    setGeneratedQuiz(null);
+    setGenerateError(undefined);
   };
 
   const handleMethodChange = (value: QuizMethod) => {
     setQuizMethod(value);
-    setSubmitted(false);
+    setGeneratedQuiz(null);
+    setGenerateError(undefined);
   };
 
   const handleHideCountChange = (value: number) => {
     setHideCount(normalizeHideCount(value, quranText, quizMethod));
-    setSubmitted(false);
+    setGeneratedQuiz(null);
+    setGenerateError(undefined);
   };
 
-  const handleContinue = () => {
-    if (!canContinue) return;
+  const handleGenerate = () => {
+    const result = safeGenerateQuiz({
+      text: quranText,
+      method: quizMethod,
+      hideCount,
+    });
 
-    setSubmitted(true);
+    if (!result.ok) {
+      setGeneratedQuiz(null);
+      setGenerateError(result.errors[0]?.message ?? "Unable to generate quiz.");
+      return;
+    }
+
+    setGeneratedQuiz(result.quiz);
+    setGenerateError(undefined);
   };
 
   return (
     <main className="min-h-screen bg-slate-50 py-12">
       <Container>
         <section className="mx-auto max-w-3xl text-center">
-          <Badge variant="primary">Phase 4.3</Badge>
+          <Badge variant="primary">Phase 7.4</Badge>
 
           <h1 className="mt-5 text-4xl font-bold tracking-tight text-slate-950 sm:text-5xl">
             Matn Quiz
           </h1>
 
           <p className="mt-4 text-base leading-7 text-slate-600">
-            Paste Quran or Islamic matn text, choose the quiz method, then choose how much content should be hidden.
+            Paste Quran or Islamic matn text, choose a quiz method, choose the hide count, then generate your quiz.
           </p>
         </section>
 
@@ -132,7 +150,7 @@ export default function HomePage() {
           <Card>
             <SectionTitle
               title="Quiz Setup Summary"
-              description="These values will be used later when quiz generation is added."
+              description="These values are used by the unified quiz generator."
             />
 
             <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
@@ -192,37 +210,41 @@ export default function HomePage() {
                 Status:{" "}
                 <strong
                   className={
-                    canContinue
+                    canGenerate
                       ? "text-emerald-700"
                       : "text-slate-500"
                   }
                 >
-                  {canContinue
-                    ? "Ready to continue"
+                  {canGenerate
+                    ? "Ready to generate"
                     : "Waiting for valid Arabic text and hide count"}
                 </strong>
               </p>
 
               <Button
                 type="button"
-                disabled={!canContinue}
-                onClick={handleContinue}
+                disabled={!canGenerate}
+                onClick={handleGenerate}
               >
                 Continue
               </Button>
             </div>
 
-            {submitted && (
-              <div className="mt-6 flex items-center gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
-                <CheckCircle2 className="h-5 w-5" />
-                <p>
-                  Text accepted with{" "}
-                  <strong>{selectedMethod?.label}</strong> and hide count{" "}
-                  <strong>{hideCount}</strong>. Quiz generation will be added in the next phases.
-                </p>
-              </div>
+            {generateError && (
+              <p
+                data-testid="generate-error"
+                className="mt-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
+              >
+                {generateError}
+              </p>
             )}
           </Card>
+
+          {generatedQuiz && (
+            <Card>
+              <GeneratedQuizPreview quiz={generatedQuiz} />
+            </Card>
+          )}
         </div>
       </Container>
     </main>

@@ -3,10 +3,13 @@ import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
 import HomePage from "@/app/page";
 
-describe("HomePage hide count integration", () => {
-  const arabicText = "بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ";
+describe("HomePage unified quiz generation integration", () => {
+  const oneLineText = "بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ";
 
-  it("renders Quran input, method selector, and hide count selector", () => {
+  const twoLineText =
+    "بِسْمِ اللَّهِ\nالرَّحْمَٰنِ الرَّحِيمِ";
+
+  it("renders Quran input, method selector, hide count selector, and summary", () => {
     render(<HomePage />);
 
     expect(screen.getByRole("textbox")).toBeInTheDocument();
@@ -20,10 +23,6 @@ describe("HomePage hide count integration", () => {
     expect(
       screen.getByRole("heading", { name: /words to hide/i }),
     ).toBeInTheDocument();
-  });
-
-  it("starts with Hide Words and hide count 1", () => {
-    render(<HomePage />);
 
     expect(screen.getByTestId("selected-method")).toHaveTextContent(
       "Hide Words",
@@ -31,86 +30,129 @@ describe("HomePage hide count integration", () => {
     expect(screen.getByTestId("selected-hide-count")).toHaveTextContent("1");
   });
 
-  it("keeps Continue disabled without Arabic text", async () => {
-    const user = userEvent.setup();
-
+  it("keeps Continue disabled without valid Arabic text", () => {
     render(<HomePage />);
-
-    const continueButton = screen.getByRole("button", { name: /continue/i });
-
-    expect(continueButton).toBeDisabled();
-
-    await user.click(screen.getByLabelText(/increase value/i));
-
-    expect(continueButton).toBeDisabled();
-  });
-
-  it("enables Continue when Arabic text and valid hide count exist", () => {
-    render(<HomePage />);
-
-    fireEvent.change(screen.getByRole("textbox"), {
-      target: { value: arabicText },
-    });
 
     expect(
       screen.getByRole("button", { name: /continue/i }),
-    ).toBeEnabled();
+    ).toBeDisabled();
 
-    expect(screen.getByTestId("selected-hide-count")).toHaveTextContent("1");
+    expect(
+      screen.queryByTestId("generated-quiz-panel"),
+    ).not.toBeInTheDocument();
   });
 
-  it("increments hide count in word mode", async () => {
+  it("generates Hide Words quiz from homepage", async () => {
     const user = userEvent.setup();
 
     render(<HomePage />);
 
     fireEvent.change(screen.getByRole("textbox"), {
-      target: { value: arabicText },
+      target: { value: oneLineText },
     });
 
     await user.click(screen.getByLabelText(/increase value/i));
 
     expect(screen.getByTestId("selected-hide-count")).toHaveTextContent("2");
+
+    await user.click(screen.getByRole("button", { name: /continue/i }));
+
+    expect(screen.getByTestId("generated-quiz-panel")).toBeInTheDocument();
+    expect(screen.getByTestId("generation-success-message")).toHaveTextContent(
+      "Text accepted with Hide Words and hide count 2.",
+    );
+    expect(screen.getByTestId("generated-hidden-count")).toHaveTextContent("2");
+    expect(screen.getByTestId("generated-quiz-text")).toHaveTextContent("____");
+    expect(screen.getAllByTestId("generated-answer-item")).toHaveLength(2);
   });
 
-  it("clamps hide count when switching from word mode to line mode", async () => {
+  it("generates Hide Lines quiz from homepage", async () => {
     const user = userEvent.setup();
 
     render(<HomePage />);
 
     fireEvent.change(screen.getByRole("textbox"), {
-      target: { value: arabicText },
+      target: { value: twoLineText },
     });
 
-    await user.click(screen.getByLabelText(/increase value/i));
-    await user.click(screen.getByLabelText(/increase value/i));
-
-    expect(screen.getByTestId("selected-hide-count")).toHaveTextContent("3");
-
     await user.click(screen.getAllByRole("radio")[1]);
+    await user.click(screen.getByLabelText(/increase value/i));
 
     expect(screen.getByTestId("selected-method")).toHaveTextContent(
       "Hide Lines",
     );
-    expect(screen.getByTestId("selected-hide-count")).toHaveTextContent("1");
+    expect(screen.getByTestId("selected-hide-count")).toHaveTextContent("2");
+
+    await user.click(screen.getByRole("button", { name: /continue/i }));
+
+    expect(screen.getByTestId("generated-quiz-panel")).toBeInTheDocument();
+    expect(screen.getByTestId("generation-success-message")).toHaveTextContent(
+      "Text accepted with Hide Lines and hide count 2.",
+    );
+    expect(screen.getByTestId("generated-hidden-count")).toHaveTextContent("2");
+    expect(screen.getByTestId("generated-quiz-text")).toHaveTextContent("____");
+    expect(screen.getAllByTestId("generated-answer-item")).toHaveLength(2);
   });
 
-  it("shows accepted message with selected method and hide count", async () => {
+  it("clears generated quiz when text changes", async () => {
     const user = userEvent.setup();
 
     render(<HomePage />);
 
     fireEvent.change(screen.getByRole("textbox"), {
-      target: { value: arabicText },
+      target: { value: oneLineText },
     });
 
-    await user.click(screen.getByLabelText(/increase value/i));
     await user.click(screen.getByRole("button", { name: /continue/i }));
 
-    expect(screen.getByText(/text accepted with/i)).toBeInTheDocument();
-    expect(screen.getByTestId("selected-method")).toHaveTextContent(
-      "Hide Words",
-    );
-    expect(screen.getByTestId("selected-hide-count")).toHaveTextContent("2");
+    expect(screen.getByTestId("generated-quiz-panel")).toBeInTheDocument();
+
+    fireEvent.change(screen.getByRole("textbox"), {
+      target: { value: `${oneLineText} اللَّهِ` },
+    });
+
+    expect(
+      screen.queryByTestId("generated-quiz-panel"),
+    ).not.toBeInTheDocument();
+  });
+
+  it("clears generated quiz when method changes", async () => {
+    const user = userEvent.setup();
+
+    render(<HomePage />);
+
+    fireEvent.change(screen.getByRole("textbox"), {
+      target: { value: oneLineText },
+    });
+
+    await user.click(screen.getByRole("button", { name: /continue/i }));
+
+    expect(screen.getByTestId("generated-quiz-panel")).toBeInTheDocument();
+
+    await user.click(screen.getAllByRole("radio")[1]);
+
+    expect(
+      screen.queryByTestId("generated-quiz-panel"),
+    ).not.toBeInTheDocument();
+  });
+
+  it("clears generated quiz when hide count changes", async () => {
+    const user = userEvent.setup();
+
+    render(<HomePage />);
+
+    fireEvent.change(screen.getByRole("textbox"), {
+      target: { value: oneLineText },
+    });
+
+    await user.click(screen.getByRole("button", { name: /continue/i }));
+
+    expect(screen.getByTestId("generated-quiz-panel")).toBeInTheDocument();
+
+    await user.click(screen.getByLabelText(/increase value/i));
+
+    expect(
+      screen.queryByTestId("generated-quiz-panel"),
+    ).not.toBeInTheDocument();
   });
 });
