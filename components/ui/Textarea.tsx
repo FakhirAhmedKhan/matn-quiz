@@ -25,6 +25,7 @@ export function Textarea({
 }: TextareaProps) {
   const generatedId = useId();
   const textareaId = id ?? name ?? generatedId;
+
   const descriptionId = error
     ? `${textareaId}-error`
     : helperText

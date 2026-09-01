@@ -1,4 +1,5 @@
 ﻿import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
 import HomePage from "@/app/page";
 
@@ -11,16 +12,63 @@ describe("HomePage", () => {
     ).toBeInTheDocument();
   });
 
-  it("renders the Phase 1.2 badge", () => {
+  it("renders the Quran text input area", () => {
     render(<HomePage />);
 
-    expect(screen.getByText(/phase 1.2/i)).toBeInTheDocument();
+    expect(screen.getByRole("textbox")).toBeInTheDocument();
   });
 
-  it("renders reusable component verification content", () => {
+  it("starts with disabled Continue button", () => {
     render(<HomePage />);
 
-    expect(screen.getByText(/ui components/i)).toBeInTheDocument();
-    expect(screen.getByText(/empty quiz state/i)).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /continue/i }),
+    ).toBeDisabled();
+  });
+
+  it("updates stats after Arabic text is typed", async () => {
+    const user = userEvent.setup();
+
+    render(<HomePage />);
+
+    await user.type(
+      screen.getByRole("textbox"),
+      "بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ",
+    );
+
+    expect(screen.getByTestId("arabic-word-count")).toHaveTextContent("4");
+    expect(screen.getByTestId("valid-line-count")).toHaveTextContent("1");
+  });
+
+  it("enables Continue button for valid Arabic text", async () => {
+    const user = userEvent.setup();
+
+    render(<HomePage />);
+
+    await user.type(
+      screen.getByRole("textbox"),
+      "بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ",
+    );
+
+    expect(
+      screen.getByRole("button", { name: /continue/i }),
+    ).toBeEnabled();
+  });
+
+  it("shows accepted message after Continue click", async () => {
+    const user = userEvent.setup();
+
+    render(<HomePage />);
+
+    await user.type(
+      screen.getByRole("textbox"),
+      "بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ",
+    );
+
+    await user.click(screen.getByRole("button", { name: /continue/i }));
+
+    expect(
+      screen.getByText(/text accepted/i),
+    ).toBeInTheDocument();
   });
 });

@@ -4,6 +4,7 @@ import { Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Textarea } from "@/components/ui/Textarea";
 import { cn } from "@/lib/utils/cn";
+import { QURAN_TEXT_MAX_LENGTH } from "@/lib/constants/quiz";
 
 interface QuranTextInputProps {
   value: string;
@@ -27,7 +28,7 @@ export function QuranTextInput({
   helperText = "Paste Arabic Quran or Islamic matn text. The text will be preserved exactly as entered.",
   error,
   disabled = false,
-  maxLength = 5000,
+  maxLength = QURAN_TEXT_MAX_LENGTH,
   rows = 10,
   showClearButton = true,
   className,
@@ -36,6 +37,7 @@ export function QuranTextInput({
 
   const handleClear = () => {
     if (disabled) return;
+
     onChange("");
   };
 

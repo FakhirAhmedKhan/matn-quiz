@@ -21,6 +21,7 @@ export function Input({
 }: InputProps) {
   const generatedId = useId();
   const inputId = id ?? name ?? generatedId;
+
   const descriptionId = error
     ? `${inputId}-error`
     : helperText
