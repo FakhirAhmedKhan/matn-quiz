@@ -1,0 +1,44 @@
+﻿name: Matn Quiz CI
+
+on:
+  push:
+    branches:
+      - main
+      - development
+  pull_request:
+
+jobs:
+  verify:
+    name: Test, Lint, Build, Smoke
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run tests
+        run: pnpm test
+
+      - name: Run lint
+        run: pnpm run lint
+
+      - name: Build
+        run: pnpm run build
+
+      - name: Production smoke
+        run: pnpm run smoke:production
+
+      - name: Deployment smoke
+        run: pnpm run smoke:deployment

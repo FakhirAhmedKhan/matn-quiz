@@ -103,11 +103,13 @@ export default function HomePage() {
   };
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     refreshSavedQuizzes();
     refreshPersistedStudySession();
   }, []);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setHideCount((current) =>
       normalizeHideCount(current, quranText, quizMethod),
     );
@@ -201,6 +203,7 @@ export default function HomePage() {
 
   const handleImportShareableQuiz = (
     quiz: GeneratedQuiz,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     _document: ShareableQuizDocument,
   ) => {
     clearResumeState();
@@ -257,7 +260,7 @@ export default function HomePage() {
     <AppShell>
       <AppContainer>
         <AppHero
-          eyebrow="Phase 14.5"
+          eyebrow="Phase 17.5"
           title="Matn Quiz"
           description="A mobile-friendly Quran and matn quiz workspace for generating, reviewing, saving, importing, exporting, and resuming study sessions."
         />
@@ -438,6 +441,9 @@ export default function HomePage() {
     </AppShell>
   );
 }
+
+
+
 
 
 

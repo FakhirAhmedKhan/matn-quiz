@@ -19,7 +19,7 @@ describe("Accessibility polished study flow", () => {
     await user.click(screen.getByRole("button", { name: /continue/i }));
 
     expect(screen.getByTestId("generated-quiz-panel")).toBeInTheDocument();
-    expect(screen.getByRole("progressbar")).toHaveAttribute("aria-valuenow", "0");
+    expect(screen.getByTestId("study-progress-bar")).toHaveAttribute("aria-valuenow", "0");
     expect(screen.getByTestId("generated-quiz-text")).toHaveAttribute("tabindex", "0");
     expect(screen.getByTestId("generated-quiz-text")).toHaveAttribute(
       "aria-label",
@@ -28,13 +28,18 @@ describe("Accessibility polished study flow", () => {
 
     await user.click(screen.getByRole("button", { name: /reveal answer 1/i }));
 
-    expect(screen.getByRole("progressbar")).toHaveAttribute("aria-valuenow", "50");
+    expect(screen.getByTestId("study-progress-bar")).toHaveAttribute("aria-valuenow", "50");
     expect(screen.getByTestId("study-progress-text")).toHaveAttribute(
       "aria-live",
       "polite",
     );
   });
 });
+
+
+
+
+
 
 
 

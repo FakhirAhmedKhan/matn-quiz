@@ -100,6 +100,7 @@ export function markReviewAnswer(
     changed = true;
 
     if (status === "unanswered") {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { reviewedAt: _reviewedAt, ...rest } = answer;
 
       return {
@@ -159,6 +160,7 @@ export function resetQuizReviewState(
   return {
     ...state,
     answers: state.answers.map((answer) => {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { reviewedAt: _reviewedAt, ...rest } = answer;
 
       return {

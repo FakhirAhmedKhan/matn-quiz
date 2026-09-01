@@ -46,7 +46,7 @@ export function getSavedQuizPreview(record: SavedQuizRecord): string {
   return preview.length > 90 ? `${preview.slice(0, 90)}...` : preview;
 }
 
-function SavedQuizHistoryItem({
+export function SavedQuizHistoryItem({
   record,
   onOpen,
   onDelete,
@@ -200,3 +200,4 @@ export function SavedQuizHistory({
     </section>
   );
 }
+

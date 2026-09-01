@@ -379,7 +379,7 @@ export function validateImportedShareableQuizValue(
     };
   }
 
-  const document = value as ShareableQuizDocument;
+  const document = value as unknown as ShareableQuizDocument;
 
   return {
     valid: true,
@@ -468,3 +468,4 @@ export function extractImportedQuizFromText(
 
   return result.valid ? result.quiz : null;
 }
+

@@ -1,0 +1,44 @@
+﻿**********************
+Windows PowerShell transcript start
+Start time: 20260902004757
+Username: DESKTOP-5ELG7C2\Dell
+RunAs User: DESKTOP-5ELG7C2\Dell
+Configuration Name: 
+Machine: DESKTOP-5ELG7C2 (Microsoft Windows NT 10.0.26200.0)
+Host Application: C:\WINDOWS\System32\WindowsPowerShell\v1.0\powershell.exe -noexit -command try { . "c:\Users\Dell\AppData\Local\Programs\Microsoft VS Code\08d4889f9e\resources\app\out\vs\workbench\contrib\terminal\common\scripts\shellIntegration.ps1" } catch {}
+Process ID: 17104
+PSVersion: 5.1.26100.9168
+PSEdition: Desktop
+PSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1.26100.9168
+BuildVersion: 10.0.26100.9168
+CLRVersion: 4.0.30319.42000
+WSManStackVersion: 3.0
+PSRemotingProtocolVersion: 2.3
+SerializationVersion: 1.1.0.1
+**********************
+✅ Fixed all progressbar queries in accessibility test
+✅ Fixed resume review summary expectation
+
+=== Running the 2 failed tests ===
+
+2 failed tests rerun exit code: 0
+
+=== Running full tests ===
+
+full test exit code: 0
+
+=== Running build ===
+
+build exit code: 0
+
+=== Running lint ===
+
+lint exit code: 0
+
+=== Running Phase 17 verify ===
+
+verify:phase17 exit code: 0
+**********************
+Windows PowerShell transcript end
+End time: 20260902005214
+**********************

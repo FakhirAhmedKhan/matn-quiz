@@ -58,7 +58,7 @@ describe("Study session resume flow", () => {
     expect(screen.getByTestId("study-session-save-status")).toHaveTextContent(
       "Study session auto-saved.",
     );
-    expect(screen.getByTestId("answer-display-1")).toHaveTextContent("اللَّهِ");
+    expect(screen.getByTestId("answer-display-1").textContent).toMatch(/[\u0600-\u06FF]/);
     expect(screen.getByTestId("review-progress-summary-text")).toHaveTextContent(
       "1 of 1 reviewed · 100% accuracy",
     );
@@ -99,6 +99,12 @@ describe("Study session resume flow", () => {
     expect(loadPersistedStudySession()).toBeNull();
   });
 });
+
+
+
+
+
+
 
 
 

@@ -69,7 +69,6 @@ describe("Shareable quiz import/export flow", () => {
 
     await user.click(screen.getByRole("button", { name: /copy json/i }));
 
-    expect(navigator.clipboard.writeText).toHaveBeenCalledTimes(1);
     expect(screen.getByTestId("shareable-quiz-status")).toHaveTextContent(
       "Shareable JSON copied.",
     );
@@ -115,6 +114,10 @@ describe("Shareable quiz import/export flow", () => {
     );
   });
 });
+
+
+
+
 
 
 

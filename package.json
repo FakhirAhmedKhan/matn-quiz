@@ -22,7 +22,14 @@
     "verify:phase11": "node scripts/verify-phase-11.cjs",
     "verify:phase12": "node scripts/verify-phase-12.cjs",
     "verify:phase13": "node scripts/verify-phase-13.cjs",
-    "verify:phase14": "node scripts/verify-phase-14.cjs"
+    "verify:phase14": "node scripts/verify-phase-14.cjs",
+    "smoke:deployment": "node scripts/deployment-smoke.cjs",
+    "deployment:report": "node scripts/deployment-report.cjs",
+    "verify:phase16": "node scripts/verify-phase-16.cjs",
+    "smoke:production": "node scripts/production-smoke.cjs",
+    "monitoring:report": "node scripts/monitoring-report.cjs",
+    "monitoring:budget": "node scripts/performance-budget-check.cjs",
+    "verify:phase17": "node scripts/verify-phase-17.cjs"
   },
   "dependencies": {
     "clsx": "^2.1.1",

@@ -4,19 +4,16 @@ import {
   getShareableQuizFileName,
   serializeShareableQuizDocument,
   SHAREABLE_QUIZ_MIME_TYPE,
-  type CreateShareableQuizDocumentOptions,
   type ShareableQuizDocument,
 } from "@/lib/quiz/shareable-quiz";
 
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
-export interface CreateShareableQuizJsonOptions
-  extends CreateShareableQuizDocumentOptions {}
+export interface CreateShareableQuizJsonOptions {
+  exportedAt?: Date;
+  title?: string;
+}
 
 export interface ExportShareableQuizFileOptions
-  extends CreateShareableQuizDocumentOptions {
-  exportedAt: Date;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  title: any;
+  extends CreateShareableQuizJsonOptions {
   fileName?: string;
 }
 
@@ -26,12 +23,26 @@ export interface DownloadTextFileOptions {
   mimeType?: string;
 }
 
+function createDocumentOptions(options: CreateShareableQuizJsonOptions = {}) {
+  const documentOptions: { exportedAt?: Date; title?: string } = {};
+
+  if (options.exportedAt) {
+    documentOptions.exportedAt = options.exportedAt;
+  }
+
+  if (typeof options.title === "string") {
+    documentOptions.title = options.title;
+  }
+
+  return documentOptions;
+}
+
 export function createShareableQuizJsonText(
   quiz: GeneratedQuiz,
   options: CreateShareableQuizJsonOptions = {},
 ): string {
   return serializeShareableQuizDocument(
-    createShareableQuizDocument(quiz, options),
+    createShareableQuizDocument(quiz, createDocumentOptions(options)),
   );
 }
 
@@ -47,7 +58,9 @@ export function createShareableQuizJsonBlobFromQuiz(
   quiz: GeneratedQuiz,
   options: CreateShareableQuizJsonOptions = {},
 ): Blob {
-  return createShareableQuizJsonBlob(createShareableQuizDocument(quiz, options));
+  return createShareableQuizJsonBlob(
+    createShareableQuizDocument(quiz, createDocumentOptions(options)),
+  );
 }
 
 export function canUseBrowserDownload(): boolean {
@@ -70,10 +83,7 @@ export function downloadTextFile({
   }
 
   try {
-    const blob = new Blob([content], {
-      type: mimeType,
-    });
-
+    const blob = new Blob([content], { type: mimeType });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
 
@@ -95,12 +105,10 @@ export function downloadTextFile({
 
 export function exportShareableQuizAsJsonFile(
   quiz: GeneratedQuiz,
-  options: ExportShareableQuizFileOptions = {
-    exportedAt: undefined,
-    title: undefined
-  },
+  options: ExportShareableQuizFileOptions = {},
 ): boolean {
   const exportedAt = options.exportedAt ?? new Date();
+
   const content = createShareableQuizJsonText(quiz, {
     exportedAt,
     title: options.title,
@@ -145,10 +153,7 @@ export async function copyShareableQuizJsonToClipboard(
 
 export function createShareableQuizDownloadPayload(
   quiz: GeneratedQuiz,
-  options: ExportShareableQuizFileOptions = {
-    exportedAt: undefined,
-    title: undefined
-  },
+  options: ExportShareableQuizFileOptions = {},
 ): DownloadTextFileOptions {
   const exportedAt = options.exportedAt ?? new Date();
 

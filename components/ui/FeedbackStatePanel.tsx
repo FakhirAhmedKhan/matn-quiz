@@ -22,7 +22,7 @@ import {
 } from "@/lib/ui/feedback-state";
 import { cn } from "@/lib/utils/cn";
 
-interface FeedbackStatePanelProps {
+export interface FeedbackStatePanelProps {
   kind: FeedbackStateKind;
   title?: string;
   description?: string;
@@ -32,20 +32,22 @@ interface FeedbackStatePanelProps {
   className?: string;
 }
 
-type PresetFeedbedackStatePanelProps = Omit<FeedbackStatePanelProps, "kind">
+export type PresetFeedbackStatePanelProps = Omit<
+  FeedbackStatePanelProps,
+  "kind"
+>;
 
 function FeedbackIcon({ kind }: { kind: FeedbackStateKind }) {
   const tone = getFeedbackStateTone(kind);
-  const iconClasses = cn(
-    "inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl ring-1",
-    getFeedbackStateIconClasses(tone),
-  );
 
   return (
     <span
       data-testid="feedback-state-icon"
       aria-label={getFeedbackStateIconLabel(kind)}
-      className={iconClasses}
+      className={cn(
+        "inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl ring-1",
+        getFeedbackStateIconClasses(tone),
+      )}
     >
       {kind === "empty" && <SearchX className="h-5 w-5" />}
       {kind === "loading" && <Loader2 className="h-5 w-5 animate-spin" />}
@@ -113,27 +115,27 @@ export function FeedbackStatePanel({
 }
 
 export function EmptyStatePanel(props: PresetFeedbackStatePanelProps) {
-  return <FeedbackStatePanel kind="empty" {...props} />;
+  return <FeedbackStatePanel {...props} kind="empty" />;
 }
 
 export function LoadingStatePanel(props: PresetFeedbackStatePanelProps) {
-  return <FeedbackStatePanel kind="loading" {...props} />;
+  return <FeedbackStatePanel {...props} kind="loading" />;
 }
 
 export function ErrorStatePanel(props: PresetFeedbackStatePanelProps) {
-  return <FeedbackStatePanel kind="error" {...props} />;
+  return <FeedbackStatePanel {...props} kind="error" />;
 }
 
 export function SuccessStatePanel(props: PresetFeedbackStatePanelProps) {
-  return <FeedbackStatePanel kind="success" {...props} />;
+  return <FeedbackStatePanel {...props} kind="success" />;
 }
 
 export function WarningStatePanel(props: PresetFeedbackStatePanelProps) {
-  return <FeedbackStatePanel kind="warning" {...props} />;
+  return <FeedbackStatePanel {...props} kind="warning" />;
 }
 
 export function InfoStatePanel(props: PresetFeedbackStatePanelProps) {
-  return <FeedbackStatePanel kind="info" {...props} />;
+  return <FeedbackStatePanel {...props} kind="info" />;
 }
 
 export function InlineStatusMessage({
