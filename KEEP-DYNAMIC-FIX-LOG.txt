@@ -1,0 +1,75 @@
+﻿**********************
+Windows PowerShell transcript start
+Start time: 20260902063843
+Username: DESKTOP-5ELG7C2\Dell
+RunAs User: DESKTOP-5ELG7C2\Dell
+Configuration Name: 
+Machine: DESKTOP-5ELG7C2 (Microsoft Windows NT 10.0.26200.0)
+Host Application: C:\WINDOWS\System32\WindowsPowerShell\v1.0\powershell.exe -noexit -command try { . "c:\Users\Dell\AppData\Local\Programs\Microsoft VS Code\08d4889f9e\resources\app\out\vs\workbench\contrib\terminal\common\scripts\shellIntegration.ps1" } catch {}
+Process ID: 6992
+PSVersion: 5.1.26100.9168
+PSEdition: Desktop
+PSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1.26100.9168
+BuildVersion: 10.0.26100.9168
+CLRVersion: 4.0.30319.42000
+WSManStackVersion: 3.0
+PSRemotingProtocolVersion: 2.3
+SerializationVersion: 1.1.0.1
+**********************
+✅ Created components/quiz/dynamic-components.tsx
+✅ app/page.tsx now uses dynamic wrapper
+✅ Checked hook: C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\hooks\usePage.ts
+✅ Added dynamic wrapper mock to C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\tests\setup.ts
+✅ Old test drift fixes preserved
+
+=== Running focused page flow tests ===
+
+focused tests exit code: 0
+
+=== Running full tests ===
+ ✓ tests/unit/quiz/study-session.test.ts (24 tests) 29ms
+ ✓ tests/unit/quiz/word-selection.test.ts (14 tests) 128ms
+ ✓ tests/unit/quiz/phase-11-complete.test.ts (10 tests) 62ms
+ ✓ tests/unit/deploy/deployment-config.test.ts (7 tests) 57ms
+ ✓ tests/unit/ui/feedback-state.test.ts (6 tests) 73ms
+ ✓ tests/unit/quiz/unified-quiz.test.ts (13 tests) 15ms
+ ✓ tests/unit/quiz/shareable-quiz.test.ts (15 tests) 44ms
+ ✓ tests/unit/quiz/phase-13-complete.test.ts (4 tests) 69ms
+ ✓ tests/unit/quiz/phase-10-complete.test.ts (6 tests) 66ms
+ ✓ tests/unit/ui/accessibility-final-pass.test.ts (9 tests) 13ms
+ ✓ tests/unit/quiz/line-tokenizer.test.ts (15 tests) 18ms
+ ✓ tests/unit/quiz/phase-6-complete.test.ts (5 tests) 12ms
+ ✓ tests/unit/ui/mobile-ux.test.ts (16 tests) 13ms
+ ✓ tests/unit/ui/phase-14-complete.test.ts (3 tests) 14ms
+ ✓ tests/unit/ui/design-system.test.ts (23 tests) 18ms
+ ✓ tests/unit/quiz/word-tokenizer.test.ts (12 tests) 11ms
+ ✓ tests/unit/ui/accessibility.test.ts (12 tests) 9ms
+ ✓ tests/unit/monitoring/client-observability.test.ts (6 tests) 12ms
+ ✓ tests/unit/utils/arabic.test.ts (9 tests) 11ms
+ ✓ tests/unit/deploy/deployment-report.test.ts (3 tests) 10ms
+ ✓ tests/unit/ui/phase-9-complete.test.ts (7 tests) 10ms
+ ✓ tests/unit/monitoring/performance-budget.test.ts (5 tests) 10ms
+ ✓ tests/unit/quiz/arabic-reading.test.ts (8 tests) 10ms
+ ✓ tests/unit/deploy/phase-16-complete.test.ts (3 tests) 10ms
+ ✓ tests/unit/monitoring/phase-17-complete.test.ts (2 tests) 8ms
+ ✓ tests/unit/quiz/quiz-export.test.ts (3 tests) 8ms
+ ✓ tests/unit/quiz/phase-8-complete.test.ts (2 tests) 11ms
+ ✓ tests/unit/quiz/validation.test.ts (8 tests) 7ms
+
+ Test Files  89 passed (89)
+      Tests  752 passed (752)
+   Start at  06:40:27
+   Duration  129.49s (transform 12.58s, setup 78.66s, import 39.40s, tests 116.40s, environment 318.80s)
+full test exit code: 0
+
+=== Running build ===
+
+build exit code: 0
+
+=== Running lint ===
+
+lint exit code: 0
+**********************
+Windows PowerShell transcript end
+End time: 20260902064258
+**********************
