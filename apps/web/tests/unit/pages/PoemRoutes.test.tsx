@@ -42,7 +42,7 @@ describe("poem routes and navigation", () => {
     );
   });
 
-  it("renders poem setup placeholder route", () => {
+  it("renders poem setup route with real input form", () => {
     pathnameMock.mockReturnValue("/poem");
 
     render(<PoemPage />);
@@ -50,13 +50,14 @@ describe("poem routes and navigation", () => {
     expect(
       screen.getByRole("heading", { level: 1, name: "Poem / Nazm Setup" }),
     ).toBeInTheDocument();
+    expect(screen.getByTestId("poem-input-form")).toBeInTheDocument();
     expect(screen.getByTestId("poem-open-reader-link")).toHaveAttribute(
       "href",
       "/poem/read",
     );
   });
 
-  it("renders poem reader placeholder route", () => {
+  it("renders poem reader route", () => {
     pathnameMock.mockReturnValue("/poem/read");
 
     render(<PoemReadPage />);
@@ -64,9 +65,5 @@ describe("poem routes and navigation", () => {
     expect(
       screen.getByRole("heading", { level: 1, name: "Read Poem" }),
     ).toBeInTheDocument();
-    expect(screen.getByTestId("poem-back-setup-link")).toHaveAttribute(
-      "href",
-      "/poem",
-    );
   });
 });

@@ -1,35 +1,52 @@
 "use client";
 
-import Link from "next/link";
+import { useEffect, useState } from "react";
 
-import { AppPageShell, AppStepHeader, ResponsiveCard } from "@/components/layout";
+import { AppPageShell, AppStepHeader } from "@/components/layout";
+import { PoemReader } from "@/components/poem";
+import {
+  clearPoemDraft,
+  createPoemDraft,
+  loadPoemDraft,
+  savePoemDraft,
+  type PoemDraft,
+  type PoemLayout,
+} from "@/lib/poem/poem-storage";
 
 export default function PoemReadPage() {
+  const [draft, setDraft] = useState<PoemDraft>(() => createPoemDraft());
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setDraft(loadPoemDraft());
+  }, []);
+
+  function handleLayoutChange(layout: PoemLayout) {
+    setDraft(savePoemDraft({ layout }));
+  }
+
+  function handleFontSizeChange(fontSize: number) {
+    setDraft(savePoemDraft({ fontSize }));
+  }
+
+  function handleClear() {
+    setDraft(clearPoemDraft());
+  }
+
   return (
     <AppPageShell>
       <AppStepHeader
         eyebrow="Poem Reader"
         title="Read Poem"
-        description="A two-column poem reader will be added here in the next phase."
-        action={
-          <Link
-            href="/poem"
-            data-testid="poem-back-setup-link"
-            className="inline-flex min-h-11 items-center justify-center rounded-2xl border border-slate-300 bg-white px-5 py-3 text-sm font-bold text-slate-700 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
-          >
-            Back to Setup
-          </Link>
-        }
+        description="Read your poem in a focused Urdu/Arabic page layout with center spacing and clean typography."
       />
 
-      <ResponsiveCard ariaLabel="Poem reader placeholder">
-        <h2 className="text-xl font-bold tracking-tight text-slate-950">
-          Reader layout coming next
-        </h2>
-        <p className="mt-3 text-sm leading-6 text-slate-600">
-          P4 will render the poem like a page with right and left columns.
-        </p>
-      </ResponsiveCard>
+      <PoemReader
+        draft={draft}
+        onLayoutChange={handleLayoutChange}
+        onFontSizeChange={handleFontSizeChange}
+        onClear={handleClear}
+      />
     </AppPageShell>
   );
 }
