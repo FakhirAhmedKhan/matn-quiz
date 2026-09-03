@@ -1,4 +1,4 @@
-﻿# dependencies
+# dependencies
 node_modules/
 .pnp
 .pnp.*
@@ -66,3 +66,8 @@ Thumbs.db
 *.bak
 *.backup
 *.broken-backup-*
+# Book Library local demo uploads
+apps/web/public/uploads/books/files/*
+apps/web/public/uploads/books/covers/*
+!apps/web/public/uploads/books/files/.gitkeep
+!apps/web/public/uploads/books/covers/.gitkeep
