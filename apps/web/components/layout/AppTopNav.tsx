@@ -33,6 +33,7 @@ export function AppTopNav() {
         <Link
           href="/"
           data-testid="app-brand-link"
+          aria-label="Matn Quiz home"
           className="group inline-flex items-center gap-3 rounded-2xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
         >
           <span className="flex size-10 items-center justify-center rounded-2xl bg-emerald-700 text-lg font-bold text-white shadow-sm shadow-emerald-900/20">
@@ -40,7 +41,7 @@ export function AppTopNav() {
           </span>
           <span className="leading-tight">
             <span className="block text-sm font-bold text-slate-950">
-              Matn Quiz
+              Matn
             </span>
             <span className="block text-xs font-medium text-slate-500">
               Quran & Matn Study

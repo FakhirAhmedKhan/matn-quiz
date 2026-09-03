@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import {
   AppContainer,
@@ -40,4 +40,3 @@ export function HomePageView({ page }: HomePageViewProps) {
     </AppShell>
   );
 }
-
