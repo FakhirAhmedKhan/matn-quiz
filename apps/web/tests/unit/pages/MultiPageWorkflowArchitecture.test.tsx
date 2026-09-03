@@ -24,6 +24,7 @@ describe("multi-page quiz workflow architecture", () => {
     expect(screen.getByTestId("top-nav-home")).toHaveAttribute("href", "/");
     expect(screen.getByTestId("top-nav-create")).toHaveAttribute("href", "/create");
     expect(screen.getByTestId("top-nav-study")).toHaveAttribute("href", "/study");
+    expect(screen.getByTestId("top-nav-poem")).toHaveAttribute("href", "/poem");
     expect(screen.getByTestId("top-nav-import-export")).toHaveAttribute(
       "href",
       "/import-export",
@@ -43,6 +44,7 @@ describe("multi-page quiz workflow architecture", () => {
     expect(screen.getByTestId("bottom-nav-home")).toHaveAttribute("href", "/");
     expect(screen.getByTestId("bottom-nav-create")).toHaveAttribute("href", "/create");
     expect(screen.getByTestId("bottom-nav-study")).toHaveAttribute("href", "/study");
+    expect(screen.getByTestId("bottom-nav-poem")).toHaveAttribute("href", "/poem");
     expect(screen.getByTestId("bottom-nav-share")).toHaveAttribute(
       "href",
       "/import-export",

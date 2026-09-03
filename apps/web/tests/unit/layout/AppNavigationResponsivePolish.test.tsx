@@ -24,7 +24,7 @@ describe("responsive navigation polish", () => {
     );
   });
 
-  it("keeps five mobile workflow destinations available", () => {
+  it("keeps six mobile workflow destinations available", () => {
     pathnameMock.mockReturnValue("/history");
 
     render(<AppBottomNav />);
@@ -32,6 +32,7 @@ describe("responsive navigation polish", () => {
     expect(screen.getByTestId("bottom-nav-home")).toHaveAttribute("href", "/");
     expect(screen.getByTestId("bottom-nav-create")).toHaveAttribute("href", "/create");
     expect(screen.getByTestId("bottom-nav-study")).toHaveAttribute("href", "/study");
+    expect(screen.getByTestId("bottom-nav-poem")).toHaveAttribute("href", "/poem");
     expect(screen.getByTestId("bottom-nav-share")).toHaveAttribute("href", "/import-export");
     expect(screen.getByTestId("bottom-nav-history")).toHaveAttribute("aria-current", "page");
   });

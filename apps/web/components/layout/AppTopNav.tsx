@@ -7,6 +7,7 @@ const navItems = [
   { href: "/", label: "Home", testId: "home" },
   { href: "/create", label: "Create", testId: "create" },
   { href: "/study", label: "Study", testId: "study" },
+  { href: "/poem", label: "Poem", testId: "poem" },
   { href: "/import-export", label: "Import / Export", testId: "import-export" },
   { href: "/history", label: "History", testId: "history" },
 ];
@@ -85,7 +86,7 @@ export function AppTopNav() {
                 data-testid={`top-nav-${item.testId}`}
                 aria-current={active ? "page" : undefined}
                 className={[
-                  "rounded-2xl px-4 py-2.5 text-sm font-bold transition",
+                  "rounded-2xl px-3 py-2.5 text-sm font-bold transition lg:px-4",
                   "focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2",
                   active
                     ? "bg-white text-emerald-700 shadow-sm ring-1 ring-slate-200/80"

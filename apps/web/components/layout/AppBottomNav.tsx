@@ -7,6 +7,7 @@ const navItems = [
   { href: "/", label: "Home", testId: "home", icon: "⌂" },
   { href: "/create", label: "Create", testId: "create", icon: "+" },
   { href: "/study", label: "Study", testId: "study", icon: "◉" },
+  { href: "/poem", label: "Poem", testId: "poem", icon: "ن" },
   { href: "/import-export", label: "Share", testId: "share", icon: "⇄" },
   { href: "/history", label: "History", testId: "history", icon: "□" },
 ];
@@ -30,7 +31,7 @@ export function AppBottomNav() {
       aria-label="Mobile navigation"
       className="fixed inset-x-0 bottom-0 z-50 border-t border-slate-200/80 bg-white/95 px-2 pb-[max(0.65rem,env(safe-area-inset-bottom))] pt-2 shadow-2xl shadow-slate-950/15 backdrop-blur-xl md:hidden"
     >
-      <div className="mx-auto grid max-w-md grid-cols-5 gap-1 rounded-[1.7rem] border border-slate-200 bg-slate-50/90 p-1">
+      <div className="mx-auto grid max-w-lg grid-cols-6 gap-1 rounded-[1.7rem] border border-slate-200 bg-slate-50/90 p-1">
         {navItems.map((item) => {
           const active = isActiveRoute(pathname, item.href);
 
@@ -41,7 +42,7 @@ export function AppBottomNav() {
               data-testid={`bottom-nav-${item.testId}`}
               aria-current={active ? "page" : undefined}
               className={[
-                "flex min-h-[3.25rem] flex-col items-center justify-center rounded-[1.25rem] px-1 text-[0.66rem] font-bold leading-none transition sm:text-xs",
+                "flex min-h-[3.25rem] flex-col items-center justify-center rounded-[1.25rem] px-1 text-[0.6rem] font-bold leading-none transition xs:text-[0.66rem] sm:text-xs",
                 "focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2",
                 active
                   ? "bg-white text-emerald-700 shadow-sm ring-1 ring-slate-200/80"
