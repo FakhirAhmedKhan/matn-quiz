@@ -26,6 +26,33 @@ function errorResponse(
   );
 }
 
+export async function GET() {
+  try {
+    const repository = getBookRepository();
+    const books = await repository.listPublicBooks();
+
+    return NextResponse.json(
+      {
+        ok: true,
+        books,
+      },
+      {
+        status: 200,
+      },
+    );
+  } catch (error) {
+    console.error(
+      "[books-list] Failed to load public books:",
+      error,
+    );
+
+    return errorResponse(
+      "Unable to load the public book library.",
+      500,
+    );
+  }
+}
+
 export async function POST(request: Request) {
   try {
     const contentType = request.headers.get("content-type") ?? "";
@@ -64,7 +91,9 @@ export async function POST(request: Request) {
       return errorResponse(
         "Book file does not contain a valid PDF signature.",
         400,
-        ["The uploaded file does not appear to be a valid PDF."],
+        [
+          "The uploaded file does not appear to be a valid PDF.",
+        ],
       );
     }
 
@@ -109,7 +138,10 @@ export async function POST(request: Request) {
       { status: 201 },
     );
   } catch (error) {
-    console.error("[books-upload] Failed to upload book:", error);
+    console.error(
+      "[books-upload] Failed to upload book:",
+      error,
+    );
 
     return errorResponse(
       "Unable to upload the book.",
