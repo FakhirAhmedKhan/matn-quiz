@@ -46,7 +46,7 @@ export function AppShell({ children, className = "" }: AppShellProps) {
     <main
       data-testid="app-shell"
       className={[
-        "min-h-dvh overflow-x-hidden bg-slate-50 text-slate-950",
+        "min-h-dvh overflow-x-hidden bg-slate-50 pb-24 text-slate-950 md:pb-0",
         "bg-[radial-gradient(circle_at_top,#ecfdf5_0%,#f8fafc_42%,#f8fafc_100%)]",
         className,
       ].join(" ")}
@@ -59,12 +59,16 @@ export function AppShell({ children, className = "" }: AppShellProps) {
         Skip to main content
       </a>
 
+      <AppTopNav />
+
       <div
         data-testid="app-safe-area"
         className="px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-[max(1rem,env(safe-area-inset-top))] sm:px-6"
       >
         {children}
       </div>
+
+      <AppBottomNav />
     </main>
   );
 }
