@@ -32,9 +32,10 @@
     "verify:phase17": "node scripts/verify-phase-17.cjs",
     "verify:phase18": "node scripts/verify-phase-18.cjs",
     "verify:phase19": "node scripts/verify-phase-19.cjs",
-    "verify:phase20": "pnpm test tests/unit/tts/azure-speech.test.ts tests/unit/api/tts-route.test.ts tests/unit/components/ArabicTtsControls.test.tsx tests/unit/components/QuizTtsPanel.test.tsx tests/integration/tts-hidden-text-safety-flow.test.tsx tests/unit/tts/phase-20-complete.test.ts && pnpm run build && pnpm run lint"
+    "verify:phase20": "pnpm test tests/unit/tts/google-translate-tts.test.ts tests/unit/api/tts-route.test.ts tests/unit/components/ArabicTtsControls.test.tsx tests/unit/components/QuizTtsPanel.test.tsx tests/unit/hooks/useArabicTts.test.ts tests/integration/tts-hidden-text-safety-flow.test.tsx tests/unit/tts/phase-20-complete.test.ts && pnpm run build && pnpm run lint"
   },
   "dependencies": {
+    "@elevenlabs/elevenlabs-js": "^2.66.0",
     "clsx": "^2.1.1",
     "lucide-react": "^1.39.0",
     "next": "16.3.4",

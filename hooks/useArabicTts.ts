@@ -95,7 +95,7 @@ async function parseProviderError(
   const message =
     payload.error || `Arabic audio request failed with status ${response.status}.`;
 
-  if (response.status === 503 || payload.code === "AZURE_TTS_NOT_CONFIGURED") {
+  if (response.status === 503 || payload.code === "TTS_PROVIDER_MISSING") {
     return new ArabicTtsPlaybackError(message, "provider-missing");
   }
 

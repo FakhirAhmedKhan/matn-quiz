@@ -1,30 +1,74 @@
-﻿import { fireEvent, render, screen } from "@testing-library/react";
+﻿import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import HomePage from "@/app/page";
 
-class MockSpeechSynthesisUtterance {
-  text: string;
-  lang = "";
-  rate = 1;
-  pitch = 1;
+let fetchMock: ReturnType<typeof vi.fn>;
 
-  constructor(text: string) {
-    this.text = text;
+class MockAudio {
+  src: string;
+  volume = 1;
+  onplaying: (() => void) | null = null;
+  onended: (() => void) | null = null;
+  onerror: (() => void) | null = null;
+
+  constructor(src: string) {
+    this.src = src;
   }
+
+  play() {
+    this.onplaying?.();
+    return Promise.resolve();
+  }
+
+  pause() {
+    return undefined;
+  }
+
+  removeAttribute(_name: string) {
+    return undefined;
+  }
+
+  load() {
+    return undefined;
+  }
+}
+
+function setupCloudAudioMocks() {
+  fetchMock = vi.fn(
+    async () =>
+      new Response(new Blob(["audio"], { type: "audio/mpeg" }), {
+        status: 200,
+      }),
+  );
+
+  vi.stubGlobal("fetch", fetchMock);
+  vi.stubGlobal("Audio", MockAudio);
+
+  Object.defineProperty(window, "Audio", {
+    value: MockAudio,
+    configurable: true,
+  });
+
+  Object.defineProperty(URL, "createObjectURL", {
+    value: vi.fn(() => "blob:matn-quiz-audio"),
+    configurable: true,
+  });
+
+  Object.defineProperty(URL, "revokeObjectURL", {
+    value: vi.fn(),
+    configurable: true,
+  });
 }
 
 describe("TTS hidden text safety flow", () => {
   beforeEach(() => {
     localStorage.clear();
     vi.restoreAllMocks();
-    vi.stubGlobal("SpeechSynthesisUtterance", MockSpeechSynthesisUtterance);
-    vi.stubGlobal("speechSynthesis", {
-      cancel: vi.fn(),
-      speak: vi.fn(),
-    });
+    vi.unstubAllGlobals();
+    setupCloudAudioMocks();
   });
 
-  it("renders TTS controls after quiz generation and never speaks placeholders", async () => {
+  it("renders TTS controls after quiz generation and never sends placeholders", async () => {
     render(<HomePage />);
 
     fireEvent.change(screen.getAllByRole("textbox")[0]!, {
@@ -41,9 +85,11 @@ describe("TTS hidden text safety flow", () => {
       screen.getByRole("button", { name: /speak visible quiz text/i }),
     );
 
-    const utterance = vi.mocked(window.speechSynthesis.speak).mock.calls[0]?.[0];
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
 
-    expect(JSON.stringify(utterance)).not.toContain("____");
+    const requestInit = fetchMock.mock.calls[0]?.[1] as RequestInit;
+    const body = JSON.parse(String(requestInit.body)) as { text: string };
+
+    expect(body.text).not.toContain("____");
   });
 });
-

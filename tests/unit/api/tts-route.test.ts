@@ -1,8 +1,6 @@
 ﻿import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { GET, POST } from "@/app/api/tts/route";
 
-const originalEnv = { ...process.env };
-
 function makeRequest(body: unknown) {
   return new Request("http://localhost/api/tts", {
     method: "POST",
@@ -15,39 +13,32 @@ function makeRequest(body: unknown) {
 
 describe("/api/tts route", () => {
   beforeEach(() => {
-    process.env = { ...originalEnv };
-    delete process.env.AZURE_SPEECH_KEY;
-    delete process.env.AZURE_SPEECH_REGION;
-    delete process.env.AZURE_SPEECH_ENDPOINT;
-    delete process.env.AZURE_SPEECH_VOICE;
+    delete process.env.GOOGLE_TRANSLATE_TTS_LANG;
+    delete process.env.GOOGLE_TRANSLATE_TTS_CLIENT;
+    delete process.env.GOOGLE_TRANSLATE_TTS_ENDPOINT;
+    delete process.env.GOOGLE_TRANSLATE_TTS_MAX_CHUNK;
   });
 
   afterEach(() => {
     vi.restoreAllMocks();
     vi.unstubAllGlobals();
-    process.env = { ...originalEnv };
   });
 
-  it("returns provider status", async () => {
+  it("returns demo provider status without API key", async () => {
     const response = await GET();
-    const payload = (await response.json()) as { provider: string };
+    const payload = (await response.json()) as {
+      provider: string;
+      configured: boolean;
+      lang: string;
+    };
 
     expect(response.status).toBe(200);
-    expect(payload.provider).toBe("azure");
+    expect(payload.provider).toBe("google-translate-demo");
+    expect(payload.configured).toBe(true);
+    expect(payload.lang).toBe("ar");
   });
 
-  it("returns 503 when Azure is not configured", async () => {
-    const response = await POST(makeRequest({ text: "السلام عليكم" }));
-    const payload = (await response.json()) as { code: string };
-
-    expect(response.status).toBe(503);
-    expect(payload.code).toBe("AZURE_TTS_NOT_CONFIGURED");
-  });
-
-  it("blocks placeholders before provider call", async () => {
-    process.env.AZURE_SPEECH_KEY = "test-key";
-    process.env.AZURE_SPEECH_REGION = "eastus";
-
+  it("blocks hidden placeholders before provider call", async () => {
     const fetchMock = vi.fn();
     vi.stubGlobal("fetch", fetchMock);
 
@@ -59,14 +50,13 @@ describe("/api/tts route", () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
-  it("calls Azure and returns audio", async () => {
-    process.env.AZURE_SPEECH_KEY = "test-key";
-    process.env.AZURE_SPEECH_REGION = "eastus";
-
+  it("calls Google Translate TTS and returns audio", async () => {
     const fetchMock = vi.fn(async () =>
       new Response(new Uint8Array([1, 2, 3]), {
         status: 200,
-        headers: { "Content-Type": "audio/mpeg" },
+        headers: {
+          "Content-Type": "audio/mpeg",
+        },
       }),
     );
 
@@ -76,7 +66,16 @@ describe("/api/tts route", () => {
     const audio = await response.arrayBuffer();
 
     expect(response.status).toBe(200);
+    expect(response.headers.get("Content-Type")).toBe("audio/mpeg");
+    expect(response.headers.get("X-TTS-Provider")).toBe(
+      "google-translate-demo",
+    );
     expect(audio.byteLength).toBe(3);
-    expect(fetchMock).toHaveBeenCalled();
+    expect(fetchMock).toHaveBeenCalledWith(
+      expect.stringContaining("translate_tts"),
+      expect.objectContaining({
+        method: "GET",
+      }),
+    );
   });
 });

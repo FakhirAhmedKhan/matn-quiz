@@ -1,13 +1,16 @@
 ﻿import { describe, expect, it } from "vitest";
-import { buildAzureSpeechSsml } from "@/lib/tts/azure-speech";
 import type { GeneratedHideWordQuiz } from "@/types/quiz";
 import {
   assertSpeakableTextDoesNotLeakHiddenAnswers,
   buildSpeakableTextForVisibleWords,
 } from "@/lib/quiz/tts-safe-text";
+import {
+  buildGoogleTranslateTtsUrl,
+  getGoogleTranslateTtsConfig,
+} from "@/lib/tts/google-translate-tts";
 
 describe("Phase 20 complete verification", () => {
-  it("keeps provider payload limited to safe visible text", () => {
+  it("uses no-key Google demo TTS and keeps payload limited to safe visible text", () => {
     const quiz: GeneratedHideWordQuiz = {
       originalText: "بسم الله الرحمن الرحيم",
       quizText: "بسم ____ الرحمن الرحيم",
@@ -27,13 +30,16 @@ describe("Phase 20 complete verification", () => {
     };
 
     const speakableText = buildSpeakableTextForVisibleWords(quiz);
-    const ssml = buildAzureSpeechSsml(speakableText, "ar-AE-FatimaNeural");
+    const config = getGoogleTranslateTtsConfig({});
+    const url = buildGoogleTranslateTtsUrl(speakableText, config);
 
+    expect(config.configured).toBe(true);
+    expect(config.provider).toBe("google-translate-demo");
+    expect(url).toContain("translate_tts");
     expect(speakableText).toBe("بسم الرحمن الرحيم");
     expect(assertSpeakableTextDoesNotLeakHiddenAnswers(quiz, speakableText)).toBe(
       true,
     );
-    expect(ssml).toContain("بسم الرحمن الرحيم");
-    expect(ssml).not.toContain("____");
+    expect(speakableText).not.toContain("____");
   });
 });

@@ -2444,3 +2444,2486 @@ pnpm run lint
 
 
 ]633;D;0]633;A]633;P;Cwd=C:\x5cUsers\x5cDell\x5cOneDrive\x5cDesktop\x5cPrograms\x5cmatn-quizPS C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz> ]633;B
+PS>clear
+]633;D;0]633;A]633;P;Cwd=C:\x5cUsers\x5cDell\x5cOneDrive\x5cDesktop\x5cPrograms\x5cmatn-quizPS C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz> ]633;B
+PS>$ErrorActionPreference = "Continue"
+
+Write-Host "=== Phase 20 - Replace Azure with ElevenLabs TTS ===" -ForegroundColor Cyan
+
+if (!(Test-Path "package.json")) {
+  Write-Host "package.json not found. Run from matn-quiz root." -ForegroundColor Red
+  exit 1
+}
+
+New-Item -ItemType Directory -Force app\api\tts, lib\tts, tests\unit\tts, tests\unit\api | Out-Null
+
+Remove-Item lib\tts\azure-speech.ts -Force -ErrorAction SilentlyContinue
+Remove-Item tests\unit\tts\azure-speech.test.ts -Force -ErrorAction SilentlyContinue
+
+@'
+export const ELEVENLABS_DEFAULT_VOICE_ID = "JBFqnCBsd6RMkjVDRZzb";
+export const ELEVENLABS_DEFAULT_MODEL_ID = "eleven_multilingual_v2";
+export const ELEVENLABS_DEFAULT_OUTPUT_FORMAT = "mp3_44100_128";
+
+export interface ElevenLabsTtsConfig {
+  configured: boolean;
+  apiKey: string;
+  voiceId: string;
+  modelId: string;
+  outputFormat: string;
+  endpoint: string;
+}
+
+export class ElevenLabsConfigError extends Error {
+  code = "ELEVENLABS_TTS_NOT_CONFIGURED" as const;
+
+  constructor() {
+    super(
+      "ElevenLabs TTS is not configured. Add ELEVENLABS_API_KEY to .env.local.",
+    );
+    this.name = "ElevenLabsConfigError";
+  }
+}
+
+export class ElevenLabsRequestError extends Error {
+  constructor(
+    message: string,
+    readonly status: number,
+    readonly responseBody: string,
+  ) {
+    super(message);
+    this.name = "ElevenLabsRequestError";
+  }
+}
+
+function trimEnv(value: string | undefined): string {
+  return value?.trim() ?? "";
+}
+
+export function getElevenLabsTtsConfig(
+  env: Record<string, string | undefined> = process.env,
+): ElevenLabsTtsConfig {
+  const apiKey = trimEnv(env.ELEVENLABS_API_KEY);
+  const voiceId =
+    trimEnv(env.ELEVENLABS_VOICE_ID) || ELEVENLABS_DEFAULT_VOICE_ID;
+  const modelId =
+    trimEnv(env.ELEVENLABS_MODEL_ID) || ELEVENLABS_DEFAULT_MODEL_ID;
+  const outputFormat =
+    trimEnv(env.ELEVENLABS_OUTPUT_FORMAT) ||
+    ELEVENLABS_DEFAULT_OUTPUT_FORMAT;
+
+  return {
+    configured: apiKey.length > 0 && voiceId.length > 0,
+    apiKey,
+    voiceId,
+    modelId,
+    outputFormat,
+    endpoint: `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}?output_format=${encodeURIComponent(
+      outputFormat,
+    )}`,
+  };
+}
+
+export async function synthesizeElevenLabsSpeech(
+  text: string,
+  config = getElevenLabsTtsConfig(),
+): Promise<ArrayBuffer> {
+  if (!config.configured) {
+    throw new ElevenLabsConfigError();
+  }
+
+  const response = await fetch(config.endpoint, {
+    method: "POST",
+    headers: {
+      Accept: "audio/mpeg",
+      "Content-Type": "application/json",
+      "xi-api-key": config.apiKey,
+    },
+    body: JSON.stringify({
+      text,
+      model_id: config.modelId,
+      voice_settings: {
+        stability: 0.5,
+        similarity_boost: 0.75,
+      },
+    }),
+  });
+
+  if (!response.ok) {
+    const responseBody = await response.text().catch(() => "");
+    throw new ElevenLabsRequestError(
+      `ElevenLabs TTS request failed with status ${response.status}.`,
+      response.status,
+      responseBody,
+    );
+  }
+
+  return response.arrayBuffer();
+}
+'@ | Set-Content -Encoding UTF8 lib\tts\elevenlabs.ts
+
+@'
+import { NextResponse } from "next/server";
+import {
+  ElevenLabsConfigError,
+  ElevenLabsRequestError,
+  ELEVENLABS_DEFAULT_MODEL_ID,
+  ELEVENLABS_DEFAULT_OUTPUT_FORMAT,
+  getElevenLabsTtsConfig,
+  synthesizeElevenLabsSpeech,
+} from "@/lib/tts/elevenlabs";
+
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
+const MAX_TTS_TEXT_LENGTH = 3000;
+const PLACEHOLDER_PATTERN = /_{2,}|□{2,}/u;
+
+interface TtsRequestBody {
+  text?: unknown;
+}
+
+function jsonError(error: string, status: number, code: string) {
+  return NextResponse.json({ error, code }, { status });
+}
+
+async function readRequestBody(request: Request): Promise<TtsRequestBody | null> {
+  try {
+    return (await request.json()) as TtsRequestBody;
+  } catch {
+    return null;
+  }
+}
+
+export async function GET() {
+  const config = getElevenLabsTtsConfig();
+
+  return NextResponse.json({
+    provider: "elevenlabs",
+    configured: config.configured,
+    voiceId: config.voiceId,
+    modelId: config.modelId,
+    outputFormat: config.outputFormat,
+  });
+}
+
+export async function POST(request: Request) {
+  const body = await readRequestBody(request);
+
+  if (!body || typeof body.text !== "string") {
+    return jsonError("Text is required.", 400, "TTS_TEXT_REQUIRED");
+  }
+
+  const text = body.text.trim();
+
+  if (!text) {
+    return jsonError("Text is required.", 400, "TTS_TEXT_REQUIRED");
+  }
+
+  if (text.length > MAX_TTS_TEXT_LENGTH) {
+    return jsonError("Text is too long.", 400, "TTS_TEXT_TOO_LONG");
+  }
+
+  if (PLACEHOLDER_PATTERN.test(text)) {
+    return jsonError(
+      "Speakable text cannot contain hidden-answer placeholders.",
+      400,
+      "TTS_PLACEHOLDER_BLOCKED",
+    );
+  }
+
+  try {
+    const audio = await synthesizeElevenLabsSpeech(text);
+
+    return new Response(audio, {
+      status: 200,
+      headers: {
+        "Content-Type": "audio/mpeg",
+        "Cache-Control": "no-store",
+        "X-Content-Type-Options": "nosniff",
+        "X-TTS-Provider": "elevenlabs",
+        "X-TTS-Model": ELEVENLABS_DEFAULT_MODEL_ID,
+        "X-TTS-Format": ELEVENLABS_DEFAULT_OUTPUT_FORMAT,
+      },
+    });
+  } catch (error) {
+    if (error instanceof ElevenLabsConfigError) {
+      return jsonError(error.message, 503, error.code);
+    }
+
+    if (error instanceof ElevenLabsRequestError) {
+      return jsonError(
+        error.message,
+        502,
+        "ELEVENLABS_TTS_REQUEST_FAILED",
+      );
+    }
+
+    return jsonError("Unable to create Arabic audio.", 500, "TTS_UNKNOWN_ERROR");
+  }
+}
+'@ | Set-Content -Encoding UTF8 app\api\tts\route.ts
+
+@'
+"use client";
+
+import { useCallback, useState } from "react";
+
+export type ArabicTtsStatus =
+  | "idle"
+  | "loading"
+  | "speaking"
+  | "stopped"
+  | "unsupported"
+  | "provider-missing"
+  | "empty"
+  | "error";
+
+export interface ArabicTtsSpeakOptions {
+  onStart?: () => void;
+  onEnd?: () => void;
+  onError?: (status: ArabicTtsStatus, message: string) => void;
+}
+
+export interface UseArabicTtsResult {
+  status: ArabicTtsStatus;
+  isSupported: boolean;
+  speak: (text: string, options?: ArabicTtsSpeakOptions) => boolean;
+  stop: () => boolean;
+}
+
+interface ProviderErrorPayload {
+  error?: string;
+  code?: string;
+}
+
+class ArabicTtsPlaybackError extends Error {
+  constructor(
+    message: string,
+    readonly status: ArabicTtsStatus = "error",
+  ) {
+    super(message);
+    this.name = "ArabicTtsPlaybackError";
+  }
+}
+
+let activeAudio: HTMLAudioElement | null = null;
+let activeObjectUrl: string | null = null;
+
+function getAudioConstructor(): typeof Audio | null {
+  if (typeof window !== "undefined" && typeof window.Audio !== "undefined") {
+    return window.Audio;
+  }
+
+  return null;
+}
+
+function canUseObjectUrl(): boolean {
+  return (
+    typeof URL !== "undefined" &&
+    typeof URL.createObjectURL === "function" &&
+    typeof URL.revokeObjectURL === "function"
+  );
+}
+
+export function canUseArabicSpeechSynthesis(): boolean {
+  return (
+    typeof fetch === "function" &&
+    getAudioConstructor() !== null &&
+    canUseObjectUrl()
+  );
+}
+
+function cleanupActiveAudio() {
+  if (activeAudio) {
+    activeAudio.pause();
+    activeAudio.removeAttribute("src");
+    activeAudio.load();
+    activeAudio = null;
+  }
+
+  if (activeObjectUrl) {
+    URL.revokeObjectURL(activeObjectUrl);
+    activeObjectUrl = null;
+  }
+}
+
+async function parseProviderError(
+  response: Response,
+): Promise<ArabicTtsPlaybackError> {
+  let payload: ProviderErrorPayload = {};
+
+  try {
+    payload = (await response.json()) as ProviderErrorPayload;
+  } catch {
+    payload = {};
+  }
+
+  const message =
+    payload.error || `Arabic audio request failed with status ${response.status}.`;
+
+  if (
+    response.status === 503 ||
+    payload.code === "ELEVENLABS_TTS_NOT_CONFIGURED"
+  ) {
+    return new ArabicTtsPlaybackError(message, "provider-missing");
+  }
+
+  return new ArabicTtsPlaybackError(message, "error");
+}
+
+async function playCloudArabicText(
+  text: string,
+  options: ArabicTtsSpeakOptions = {},
+) {
+  if (!canUseArabicSpeechSynthesis()) {
+    throw new ArabicTtsPlaybackError(
+      "Audio playback is not supported in this browser.",
+      "unsupported",
+    );
+  }
+
+  const response = await fetch("/api/tts", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ text }),
+  });
+
+  if (!response.ok) {
+    throw await parseProviderError(response);
+  }
+
+  const audioBlob = await response.blob();
+
+  if (audioBlob.size === 0) {
+    throw new ArabicTtsPlaybackError("Audio provider returned an empty file.");
+  }
+
+  cleanupActiveAudio();
+
+  const AudioConstructor = getAudioConstructor();
+
+  if (!AudioConstructor || !canUseObjectUrl()) {
+    throw new ArabicTtsPlaybackError(
+      "Audio playback is not supported in this browser.",
+      "unsupported",
+    );
+  }
+
+  const audioUrl = URL.createObjectURL(audioBlob);
+  const audio = new AudioConstructor(audioUrl);
+
+  activeObjectUrl = audioUrl;
+  activeAudio = audio;
+  audio.volume = 1;
+
+  audio.onplaying = () => {
+    options.onStart?.();
+  };
+
+  audio.onended = () => {
+    cleanupActiveAudio();
+    options.onEnd?.();
+  };
+
+  audio.onerror = () => {
+    cleanupActiveAudio();
+    options.onError?.("error", "Unable to play Arabic audio.");
+  };
+
+  await audio.play();
+}
+
+export function speakArabicText(
+  text: string,
+  options: ArabicTtsSpeakOptions = {},
+): boolean {
+  const speakableText = text.trim();
+
+  if (!speakableText) {
+    return false;
+  }
+
+  void playCloudArabicText(speakableText, options).catch((error: unknown) => {
+    if (error instanceof ArabicTtsPlaybackError) {
+      options.onError?.(error.status, error.message);
+      return;
+    }
+
+    options.onError?.("error", "Unable to play Arabic audio.");
+  });
+
+  return true;
+}
+
+export function stopArabicSpeech(): boolean {
+  cleanupActiveAudio();
+  return true;
+}
+
+export function useArabicTts(): UseArabicTtsResult {
+  const [status, setStatus] = useState<ArabicTtsStatus>("idle");
+  const [isSupported, setIsSupported] = useState(true);
+
+  const speak = useCallback(
+    (text: string, options: ArabicTtsSpeakOptions = {}) => {
+      if (text.trim().length === 0) {
+        setStatus("empty");
+        return false;
+      }
+
+      if (!canUseArabicSpeechSynthesis()) {
+        setIsSupported(false);
+        setStatus("unsupported");
+        return false;
+      }
+
+      setIsSupported(true);
+      setStatus("loading");
+
+      const didStart = speakArabicText(text, {
+        ...options,
+        onStart: () => {
+          setStatus("speaking");
+          options.onStart?.();
+        },
+        onEnd: () => {
+          setStatus("idle");
+          options.onEnd?.();
+        },
+        onError: (nextStatus, message) => {
+          setStatus(nextStatus);
+          options.onError?.(nextStatus, message);
+        },
+      });
+
+      if (!didStart) {
+        setStatus("error");
+      }
+
+      return didStart;
+    },
+    [],
+  );
+
+  const stop = useCallback(() => {
+    const didStop = stopArabicSpeech();
+
+    if (didStop) {
+      setStatus("stopped");
+    }
+
+    return didStop;
+  }, []);
+
+  return {
+    status,
+    isSupported,
+    speak,
+    stop,
+  };
+}
+'@ | Set-Content -Encoding UTF8 hooks\useArabicTts.ts
+
+$controlsFile = "components\quiz\ArabicTtsControls.tsx"
+if (Test-Path $controlsFile) {
+  $controls = Get-Content $controlsFile -Raw
+  $controls = $controls.Replace("Cloud Arabic audio is not configured. Add Azure Speech settings to .env.local.", "Cloud Arabic audio is not configured. Add ElevenLabs API key to .env.local.")
+  $controls = $controls.Replace("Azure Speech", "ElevenLabs")
+  Set-Content -Encoding UTF8 $controlsFile $controls
+}
+
+@'
+# ElevenLabs TTS
+ELEVENLABS_API_KEY=
+ELEVENLABS_VOICE_ID=JBFqnCBsd6RMkjVDRZzb
+ELEVENLABS_MODEL_ID=eleven_multilingual_v2
+ELEVENLABS_OUTPUT_FORMAT=mp3_44100_128
+'@ | Set-Content -Encoding UTF8 .env.local.example
+
+if (!(Test-Path ".env.local")) {
+  Copy-Item ".env.local.example" ".env.local" -Force
+} else {
+  $envLocal = Get-Content ".env.local" -Raw
+  if ($envLocal -notmatch "ELEVENLABS_API_KEY") {
+    Add-Content -Encoding UTF8 ".env.local" "`r`n# ElevenLabs TTS`r`nELEVENLABS_API_KEY=`r`nELEVENLABS_VOICE_ID=JBFqnCBsd6RMkjVDRZzb`r`nELEVENLABS_MODEL_ID=eleven_multilingual_v2`r`nELEVENLABS_OUTPUT_FORMAT=mp3_44100_128`r`n"
+  }
+}
+
+@'
+import { describe, expect, it } from "vitest";
+import {
+  ELEVENLABS_DEFAULT_MODEL_ID,
+  ELEVENLABS_DEFAULT_OUTPUT_FORMAT,
+  ELEVENLABS_DEFAULT_VOICE_ID,
+  getElevenLabsTtsConfig,
+} from "@/lib/tts/elevenlabs";
+
+describe("elevenlabs provider", () => {
+  it("detects missing config", () => {
+    const config = getElevenLabsTtsConfig({});
+
+    expect(config.configured).toBe(false);
+    expect(config.voiceId).toBe(ELEVENLABS_DEFAULT_VOICE_ID);
+    expect(config.modelId).toBe(ELEVENLABS_DEFAULT_MODEL_ID);
+    expect(config.outputFormat).toBe(ELEVENLABS_DEFAULT_OUTPUT_FORMAT);
+  });
+
+  it("builds configured endpoint", () => {
+    const config = getElevenLabsTtsConfig({
+      ELEVENLABS_API_KEY: "test-key",
+      ELEVENLABS_VOICE_ID: "voice-123",
+      ELEVENLABS_MODEL_ID: "eleven_multilingual_v2",
+      ELEVENLABS_OUTPUT_FORMAT: "mp3_44100_128",
+    });
+
+    expect(config.configured).toBe(true);
+    expect(config.endpoint).toContain(
+      "https://api.elevenlabs.io/v1/text-to-speech/voice-123",
+    );
+    expect(config.endpoint).toContain("output_format=mp3_44100_128");
+  });
+});
+'@ | Set-Content -Encoding UTF8 tests\unit\tts\elevenlabs.test.ts
+
+@'
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { GET, POST } from "@/app/api/tts/route";
+
+const originalEnv = { ...process.env };
+
+function makeRequest(body: unknown) {
+  return new Request("http://localhost/api/tts", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(body),
+  });
+}
+
+describe("/api/tts route", () => {
+  beforeEach(() => {
+    process.env = { ...originalEnv };
+    delete process.env.ELEVENLABS_API_KEY;
+    delete process.env.ELEVENLABS_VOICE_ID;
+    delete process.env.ELEVENLABS_MODEL_ID;
+    delete process.env.ELEVENLABS_OUTPUT_FORMAT;
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+    vi.unstubAllGlobals();
+    process.env = { ...originalEnv };
+  });
+
+  it("returns provider status", async () => {
+    const response = await GET();
+    const payload = (await response.json()) as {
+      provider: string;
+      modelId: string;
+    };
+
+    expect(response.status).toBe(200);
+    expect(payload.provider).toBe("elevenlabs");
+    expect(payload.modelId).toBe("eleven_multilingual_v2");
+  });
+
+  it("returns 503 when ElevenLabs is not configured", async () => {
+    const response = await POST(makeRequest({ text: "السلام عليكم" }));
+    const payload = (await response.json()) as { code: string };
+
+    expect(response.status).toBe(503);
+    expect(payload.code).toBe("ELEVENLABS_TTS_NOT_CONFIGURED");
+  });
+
+  it("blocks hidden placeholders before provider call", async () => {
+    process.env.ELEVENLABS_API_KEY = "test-key";
+
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+
+    const response = await POST(makeRequest({ text: "السلام ____ عليكم" }));
+    const payload = (await response.json()) as { code: string };
+
+    expect(response.status).toBe(400);
+    expect(payload.code).toBe("TTS_PLACEHOLDER_BLOCKED");
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("calls ElevenLabs and returns audio", async () => {
+    process.env.ELEVENLABS_API_KEY = "test-key";
+    process.env.ELEVENLABS_VOICE_ID = "voice-123";
+
+    const fetchMock = vi.fn(async () =>
+      new Response(new Uint8Array([1, 2, 3]), {
+        status: 200,
+        headers: {
+          "Content-Type": "audio/mpeg",
+        },
+      }),
+    );
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    const response = await POST(makeRequest({ text: "السلام عليكم" }));
+    const audio = await response.arrayBuffer();
+    const requestInit = fetchMock.mock.calls[0]?.[1] as RequestInit;
+    const body = JSON.parse(String(requestInit.body)) as {
+      text: string;
+      model_id: string;
+    };
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get("Content-Type")).toBe("audio/mpeg");
+    expect(audio.byteLength).toBe(3);
+    expect(fetchMock).toHaveBeenCalledWith(
+      expect.stringContaining("https://api.elevenlabs.io/v1/text-to-speech/voice-123"),
+      expect.objectContaining({
+        method: "POST",
+      }),
+    );
+    expect(body.text).toBe("السلام عليكم");
+    expect(body.model_id).toBe("eleven_multilingual_v2");
+  });
+});
+'@ | Set-Content -Encoding UTF8 tests\unit\api\tts-route.test.ts
+
+@'
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { ArabicTtsControls } from "@/components/quiz/ArabicTtsControls";
+
+let fetchMock: ReturnType<typeof vi.fn>;
+let audioPlayMock: ReturnType<typeof vi.fn>;
+let audioPauseMock: ReturnType<typeof vi.fn>;
+
+class MockAudio {
+  src: string;
+  volume = 1;
+  onplaying: (() => void) | null = null;
+  onended: (() => void) | null = null;
+  onerror: (() => void) | null = null;
+
+  constructor(src: string) {
+    this.src = src;
+  }
+
+  play() {
+    audioPlayMock();
+    this.onplaying?.();
+    return Promise.resolve();
+  }
+
+  pause() {
+    audioPauseMock();
+  }
+
+  removeAttribute(_name: string) {
+    return undefined;
+  }
+
+  load() {
+    return undefined;
+  }
+}
+
+function setupCloudAudioMocks(response?: Response) {
+  fetchMock = vi.fn(
+    async () =>
+      response ??
+      new Response(new Blob(["audio"], { type: "audio/mpeg" }), {
+        status: 200,
+        headers: {
+          "Content-Type": "audio/mpeg",
+        },
+      }),
+  );
+  audioPlayMock = vi.fn();
+  audioPauseMock = vi.fn();
+
+  vi.stubGlobal("fetch", fetchMock);
+  vi.stubGlobal("Audio", MockAudio);
+
+  Object.defineProperty(window, "Audio", {
+    value: MockAudio,
+    configurable: true,
+  });
+
+  Object.defineProperty(URL, "createObjectURL", {
+    value: vi.fn(() => "blob:matn-quiz-audio"),
+    configurable: true,
+  });
+
+  Object.defineProperty(URL, "revokeObjectURL", {
+    value: vi.fn(),
+    configurable: true,
+  });
+}
+
+describe("ArabicTtsControls", () => {
+  beforeEach(() => {
+    vi.restoreAllMocks();
+    vi.unstubAllGlobals();
+    setupCloudAudioMocks();
+  });
+
+  it("requests provider audio for visible Arabic text", async () => {
+    render(
+      <ArabicTtsControls
+        speakableText="بسم الرحمن الرحيم"
+        label="Speak visible quiz text"
+      />,
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", { name: /speak visible quiz text/i }),
+    );
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(audioPlayMock).toHaveBeenCalledTimes(1));
+
+    const requestInit = fetchMock.mock.calls[0]?.[1] as RequestInit;
+    const body = JSON.parse(String(requestInit.body)) as { text: string };
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/tts",
+      expect.objectContaining({
+        method: "POST",
+      }),
+    );
+    expect(body.text).toBe("بسم الرحمن الرحيم");
+  });
+
+  it("does not call provider for empty speakable text", () => {
+    render(
+      <ArabicTtsControls
+        speakableText=""
+        label="Speak visible quiz text"
+        hiddenWarning="Hidden text cannot be played."
+      />,
+    );
+
+    expect(
+      screen.getByRole("button", { name: /speak visible quiz text/i }),
+    ).toBeDisabled();
+    expect(screen.getByTestId("arabic-tts-status")).toHaveTextContent(
+      "Hidden text cannot be played.",
+    );
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("shows provider setup message when ElevenLabs is missing", async () => {
+    setupCloudAudioMocks(
+      new Response(
+        JSON.stringify({
+          code: "ELEVENLABS_TTS_NOT_CONFIGURED",
+          error: "ElevenLabs TTS is not configured.",
+        }),
+        {
+          status: 503,
+          headers: {
+            "Content-Type": "application/json",
+          },
+        },
+      ),
+    );
+
+    render(<ArabicTtsControls speakableText="بسم الله" />);
+
+    fireEvent.click(screen.getByRole("button", { name: /speak visible text/i }));
+
+    await waitFor(() =>
+      expect(screen.getByTestId("arabic-tts-status")).toHaveTextContent(
+        "Cloud Arabic audio is not configured.",
+      ),
+    );
+  });
+
+  it("stops Arabic audio", async () => {
+    render(<ArabicTtsControls speakableText="بسم الله" />);
+
+    fireEvent.click(screen.getByRole("button", { name: /speak visible text/i }));
+
+    await waitFor(() => expect(audioPlayMock).toHaveBeenCalledTimes(1));
+
+    fireEvent.click(screen.getByRole("button", { name: /stop arabic audio/i }));
+
+    expect(audioPauseMock).toHaveBeenCalled();
+  });
+});
+'@ | Set-Content -Encoding UTF8 tests\unit\components\ArabicTtsControls.test.tsx
+
+@'
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import type {
+  GeneratedHideLineQuiz,
+  GeneratedHideWordQuiz,
+} from "@/types/quiz";
+import { QuizTtsPanel } from "@/components/quiz/QuizTtsPanel";
+
+let fetchMock: ReturnType<typeof vi.fn>;
+
+class MockAudio {
+  src: string;
+  volume = 1;
+  onplaying: (() => void) | null = null;
+  onended: (() => void) | null = null;
+  onerror: (() => void) | null = null;
+
+  constructor(src: string) {
+    this.src = src;
+  }
+
+  play() {
+    this.onplaying?.();
+    return Promise.resolve();
+  }
+
+  pause() {
+    return undefined;
+  }
+
+  removeAttribute(_name: string) {
+    return undefined;
+  }
+
+  load() {
+    return undefined;
+  }
+}
+
+function setupCloudAudioMocks() {
+  fetchMock = vi.fn(
+    async () =>
+      new Response(new Blob(["audio"], { type: "audio/mpeg" }), {
+        status: 200,
+      }),
+  );
+
+  vi.stubGlobal("fetch", fetchMock);
+  vi.stubGlobal("Audio", MockAudio);
+
+  Object.defineProperty(window, "Audio", {
+    value: MockAudio,
+    configurable: true,
+  });
+
+  Object.defineProperty(URL, "createObjectURL", {
+    value: vi.fn(() => "blob:matn-quiz-audio"),
+    configurable: true,
+  });
+
+  Object.defineProperty(URL, "revokeObjectURL", {
+    value: vi.fn(),
+    configurable: true,
+  });
+}
+
+const wordQuiz: GeneratedHideWordQuiz = {
+  originalText: "بسم الله الرحمن الرحيم",
+  quizText: "بسم ____ الرحمن الرحيم",
+  method: "HIDE_WORD",
+  requestedCount: 1,
+  hiddenCount: 1,
+  selectedTokenIndexes: [2],
+  answers: [
+    {
+      index: 1,
+      tokenIndex: 2,
+      wordIndex: 1,
+      answer: "الله",
+      kind: "word",
+    },
+  ],
+};
+
+const lineQuiz: GeneratedHideLineQuiz = {
+  originalText: "بسم الله\nالرحمن الرحيم\nالحمد لله",
+  quizText: "بسم الله\n____\nالحمد لله",
+  method: "HIDE_LINE",
+  requestedCount: 1,
+  hiddenCount: 1,
+  selectedTokenIndexes: [2],
+  selectedLineIndexes: [2],
+  answers: [
+    {
+      index: 1,
+      tokenIndex: 2,
+      lineIndex: 1,
+      answer: "الرحمن الرحيم",
+      kind: "line",
+    },
+  ],
+};
+
+describe("QuizTtsPanel", () => {
+  beforeEach(() => {
+    vi.restoreAllMocks();
+    vi.unstubAllGlobals();
+    setupCloudAudioMocks();
+  });
+
+  it("sends visible word quiz text to provider without hidden words", async () => {
+    render(<QuizTtsPanel quiz={wordQuiz} />);
+
+    fireEvent.click(
+      screen.getByRole("button", { name: /speak visible quiz text/i }),
+    );
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+
+    const requestInit = fetchMock.mock.calls[0]?.[1] as RequestInit;
+    const body = JSON.parse(String(requestInit.body)) as { text: string };
+
+    expect(body.text).toBe("بسم الرحمن الرحيم");
+    expect(body.text).not.toContain("الله");
+    expect(body.text).not.toContain("____");
+  });
+
+  it("sends only requested visible line to provider", async () => {
+    render(<QuizTtsPanel quiz={lineQuiz} />);
+
+    expect(screen.getAllByTestId("tts-line-option")).toHaveLength(3);
+    expect(
+      screen.getByRole("button", {
+        name: /hidden line 2 cannot be played/i,
+      }),
+    ).toBeDisabled();
+
+    fireEvent.click(
+      screen.getByRole("button", { name: /speak visible line 1/i }),
+    );
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+
+    const requestInit = fetchMock.mock.calls[0]?.[1] as RequestInit;
+    const body = JSON.parse(String(requestInit.body)) as { text: string };
+
+    expect(body.text).toBe("بسم الله");
+    expect(body.text).not.toContain("الرحمن الرحيم");
+    expect(body.text).not.toContain("____");
+  });
+
+  it("keeps visible Arabic line text RTL", () => {
+    render(<QuizTtsPanel quiz={lineQuiz} />);
+
+    const visibleLines = screen.getAllByTestId("tts-visible-line-text");
+
+    expect(visibleLines[0]).toHaveAttribute("dir", "rtl");
+    expect(visibleLines[0]).toHaveAttribute("lang", "ar");
+    expect(visibleLines[1]).toHaveAttribute("dir", "rtl");
+    expect(visibleLines[1]).toHaveAttribute("lang", "ar");
+  });
+});
+'@ | Set-Content -Encoding UTF8 tests\unit\components\QuizTtsPanel.test.tsx
+
+@'
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import HomePage from "@/app/page";
+
+let fetchMock: ReturnType<typeof vi.fn>;
+
+class MockAudio {
+  src: string;
+  volume = 1;
+  onplaying: (() => void) | null = null;
+  onended: (() => void) | null = null;
+  onerror: (() => void) | null = null;
+
+  constructor(src: string) {
+    this.src = src;
+  }
+
+  play() {
+    this.onplaying?.();
+    return Promise.resolve();
+  }
+
+  pause() {
+    return undefined;
+  }
+
+  removeAttribute(_name: string) {
+    return undefined;
+  }
+
+  load() {
+    return undefined;
+  }
+}
+
+function setupCloudAudioMocks() {
+  fetchMock = vi.fn(
+    async () =>
+      new Response(new Blob(["audio"], { type: "audio/mpeg" }), {
+        status: 200,
+      }),
+  );
+
+  vi.stubGlobal("fetch", fetchMock);
+  vi.stubGlobal("Audio", MockAudio);
+
+  Object.defineProperty(window, "Audio", {
+    value: MockAudio,
+    configurable: true,
+  });
+
+  Object.defineProperty(URL, "createObjectURL", {
+    value: vi.fn(() => "blob:matn-quiz-audio"),
+    configurable: true,
+  });
+
+  Object.defineProperty(URL, "revokeObjectURL", {
+    value: vi.fn(),
+    configurable: true,
+  });
+}
+
+describe("TTS hidden text safety flow", () => {
+  beforeEach(() => {
+    localStorage.clear();
+    vi.restoreAllMocks();
+    vi.unstubAllGlobals();
+    setupCloudAudioMocks();
+  });
+
+  it("renders TTS controls after quiz generation and never sends placeholders", async () => {
+    render(<HomePage />);
+
+    fireEvent.change(screen.getAllByRole("textbox")[0]!, {
+      target: { value: "بسم الله الرحمن الرحيم" },
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: /continue/i }));
+
+    const ttsPanel = await screen.findByTestId("arabic-tts-panel");
+
+    expect(ttsPanel).toBeInTheDocument();
+
+    fireEvent.click(
+      screen.getByRole("button", { name: /speak visible quiz text/i }),
+    );
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+
+    const requestInit = fetchMock.mock.calls[0]?.[1] as RequestInit;
+    const body = JSON.parse(String(requestInit.body)) as { text: string };
+
+    expect(body.text).not.toContain("____");
+  });
+});
+'@ | Set-Content -Encoding UTF8 tests\integration\tts-hidden-text-safety-flow.test.tsx
+
+@'
+import { describe, expect, it } from "vitest";
+import type { GeneratedHideWordQuiz } from "@/types/quiz";
+import {
+  assertSpeakableTextDoesNotLeakHiddenAnswers,
+  buildSpeakableTextForVisibleWords,
+} from "@/lib/quiz/tts-safe-text";
+import { getElevenLabsTtsConfig } from "@/lib/tts/elevenlabs";
+
+describe("Phase 20 complete verification", () => {
+  it("uses ElevenLabs and keeps provider payload limited to safe visible text", () => {
+    const quiz: GeneratedHideWordQuiz = {
+      originalText: "بسم الله الرحمن الرحيم",
+      quizText: "بسم ____ الرحمن الرحيم",
+      method: "HIDE_WORD",
+      requestedCount: 1,
+      hiddenCount: 1,
+      selectedTokenIndexes: [2],
+      answers: [
+        {
+          index: 1,
+          tokenIndex: 2,
+          wordIndex: 1,
+          answer: "الله",
+          kind: "word",
+        },
+      ],
+    };
+
+    const speakableText = buildSpeakableTextForVisibleWords(quiz);
+    const config = getElevenLabsTtsConfig({
+      ELEVENLABS_API_KEY: "test-key",
+    });
+
+    expect(config.configured).toBe(true);
+    expect(config.endpoint).toContain("api.elevenlabs.io");
+    expect(speakableText).toBe("بسم الرحمن الرحيم");
+    expect(assertSpeakableTextDoesNotLeakHiddenAnswers(quiz, speakableText)).toBe(
+      true,
+    );
+    expect(speakableText).not.toContain("____");
+  });
+});
+'@ | Set-Content -Encoding UTF8 tests\unit\tts\phase-20-complete.test.ts
+
+node -e "const fs=require('fs');const p=JSON.parse(fs.readFileSync('package.json','utf8'));p.scripts=p.scripts||{};p.scripts.test='vitest run';p.scripts['verify:phase20']='pnpm test tests/unit/tts/elevenlabs.test.ts tests/unit/api/tts-route.test.ts tests/unit/components/ArabicTtsControls.test.tsx tests/unit/components/QuizTtsPanel.test.tsx tests/integration/tts-hidden-text-safety-flow.test.tsx tests/unit/tts/phase-20-complete.test.ts && pnpm test && pnpm run build && pnpm run lint';fs.writeFileSync('package.json',JSON.stringify(p,null,2)+'\n');"
+
+pnpm test tests/unit/tts/elevenlabs.test.ts tests/unit/api/tts-route.test.ts tests/unit/components/ArabicTtsControls.test.tsx tests/unit/components/QuizTtsPanel.test.tsx tests/integration/tts-hidden-text-safety-flow.test.tsx tests/unit/tts/phase-20-complete.test.ts
+pnpm run build
+pnpm run lint
+=== Phase 20 - Replace Azure with ElevenLabs TTS ===
+
+
+
+
+]633;D;0]633;A]633;P;Cwd=C:\x5cUsers\x5cDell\x5cOneDrive\x5cDesktop\x5cPrograms\x5cmatn-quizPS C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz> ]633;B
+PS>npm install @elevenlabs/elevenlabs-js
+
+
+]633;D;0]633;A]633;P;Cwd=C:\x5cUsers\x5cDell\x5cOneDrive\x5cDesktop\x5cPrograms\x5cmatn-quizPS C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz> ]633;B
+PS>clear
+]633;D;0]633;A]633;P;Cwd=C:\x5cUsers\x5cDell\x5cOneDrive\x5cDesktop\x5cPrograms\x5cmatn-quizPS C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz> ]633;B
+PS>$ErrorActionPreference = "Continue"
+
+Write-Host "=== Phase 20 - No Key Google Translate TTS Demo Provider ===" -ForegroundColor Cyan
+
+if (!(Test-Path "package.json")) {
+  Write-Host "package.json not found. Run this from matn-quiz root." -ForegroundColor Red
+  exit 1
+}
+
+New-Item -ItemType Directory -Force app\api\tts, lib\tts, hooks, components\quiz, tests\unit\tts, tests\unit\api, tests\unit\components, tests\unit\hooks, tests\integration, scripts | Out-Null
+
+Remove-Item lib\tts\azure-speech.ts -Force -ErrorAction SilentlyContinue
+Remove-Item lib\tts\elevenlabs.ts -Force -ErrorAction SilentlyContinue
+Remove-Item tests\unit\tts\azure-speech.test.ts -Force -ErrorAction SilentlyContinue
+Remove-Item tests\unit\tts\elevenlabs.test.ts -Force -ErrorAction SilentlyContinue
+
+@'
+export const GOOGLE_TRANSLATE_TTS_PROVIDER = "google-translate-demo";
+export const GOOGLE_TRANSLATE_TTS_DEFAULT_LANG = "ar";
+export const GOOGLE_TRANSLATE_TTS_DEFAULT_CLIENT = "tw-ob";
+export const GOOGLE_TRANSLATE_TTS_DEFAULT_ENDPOINT =
+  "https://translate.google.com/translate_tts";
+
+export interface GoogleTranslateTtsConfig {
+  provider: string;
+  configured: boolean;
+  lang: string;
+  client: string;
+  endpoint: string;
+  maxChunkLength: number;
+}
+
+export class GoogleTranslateTtsRequestError extends Error {
+  constructor(
+    message: string,
+    readonly status: number,
+    readonly responseBody: string,
+  ) {
+    super(message);
+    this.name = "GoogleTranslateTtsRequestError";
+  }
+}
+
+function trimEnv(value: string | undefined): string {
+  return value?.trim() ?? "";
+}
+
+export function getGoogleTranslateTtsConfig(
+  env: Record<string, string | undefined> = process.env,
+): GoogleTranslateTtsConfig {
+  return {
+    provider: GOOGLE_TRANSLATE_TTS_PROVIDER,
+    configured: true,
+    lang:
+      trimEnv(env.GOOGLE_TRANSLATE_TTS_LANG) ||
+      GOOGLE_TRANSLATE_TTS_DEFAULT_LANG,
+    client:
+      trimEnv(env.GOOGLE_TRANSLATE_TTS_CLIENT) ||
+      GOOGLE_TRANSLATE_TTS_DEFAULT_CLIENT,
+    endpoint:
+      trimEnv(env.GOOGLE_TRANSLATE_TTS_ENDPOINT) ||
+      GOOGLE_TRANSLATE_TTS_DEFAULT_ENDPOINT,
+    maxChunkLength: Number(trimEnv(env.GOOGLE_TRANSLATE_TTS_MAX_CHUNK) || 180),
+  };
+}
+
+export function splitTextIntoTtsChunks(
+  text: string,
+  maxChunkLength = 180,
+): string[] {
+  const normalized = text.replace(/\s+/gu, " ").trim();
+
+  if (!normalized) {
+    return [];
+  }
+
+  if (normalized.length <= maxChunkLength) {
+    return [normalized];
+  }
+
+  const chunks: string[] = [];
+  let current = "";
+
+  for (const word of normalized.split(" ")) {
+    if (word.length > maxChunkLength) {
+      if (current) {
+        chunks.push(current);
+        current = "";
+      }
+
+      for (let index = 0; index < word.length; index += maxChunkLength) {
+        chunks.push(word.slice(index, index + maxChunkLength));
+      }
+
+      continue;
+    }
+
+    const next = current ? `${current} ${word}` : word;
+
+    if (next.length > maxChunkLength) {
+      if (current) {
+        chunks.push(current);
+      }
+
+      current = word;
+    } else {
+      current = next;
+    }
+  }
+
+  if (current) {
+    chunks.push(current);
+  }
+
+  return chunks;
+}
+
+export function buildGoogleTranslateTtsUrl(
+  text: string,
+  config = getGoogleTranslateTtsConfig(),
+): string {
+  const url = new URL(config.endpoint);
+
+  url.searchParams.set("ie", "UTF-8");
+  url.searchParams.set("q", text);
+  url.searchParams.set("tl", config.lang);
+  url.searchParams.set("client", config.client);
+
+  return url.toString();
+}
+
+function concatArrayBuffers(buffers: ArrayBuffer[]): ArrayBuffer {
+  const totalLength = buffers.reduce((sum, buffer) => sum + buffer.byteLength, 0);
+  const merged = new Uint8Array(totalLength);
+  let offset = 0;
+
+  for (const buffer of buffers) {
+    merged.set(new Uint8Array(buffer), offset);
+    offset += buffer.byteLength;
+  }
+
+  return merged.buffer;
+}
+
+export async function synthesizeGoogleTranslateSpeech(
+  text: string,
+  config = getGoogleTranslateTtsConfig(),
+): Promise<ArrayBuffer> {
+  const chunks = splitTextIntoTtsChunks(text, config.maxChunkLength);
+
+  if (chunks.length === 0) {
+    return new ArrayBuffer(0);
+  }
+
+  const audioParts: ArrayBuffer[] = [];
+
+  for (const chunk of chunks) {
+    const response = await fetch(buildGoogleTranslateTtsUrl(chunk, config), {
+      method: "GET",
+      headers: {
+        Accept: "audio/mpeg,audio/*,*/*",
+        "User-Agent":
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome Safari",
+      },
+    });
+
+    if (!response.ok) {
+      const responseBody = await response.text().catch(() => "");
+      throw new GoogleTranslateTtsRequestError(
+        `Google Translate TTS request failed with status ${response.status}.`,
+        response.status,
+        responseBody,
+      );
+    }
+
+    audioParts.push(await response.arrayBuffer());
+  }
+
+  return concatArrayBuffers(audioParts);
+}
+'@ | Set-Content -Encoding UTF8 lib\tts\google-translate-tts.ts
+
+@'
+import { NextResponse } from "next/server";
+import {
+  GOOGLE_TRANSLATE_TTS_PROVIDER,
+  GoogleTranslateTtsRequestError,
+  getGoogleTranslateTtsConfig,
+  synthesizeGoogleTranslateSpeech,
+} from "@/lib/tts/google-translate-tts";
+
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
+const MAX_TTS_TEXT_LENGTH = 3000;
+const PLACEHOLDER_PATTERN = /_{2,}|□{2,}/u;
+
+interface TtsRequestBody {
+  text?: unknown;
+}
+
+function jsonError(error: string, status: number, code: string) {
+  return NextResponse.json({ error, code }, { status });
+}
+
+async function readRequestBody(request: Request): Promise<TtsRequestBody | null> {
+  try {
+    return (await request.json()) as TtsRequestBody;
+  } catch {
+    return null;
+  }
+}
+
+export async function GET() {
+  const config = getGoogleTranslateTtsConfig();
+
+  return NextResponse.json({
+    provider: GOOGLE_TRANSLATE_TTS_PROVIDER,
+    configured: config.configured,
+    lang: config.lang,
+    client: config.client,
+    maxChunkLength: config.maxChunkLength,
+  });
+}
+
+export async function POST(request: Request) {
+  const body = await readRequestBody(request);
+
+  if (!body || typeof body.text !== "string") {
+    return jsonError("Text is required.", 400, "TTS_TEXT_REQUIRED");
+  }
+
+  const text = body.text.trim();
+
+  if (!text) {
+    return jsonError("Text is required.", 400, "TTS_TEXT_REQUIRED");
+  }
+
+  if (text.length > MAX_TTS_TEXT_LENGTH) {
+    return jsonError("Text is too long.", 400, "TTS_TEXT_TOO_LONG");
+  }
+
+  if (PLACEHOLDER_PATTERN.test(text)) {
+    return jsonError(
+      "Speakable text cannot contain hidden-answer placeholders.",
+      400,
+      "TTS_PLACEHOLDER_BLOCKED",
+    );
+  }
+
+  try {
+    const audio = await synthesizeGoogleTranslateSpeech(text);
+
+    if (audio.byteLength === 0) {
+      return jsonError("Unable to create Arabic audio.", 500, "TTS_EMPTY_AUDIO");
+    }
+
+    return new Response(audio, {
+      status: 200,
+      headers: {
+        "Content-Type": "audio/mpeg",
+        "Cache-Control": "no-store",
+        "X-Content-Type-Options": "nosniff",
+        "X-TTS-Provider": GOOGLE_TRANSLATE_TTS_PROVIDER,
+      },
+    });
+  } catch (error) {
+    if (error instanceof GoogleTranslateTtsRequestError) {
+      return jsonError(
+        error.message,
+        502,
+        "GOOGLE_TRANSLATE_TTS_REQUEST_FAILED",
+      );
+    }
+
+    return jsonError("Unable to create Arabic audio.", 500, "TTS_UNKNOWN_ERROR");
+  }
+}
+'@ | Set-Content -Encoding UTF8 app\api\tts\route.ts
+
+@'
+"use client";
+
+import { useCallback, useState } from "react";
+
+export type ArabicTtsStatus =
+  | "idle"
+  | "loading"
+  | "speaking"
+  | "stopped"
+  | "unsupported"
+  | "provider-missing"
+  | "empty"
+  | "error";
+
+export interface ArabicTtsSpeakOptions {
+  onStart?: () => void;
+  onEnd?: () => void;
+  onError?: (status: ArabicTtsStatus, message: string) => void;
+}
+
+export interface UseArabicTtsResult {
+  status: ArabicTtsStatus;
+  isSupported: boolean;
+  speak: (text: string, options?: ArabicTtsSpeakOptions) => boolean;
+  stop: () => boolean;
+}
+
+interface ProviderErrorPayload {
+  error?: string;
+  code?: string;
+}
+
+class ArabicTtsPlaybackError extends Error {
+  constructor(
+    message: string,
+    readonly status: ArabicTtsStatus = "error",
+  ) {
+    super(message);
+    this.name = "ArabicTtsPlaybackError";
+  }
+}
+
+let activeAudio: HTMLAudioElement | null = null;
+let activeObjectUrl: string | null = null;
+
+function getAudioConstructor(): typeof Audio | null {
+  if (typeof window !== "undefined" && typeof window.Audio !== "undefined") {
+    return window.Audio;
+  }
+
+  return null;
+}
+
+function canUseObjectUrl(): boolean {
+  return (
+    typeof URL !== "undefined" &&
+    typeof URL.createObjectURL === "function" &&
+    typeof URL.revokeObjectURL === "function"
+  );
+}
+
+export function canUseArabicSpeechSynthesis(): boolean {
+  return (
+    typeof fetch === "function" &&
+    getAudioConstructor() !== null &&
+    canUseObjectUrl()
+  );
+}
+
+function cleanupActiveAudio() {
+  if (activeAudio) {
+    activeAudio.pause();
+    activeAudio.removeAttribute("src");
+    activeAudio.load();
+    activeAudio = null;
+  }
+
+  if (activeObjectUrl) {
+    URL.revokeObjectURL(activeObjectUrl);
+    activeObjectUrl = null;
+  }
+}
+
+async function parseProviderError(
+  response: Response,
+): Promise<ArabicTtsPlaybackError> {
+  let payload: ProviderErrorPayload = {};
+
+  try {
+    payload = (await response.json()) as ProviderErrorPayload;
+  } catch {
+    payload = {};
+  }
+
+  const message =
+    payload.error || `Arabic audio request failed with status ${response.status}.`;
+
+  if (response.status === 503 || payload.code === "TTS_PROVIDER_MISSING") {
+    return new ArabicTtsPlaybackError(message, "provider-missing");
+  }
+
+  return new ArabicTtsPlaybackError(message, "error");
+}
+
+async function playCloudArabicText(
+  text: string,
+  options: ArabicTtsSpeakOptions = {},
+) {
+  if (!canUseArabicSpeechSynthesis()) {
+    throw new ArabicTtsPlaybackError(
+      "Audio playback is not supported in this browser.",
+      "unsupported",
+    );
+  }
+
+  const response = await fetch("/api/tts", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ text }),
+  });
+
+  if (!response.ok) {
+    throw await parseProviderError(response);
+  }
+
+  const audioBlob = await response.blob();
+
+  if (audioBlob.size === 0) {
+    throw new ArabicTtsPlaybackError("Audio provider returned an empty file.");
+  }
+
+  cleanupActiveAudio();
+
+  const AudioConstructor = getAudioConstructor();
+
+  if (!AudioConstructor || !canUseObjectUrl()) {
+    throw new ArabicTtsPlaybackError(
+      "Audio playback is not supported in this browser.",
+      "unsupported",
+    );
+  }
+
+  const audioUrl = URL.createObjectURL(audioBlob);
+  const audio = new AudioConstructor(audioUrl);
+
+  activeObjectUrl = audioUrl;
+  activeAudio = audio;
+  audio.volume = 1;
+
+  audio.onplaying = () => {
+    options.onStart?.();
+  };
+
+  audio.onended = () => {
+    cleanupActiveAudio();
+    options.onEnd?.();
+  };
+
+  audio.onerror = () => {
+    cleanupActiveAudio();
+    options.onError?.("error", "Unable to play Arabic audio.");
+  };
+
+  await audio.play();
+}
+
+export function speakArabicText(
+  text: string,
+  options: ArabicTtsSpeakOptions = {},
+): boolean {
+  const speakableText = text.trim();
+
+  if (!speakableText) {
+    return false;
+  }
+
+  void playCloudArabicText(speakableText, options).catch((error: unknown) => {
+    if (error instanceof ArabicTtsPlaybackError) {
+      options.onError?.(error.status, error.message);
+      return;
+    }
+
+    options.onError?.("error", "Unable to play Arabic audio.");
+  });
+
+  return true;
+}
+
+export function stopArabicSpeech(): boolean {
+  cleanupActiveAudio();
+
+  return true;
+}
+
+export function useArabicTts(): UseArabicTtsResult {
+  const [status, setStatus] = useState<ArabicTtsStatus>("idle");
+  const [isSupported, setIsSupported] = useState(true);
+
+  const speak = useCallback(
+    (text: string, options: ArabicTtsSpeakOptions = {}) => {
+      if (text.trim().length === 0) {
+        setStatus("empty");
+        return false;
+      }
+
+      if (!canUseArabicSpeechSynthesis()) {
+        setIsSupported(false);
+        setStatus("unsupported");
+        return false;
+      }
+
+      setIsSupported(true);
+      setStatus("loading");
+
+      const didStart = speakArabicText(text, {
+        ...options,
+        onStart: () => {
+          setStatus("speaking");
+          options.onStart?.();
+        },
+        onEnd: () => {
+          setStatus("idle");
+          options.onEnd?.();
+        },
+        onError: (nextStatus, message) => {
+          setStatus(nextStatus);
+          options.onError?.(nextStatus, message);
+        },
+      });
+
+      if (!didStart) {
+        setStatus("error");
+      }
+
+      return didStart;
+    },
+    [],
+  );
+
+  const stop = useCallback(() => {
+    const didStop = stopArabicSpeech();
+
+    if (didStop) {
+      setStatus("stopped");
+    }
+
+    return didStop;
+  }, []);
+
+  return {
+    status,
+    isSupported,
+    speak,
+    stop,
+  };
+}
+'@ | Set-Content -Encoding UTF8 hooks\useArabicTts.ts
+
+@'
+"use client";
+
+import { Square, Volume2 } from "lucide-react";
+import { Button } from "@/components/ui";
+import { useArabicTts } from "@/hooks/useArabicTts";
+import { cn } from "@/lib/utils/cn";
+
+export interface ArabicTtsControlsProps {
+  speakableText: string;
+  label?: string;
+  disabled?: boolean;
+  hiddenWarning?: string;
+  className?: string;
+  testId?: string;
+}
+
+export function ArabicTtsControls({
+  speakableText,
+  label = "Speak visible text",
+  disabled = false,
+  hiddenWarning = "Hidden text cannot be played.",
+  className,
+  testId = "arabic-tts-controls",
+}: ArabicTtsControlsProps) {
+  const { status, isSupported, speak, stop } = useArabicTts();
+
+  const hasSpeakableText = speakableText.trim().length > 0;
+  const isBusy = status === "loading" || status === "speaking";
+  const isDisabled = disabled || !hasSpeakableText || !isSupported || isBusy;
+
+  const statusText = !hasSpeakableText
+    ? hiddenWarning
+    : !isSupported || status === "unsupported"
+      ? "Audio playback is not supported in this browser."
+      : status === "provider-missing"
+        ? "Arabic audio provider is not available."
+        : status === "loading"
+          ? "Preparing Arabic audio..."
+          : status === "speaking"
+            ? "Playing visible Arabic text."
+            : status === "stopped"
+              ? "Audio stopped."
+              : status === "error"
+                ? "Unable to play Arabic audio."
+                : "Ready to play visible Arabic text.";
+
+  return (
+    <div
+      data-testid={testId}
+      className={cn(
+        "rounded-2xl border border-emerald-100 bg-emerald-50/60 p-4",
+        className,
+      )}
+    >
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <p className="text-sm font-semibold text-emerald-950">
+            Arabic Text-to-Speech
+          </p>
+          <p
+            data-testid="arabic-tts-status"
+            role="status"
+            aria-live="polite"
+            className="mt-1 text-sm leading-6 text-emerald-800"
+          >
+            {statusText}
+          </p>
+        </div>
+
+        <div className="flex flex-wrap gap-2">
+          <Button
+            type="button"
+            variant="primary"
+            size="sm"
+            disabled={isDisabled}
+            aria-label={label}
+            onClick={() => speak(speakableText)}
+          >
+            <Volume2 className="h-4 w-4" aria-hidden="true" />
+            <span>{status === "loading" ? "Preparing..." : label}</span>
+          </Button>
+
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            disabled={!isSupported}
+            aria-label="Stop Arabic audio"
+            onClick={stop}
+          >
+            <Square className="h-4 w-4" aria-hidden="true" />
+            <span>Stop</span>
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+'@ | Set-Content -Encoding UTF8 components\quiz\ArabicTtsControls.tsx
+
+@'
+# No API key required for demo provider.
+# Optional overrides only:
+GOOGLE_TRANSLATE_TTS_LANG=ar
+GOOGLE_TRANSLATE_TTS_CLIENT=tw-ob
+GOOGLE_TRANSLATE_TTS_MAX_CHUNK=180
+GOOGLE_TRANSLATE_TTS_ENDPOINT=https://translate.google.com/translate_tts
+'@ | Set-Content -Encoding UTF8 .env.local.example
+
+if (!(Test-Path ".env.local")) {
+  Copy-Item ".env.local.example" ".env.local" -Force
+}
+
+@'
+import { describe, expect, it } from "vitest";
+import {
+  GOOGLE_TRANSLATE_TTS_PROVIDER,
+  buildGoogleTranslateTtsUrl,
+  getGoogleTranslateTtsConfig,
+  splitTextIntoTtsChunks,
+} from "@/lib/tts/google-translate-tts";
+
+describe("google-translate-tts demo provider", () => {
+  it("is configured without any paid API key", () => {
+    const config = getGoogleTranslateTtsConfig({});
+
+    expect(config.configured).toBe(true);
+    expect(config.provider).toBe(GOOGLE_TRANSLATE_TTS_PROVIDER);
+    expect(config.lang).toBe("ar");
+  });
+
+  it("builds a Google Translate TTS URL", () => {
+    const url = buildGoogleTranslateTtsUrl("السلام عليكم");
+
+    expect(url).toContain("translate_tts");
+    expect(url).toContain("tl=ar");
+    expect(url).toContain("client=tw-ob");
+  });
+
+  it("splits longer Arabic text into safe chunks", () => {
+    const chunks = splitTextIntoTtsChunks(
+      "بسم الله الرحمن الرحيم الحمد لله رب العالمين الرحمن الرحيم مالك يوم الدين",
+      25,
+    );
+
+    expect(chunks.length).toBeGreaterThan(1);
+    expect(chunks.every((chunk) => chunk.length <= 25)).toBe(true);
+  });
+});
+'@ | Set-Content -Encoding UTF8 tests\unit\tts\google-translate-tts.test.ts
+
+@'
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { GET, POST } from "@/app/api/tts/route";
+
+function makeRequest(body: unknown) {
+  return new Request("http://localhost/api/tts", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(body),
+  });
+}
+
+describe("/api/tts route", () => {
+  beforeEach(() => {
+    delete process.env.GOOGLE_TRANSLATE_TTS_LANG;
+    delete process.env.GOOGLE_TRANSLATE_TTS_CLIENT;
+    delete process.env.GOOGLE_TRANSLATE_TTS_ENDPOINT;
+    delete process.env.GOOGLE_TRANSLATE_TTS_MAX_CHUNK;
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+    vi.unstubAllGlobals();
+  });
+
+  it("returns demo provider status without API key", async () => {
+    const response = await GET();
+    const payload = (await response.json()) as {
+      provider: string;
+      configured: boolean;
+      lang: string;
+    };
+
+    expect(response.status).toBe(200);
+    expect(payload.provider).toBe("google-translate-demo");
+    expect(payload.configured).toBe(true);
+    expect(payload.lang).toBe("ar");
+  });
+
+  it("blocks hidden placeholders before provider call", async () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+
+    const response = await POST(makeRequest({ text: "السلام ____ عليكم" }));
+    const payload = (await response.json()) as { code: string };
+
+    expect(response.status).toBe(400);
+    expect(payload.code).toBe("TTS_PLACEHOLDER_BLOCKED");
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("calls Google Translate TTS and returns audio", async () => {
+    const fetchMock = vi.fn(async () =>
+      new Response(new Uint8Array([1, 2, 3]), {
+        status: 200,
+        headers: {
+          "Content-Type": "audio/mpeg",
+        },
+      }),
+    );
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    const response = await POST(makeRequest({ text: "السلام عليكم" }));
+    const audio = await response.arrayBuffer();
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get("Content-Type")).toBe("audio/mpeg");
+    expect(response.headers.get("X-TTS-Provider")).toBe(
+      "google-translate-demo",
+    );
+    expect(audio.byteLength).toBe(3);
+    expect(fetchMock).toHaveBeenCalledWith(
+      expect.stringContaining("translate_tts"),
+      expect.objectContaining({
+        method: "GET",
+      }),
+    );
+  });
+});
+'@ | Set-Content -Encoding UTF8 tests\unit\api\tts-route.test.ts
+
+@'
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { ArabicTtsControls } from "@/components/quiz/ArabicTtsControls";
+
+let fetchMock: ReturnType<typeof vi.fn>;
+let audioPlayMock: ReturnType<typeof vi.fn>;
+let audioPauseMock: ReturnType<typeof vi.fn>;
+
+class MockAudio {
+  src: string;
+  volume = 1;
+  onplaying: (() => void) | null = null;
+  onended: (() => void) | null = null;
+  onerror: (() => void) | null = null;
+
+  constructor(src: string) {
+    this.src = src;
+  }
+
+  play() {
+    audioPlayMock();
+    this.onplaying?.();
+    return Promise.resolve();
+  }
+
+  pause() {
+    audioPauseMock();
+  }
+
+  removeAttribute(_name: string) {
+    return undefined;
+  }
+
+  load() {
+    return undefined;
+  }
+}
+
+function setupCloudAudioMocks(response?: Response) {
+  fetchMock = vi.fn(
+    async () =>
+      response ??
+      new Response(new Blob(["audio"], { type: "audio/mpeg" }), {
+        status: 200,
+        headers: {
+          "Content-Type": "audio/mpeg",
+        },
+      }),
+  );
+  audioPlayMock = vi.fn();
+  audioPauseMock = vi.fn();
+
+  vi.stubGlobal("fetch", fetchMock);
+  vi.stubGlobal("Audio", MockAudio);
+
+  Object.defineProperty(window, "Audio", {
+    value: MockAudio,
+    configurable: true,
+  });
+
+  Object.defineProperty(URL, "createObjectURL", {
+    value: vi.fn(() => "blob:matn-quiz-audio"),
+    configurable: true,
+  });
+
+  Object.defineProperty(URL, "revokeObjectURL", {
+    value: vi.fn(),
+    configurable: true,
+  });
+}
+
+describe("ArabicTtsControls", () => {
+  beforeEach(() => {
+    vi.restoreAllMocks();
+    vi.unstubAllGlobals();
+    setupCloudAudioMocks();
+  });
+
+  it("requests provider audio for visible Arabic text", async () => {
+    render(
+      <ArabicTtsControls
+        speakableText="بسم الرحمن الرحيم"
+        label="Speak visible quiz text"
+      />,
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", { name: /speak visible quiz text/i }),
+    );
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(audioPlayMock).toHaveBeenCalledTimes(1));
+
+    const requestInit = fetchMock.mock.calls[0]?.[1] as RequestInit;
+    const body = JSON.parse(String(requestInit.body)) as { text: string };
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/tts",
+      expect.objectContaining({
+        method: "POST",
+      }),
+    );
+    expect(body.text).toBe("بسم الرحمن الرحيم");
+  });
+
+  it("does not call provider for empty speakable text", () => {
+    render(
+      <ArabicTtsControls
+        speakableText=""
+        label="Speak visible quiz text"
+        hiddenWarning="Hidden text cannot be played."
+      />,
+    );
+
+    expect(
+      screen.getByRole("button", { name: /speak visible quiz text/i }),
+    ).toBeDisabled();
+    expect(screen.getByTestId("arabic-tts-status")).toHaveTextContent(
+      "Hidden text cannot be played.",
+    );
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("shows error message when provider fails", async () => {
+    setupCloudAudioMocks(
+      new Response(
+        JSON.stringify({
+          code: "GOOGLE_TRANSLATE_TTS_REQUEST_FAILED",
+          error: "Provider failed.",
+        }),
+        {
+          status: 502,
+          headers: {
+            "Content-Type": "application/json",
+          },
+        },
+      ),
+    );
+
+    render(<ArabicTtsControls speakableText="بسم الله" />);
+
+    fireEvent.click(screen.getByRole("button", { name: /speak visible text/i }));
+
+    await waitFor(() =>
+      expect(screen.getByTestId("arabic-tts-status")).toHaveTextContent(
+        "Unable to play Arabic audio.",
+      ),
+    );
+  });
+
+  it("stops Arabic audio", async () => {
+    render(<ArabicTtsControls speakableText="بسم الله" />);
+
+    fireEvent.click(screen.getByRole("button", { name: /speak visible text/i }));
+
+    await waitFor(() => expect(audioPlayMock).toHaveBeenCalledTimes(1));
+
+    fireEvent.click(screen.getByRole("button", { name: /stop arabic audio/i }));
+
+    expect(audioPauseMock).toHaveBeenCalled();
+  });
+});
+'@ | Set-Content -Encoding UTF8 tests\unit\components\ArabicTtsControls.test.tsx
+
+@'
+import { renderHook } from "@testing-library/react";
+import { describe, expect, it } from "vitest";
+import {
+  canUseArabicSpeechSynthesis,
+  speakArabicText,
+} from "@/hooks/useArabicTts";
+
+describe("useArabicTts cloud provider helpers", () => {
+  it("returns false for empty text", () => {
+    expect(speakArabicText("   ")).toBe(false);
+  });
+
+  it("exposes browser capability as a boolean", () => {
+    expect(typeof canUseArabicSpeechSynthesis()).toBe("boolean");
+  });
+
+  it("can render the hook helper without speechSynthesis mocks", () => {
+    const { result } = renderHook(() => ({
+      supported: canUseArabicSpeechSynthesis(),
+    }));
+
+    expect(typeof result.current.supported).toBe("boolean");
+  });
+});
+'@ | Set-Content -Encoding UTF8 tests\unit\hooks\useArabicTts.test.ts
+
+@'
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import type {
+  GeneratedHideLineQuiz,
+  GeneratedHideWordQuiz,
+} from "@/types/quiz";
+import { QuizTtsPanel } from "@/components/quiz/QuizTtsPanel";
+
+let fetchMock: ReturnType<typeof vi.fn>;
+
+class MockAudio {
+  src: string;
+  volume = 1;
+  onplaying: (() => void) | null = null;
+  onended: (() => void) | null = null;
+  onerror: (() => void) | null = null;
+
+  constructor(src: string) {
+    this.src = src;
+  }
+
+  play() {
+    this.onplaying?.();
+    return Promise.resolve();
+  }
+
+  pause() {
+    return undefined;
+  }
+
+  removeAttribute(_name: string) {
+    return undefined;
+  }
+
+  load() {
+    return undefined;
+  }
+}
+
+function setupCloudAudioMocks() {
+  fetchMock = vi.fn(
+    async () =>
+      new Response(new Blob(["audio"], { type: "audio/mpeg" }), {
+        status: 200,
+      }),
+  );
+
+  vi.stubGlobal("fetch", fetchMock);
+  vi.stubGlobal("Audio", MockAudio);
+
+  Object.defineProperty(window, "Audio", {
+    value: MockAudio,
+    configurable: true,
+  });
+
+  Object.defineProperty(URL, "createObjectURL", {
+    value: vi.fn(() => "blob:matn-quiz-audio"),
+    configurable: true,
+  });
+
+  Object.defineProperty(URL, "revokeObjectURL", {
+    value: vi.fn(),
+    configurable: true,
+  });
+}
+
+const wordQuiz: GeneratedHideWordQuiz = {
+  originalText: "بسم الله الرحمن الرحيم",
+  quizText: "بسم ____ الرحمن الرحيم",
+  method: "HIDE_WORD",
+  requestedCount: 1,
+  hiddenCount: 1,
+  selectedTokenIndexes: [2],
+  answers: [
+    {
+      index: 1,
+      tokenIndex: 2,
+      wordIndex: 1,
+      answer: "الله",
+      kind: "word",
+    },
+  ],
+};
+
+const lineQuiz: GeneratedHideLineQuiz = {
+  originalText: "بسم الله\nالرحمن الرحيم\nالحمد لله",
+  quizText: "بسم الله\n____\nالحمد لله",
+  method: "HIDE_LINE",
+  requestedCount: 1,
+  hiddenCount: 1,
+  selectedTokenIndexes: [2],
+  selectedLineIndexes: [2],
+  answers: [
+    {
+      index: 1,
+      tokenIndex: 2,
+      lineIndex: 1,
+      answer: "الرحمن الرحيم",
+      kind: "line",
+    },
+  ],
+};
+
+describe("QuizTtsPanel", () => {
+  beforeEach(() => {
+    vi.restoreAllMocks();
+    vi.unstubAllGlobals();
+    setupCloudAudioMocks();
+  });
+
+  it("sends visible word quiz text to provider without hidden words", async () => {
+    render(<QuizTtsPanel quiz={wordQuiz} />);
+
+    fireEvent.click(
+      screen.getByRole("button", { name: /speak visible quiz text/i }),
+    );
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+
+    const requestInit = fetchMock.mock.calls[0]?.[1] as RequestInit;
+    const body = JSON.parse(String(requestInit.body)) as { text: string };
+
+    expect(body.text).toBe("بسم الرحمن الرحيم");
+    expect(body.text).not.toContain("الله");
+    expect(body.text).not.toContain("____");
+  });
+
+  it("sends only requested visible line to provider", async () => {
+    render(<QuizTtsPanel quiz={lineQuiz} />);
+
+    expect(screen.getAllByTestId("tts-line-option")).toHaveLength(3);
+    expect(
+      screen.getByRole("button", {
+        name: /hidden line 2 cannot be played/i,
+      }),
+    ).toBeDisabled();
+
+    fireEvent.click(
+      screen.getByRole("button", { name: /speak visible line 1/i }),
+    );
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+
+    const requestInit = fetchMock.mock.calls[0]?.[1] as RequestInit;
+    const body = JSON.parse(String(requestInit.body)) as { text: string };
+
+    expect(body.text).toBe("بسم الله");
+    expect(body.text).not.toContain("الرحمن الرحيم");
+    expect(body.text).not.toContain("____");
+  });
+
+  it("keeps visible Arabic line text RTL", () => {
+    render(<QuizTtsPanel quiz={lineQuiz} />);
+
+    const visibleLines = screen.getAllByTestId("tts-visible-line-text");
+
+    expect(visibleLines[0]).toHaveAttribute("dir", "rtl");
+    expect(visibleLines[0]).toHaveAttribute("lang", "ar");
+    expect(visibleLines[1]).toHaveAttribute("dir", "rtl");
+    expect(visibleLines[1]).toHaveAttribute("lang", "ar");
+  });
+});
+'@ | Set-Content -Encoding UTF8 tests\unit\components\QuizTtsPanel.test.tsx
+
+@'
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import HomePage from "@/app/page";
+
+let fetchMock: ReturnType<typeof vi.fn>;
+
+class MockAudio {
+  src: string;
+  volume = 1;
+  onplaying: (() => void) | null = null;
+  onended: (() => void) | null = null;
+  onerror: (() => void) | null = null;
+
+  constructor(src: string) {
+    this.src = src;
+  }
+
+  play() {
+    this.onplaying?.();
+    return Promise.resolve();
+  }
+
+  pause() {
+    return undefined;
+  }
+
+  removeAttribute(_name: string) {
+    return undefined;
+  }
+
+  load() {
+    return undefined;
+  }
+}
+
+function setupCloudAudioMocks() {
+  fetchMock = vi.fn(
+    async () =>
+      new Response(new Blob(["audio"], { type: "audio/mpeg" }), {
+        status: 200,
+      }),
+  );
+
+  vi.stubGlobal("fetch", fetchMock);
+  vi.stubGlobal("Audio", MockAudio);
+
+  Object.defineProperty(window, "Audio", {
+    value: MockAudio,
+    configurable: true,
+  });
+
+  Object.defineProperty(URL, "createObjectURL", {
+    value: vi.fn(() => "blob:matn-quiz-audio"),
+    configurable: true,
+  });
+
+  Object.defineProperty(URL, "revokeObjectURL", {
+    value: vi.fn(),
+    configurable: true,
+  });
+}
+
+describe("TTS hidden text safety flow", () => {
+  beforeEach(() => {
+    localStorage.clear();
+    vi.restoreAllMocks();
+    vi.unstubAllGlobals();
+    setupCloudAudioMocks();
+  });
+
+  it("renders TTS controls after quiz generation and never sends placeholders", async () => {
+    render(<HomePage />);
+
+    fireEvent.change(screen.getAllByRole("textbox")[0]!, {
+      target: { value: "بسم الله الرحمن الرحيم" },
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: /continue/i }));
+
+    const ttsPanel = await screen.findByTestId("arabic-tts-panel");
+
+    expect(ttsPanel).toBeInTheDocument();
+
+    fireEvent.click(
+      screen.getByRole("button", { name: /speak visible quiz text/i }),
+    );
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+
+    const requestInit = fetchMock.mock.calls[0]?.[1] as RequestInit;
+    const body = JSON.parse(String(requestInit.body)) as { text: string };
+
+    expect(body.text).not.toContain("____");
+  });
+});
+'@ | Set-Content -Encoding UTF8 tests\integration\tts-hidden-text-safety-flow.test.tsx
+
+@'
+import { describe, expect, it } from "vitest";
+import type { GeneratedHideWordQuiz } from "@/types/quiz";
+import {
+  assertSpeakableTextDoesNotLeakHiddenAnswers,
+  buildSpeakableTextForVisibleWords,
+} from "@/lib/quiz/tts-safe-text";
+import {
+  buildGoogleTranslateTtsUrl,
+  getGoogleTranslateTtsConfig,
+} from "@/lib/tts/google-translate-tts";
+
+describe("Phase 20 complete verification", () => {
+  it("uses no-key Google demo TTS and keeps payload limited to safe visible text", () => {
+    const quiz: GeneratedHideWordQuiz = {
+      originalText: "بسم الله الرحمن الرحيم",
+      quizText: "بسم ____ الرحمن الرحيم",
+      method: "HIDE_WORD",
+      requestedCount: 1,
+      hiddenCount: 1,
+      selectedTokenIndexes: [2],
+      answers: [
+        {
+          index: 1,
+          tokenIndex: 2,
+          wordIndex: 1,
+          answer: "الله",
+          kind: "word",
+        },
+      ],
+    };
+
+    const speakableText = buildSpeakableTextForVisibleWords(quiz);
+    const config = getGoogleTranslateTtsConfig({});
+    const url = buildGoogleTranslateTtsUrl(speakableText, config);
+
+    expect(config.configured).toBe(true);
+    expect(config.provider).toBe("google-translate-demo");
+    expect(url).toContain("translate_tts");
+    expect(speakableText).toBe("بسم الرحمن الرحيم");
+    expect(assertSpeakableTextDoesNotLeakHiddenAnswers(quiz, speakableText)).toBe(
+      true,
+    );
+    expect(speakableText).not.toContain("____");
+  });
+});
+'@ | Set-Content -Encoding UTF8 tests\unit\tts\phase-20-complete.test.ts
+
+@'
+# Matn Quiz - Phase 20 Status
+
+Phase 20 now uses a no-key demo Arabic TTS provider through `/api/tts`.
+
+## Current Provider
+
+Google Translate TTS demo endpoint.
+
+## Env
+
+No API key is required.
+
+Optional values:
+
+```env
+GOOGLE_TRANSLATE_TTS_LANG=ar
+GOOGLE_TRANSLATE_TTS_CLIENT=tw-ob
+GOOGLE_TRANSLATE_TTS_MAX_CHUNK=180
+GOOGLE_TRANSLATE_TTS_ENDPOINT=https://translate.google.com/translate_tts
+```
+
+## Safety Rule
+
+Never send hidden answers to `/api/tts`.
+
+Only send safe visible text generated from `lib/quiz/tts-safe-text.ts`.
+
+## Note
+
+This provider is for demo/local usage. For production, use a stable provider with official API terms.
+'@ | Set-Content -Encoding UTF8 PHASE-20-STATUS.md
+
+@'
+/* eslint-disable @typescript-eslint/no-require-imports */
+const fs = require("node:fs");
+
+const pkg = JSON.parse(fs.readFileSync("package.json", "utf8"));
+
+pkg.scripts = pkg.scripts || {};
+pkg.scripts.test = "vitest run";
+pkg.scripts["verify:phase20"] =
+  "pnpm test tests/unit/tts/google-translate-tts.test.ts tests/unit/api/tts-route.test.ts tests/unit/components/ArabicTtsControls.test.tsx tests/unit/components/QuizTtsPanel.test.tsx tests/unit/hooks/useArabicTts.test.ts tests/integration/tts-hidden-text-safety-flow.test.tsx tests/unit/tts/phase-20-complete.test.ts && pnpm run build && pnpm run lint";
+
+fs.writeFileSync("package.json", `${JSON.stringify(pkg, null, 2)}\n`);
+'@ | Set-Content -Encoding UTF8 scripts\set-phase20-google-provider.cjs
+
+node scripts\set-phase20-google-provider.cjs
+
+pnpm test tests/unit/tts/google-translate-tts.test.ts tests/unit/api/tts-route.test.ts tests/unit/components/ArabicTtsControls.test.tsx tests/unit/components/QuizTtsPanel.test.tsx tests/unit/hooks/useArabicTts.test.ts tests/integration/tts-hidden-text-safety-flow.test.tsx tests/unit/tts/phase-20-complete.test.ts
+pnpm run build
+pnpm run lint
+
+Write-Host ""
+Write-Host "Phase 20 no-key Google demo TTS script finished." -ForegroundColor Green
+Write-Host "Run pnpm dev and test the Speak button." -ForegroundColor Cyan
+
+=== Phase 20 - No Key Google Translate TTS Demo Provider ===
+
+
+
+
+
+Phase 20 no-key Google demo TTS script finished.
+Run pnpm dev and test the Speak button.
+]633;D;0]633;A]633;P;Cwd=C:\x5cUsers\x5cDell\x5cOneDrive\x5cDesktop\x5cPrograms\x5cmatn-quizPS C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz> ]633;B

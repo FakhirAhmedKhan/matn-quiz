@@ -33,7 +33,7 @@ export function ArabicTtsControls({
     : !isSupported || status === "unsupported"
       ? "Audio playback is not supported in this browser."
       : status === "provider-missing"
-        ? "Cloud Arabic audio is not configured. Add Azure Speech settings to .env.local."
+        ? "Arabic audio provider is not available."
         : status === "loading"
           ? "Preparing Arabic audio..."
           : status === "speaking"

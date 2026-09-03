@@ -1,4 +1,4 @@
-﻿import { fireEvent, render, screen } from "@testing-library/react";
+﻿import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type {
   GeneratedHideLineQuiz,
@@ -6,15 +6,62 @@ import type {
 } from "@/types/quiz";
 import { QuizTtsPanel } from "@/components/quiz/QuizTtsPanel";
 
-class MockSpeechSynthesisUtterance {
-  text: string;
-  lang = "";
-  rate = 1;
-  pitch = 1;
+let fetchMock: ReturnType<typeof vi.fn>;
 
-  constructor(text: string) {
-    this.text = text;
+class MockAudio {
+  src: string;
+  volume = 1;
+  onplaying: (() => void) | null = null;
+  onended: (() => void) | null = null;
+  onerror: (() => void) | null = null;
+
+  constructor(src: string) {
+    this.src = src;
   }
+
+  play() {
+    this.onplaying?.();
+    return Promise.resolve();
+  }
+
+  pause() {
+    return undefined;
+  }
+
+  removeAttribute(_name: string) {
+    return undefined;
+  }
+
+  load() {
+    return undefined;
+  }
+}
+
+function setupCloudAudioMocks() {
+  fetchMock = vi.fn(
+    async () =>
+      new Response(new Blob(["audio"], { type: "audio/mpeg" }), {
+        status: 200,
+      }),
+  );
+
+  vi.stubGlobal("fetch", fetchMock);
+  vi.stubGlobal("Audio", MockAudio);
+
+  Object.defineProperty(window, "Audio", {
+    value: MockAudio,
+    configurable: true,
+  });
+
+  Object.defineProperty(URL, "createObjectURL", {
+    value: vi.fn(() => "blob:matn-quiz-audio"),
+    configurable: true,
+  });
+
+  Object.defineProperty(URL, "revokeObjectURL", {
+    value: vi.fn(),
+    configurable: true,
+  });
 }
 
 const wordQuiz: GeneratedHideWordQuiz = {
@@ -57,30 +104,28 @@ const lineQuiz: GeneratedHideLineQuiz = {
 describe("QuizTtsPanel", () => {
   beforeEach(() => {
     vi.restoreAllMocks();
-    vi.stubGlobal("SpeechSynthesisUtterance", MockSpeechSynthesisUtterance);
-    vi.stubGlobal("speechSynthesis", {
-      cancel: vi.fn(),
-      speak: vi.fn(),
-    });
+    vi.unstubAllGlobals();
+    setupCloudAudioMocks();
   });
 
-  it("speaks visible word quiz text without hidden words", () => {
+  it("sends visible word quiz text to provider without hidden words", async () => {
     render(<QuizTtsPanel quiz={wordQuiz} />);
 
     fireEvent.click(
       screen.getByRole("button", { name: /speak visible quiz text/i }),
     );
 
-    const utterance = vi.mocked(window.speechSynthesis.speak).mock.calls[0]?.[0];
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
 
-    expect(utterance).toMatchObject({
-      text: "بسم الرحمن الرحيم",
-    });
-    expect(JSON.stringify(utterance)).not.toContain("الله");
-    expect(JSON.stringify(utterance)).not.toContain("____");
+    const requestInit = fetchMock.mock.calls[0]?.[1] as RequestInit;
+    const body = JSON.parse(String(requestInit.body)) as { text: string };
+
+    expect(body.text).toBe("بسم الرحمن الرحيم");
+    expect(body.text).not.toContain("الله");
+    expect(body.text).not.toContain("____");
   });
 
-  it("renders line controls and disables hidden line audio", () => {
+  it("sends only requested visible line to provider", async () => {
     render(<QuizTtsPanel quiz={lineQuiz} />);
 
     expect(screen.getAllByTestId("tts-line-option")).toHaveLength(3);
@@ -94,14 +139,24 @@ describe("QuizTtsPanel", () => {
       screen.getByRole("button", { name: /speak visible line 1/i }),
     );
 
-    const utterance = vi.mocked(window.speechSynthesis.speak).mock.calls[0]?.[0];
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
 
-    expect(utterance).toMatchObject({
-      text: "بسم الله",
-    });
-    expect(JSON.stringify(utterance)).not.toContain("الرحمن الرحيم");
-    expect(JSON.stringify(utterance)).not.toContain("____");
+    const requestInit = fetchMock.mock.calls[0]?.[1] as RequestInit;
+    const body = JSON.parse(String(requestInit.body)) as { text: string };
+
+    expect(body.text).toBe("بسم الله");
+    expect(body.text).not.toContain("الرحمن الرحيم");
+    expect(body.text).not.toContain("____");
+  });
+
+  it("keeps visible Arabic line text RTL", () => {
+    render(<QuizTtsPanel quiz={lineQuiz} />);
+
+    const visibleLines = screen.getAllByTestId("tts-visible-line-text");
+
+    expect(visibleLines[0]).toHaveAttribute("dir", "rtl");
+    expect(visibleLines[0]).toHaveAttribute("lang", "ar");
+    expect(visibleLines[1]).toHaveAttribute("dir", "rtl");
+    expect(visibleLines[1]).toHaveAttribute("lang", "ar");
   });
 });
-
-

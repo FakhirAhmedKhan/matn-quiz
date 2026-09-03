@@ -1,11 +1,10 @@
 ﻿import { NextResponse } from "next/server";
 import {
-  AZURE_TTS_OUTPUT_FORMAT,
-  AzureSpeechConfigError,
-  AzureSpeechRequestError,
-  getAzureSpeechConfig,
-  synthesizeAzureSpeech,
-} from "@/lib/tts/azure-speech";
+  GOOGLE_TRANSLATE_TTS_PROVIDER,
+  GoogleTranslateTtsRequestError,
+  getGoogleTranslateTtsConfig,
+  synthesizeGoogleTranslateSpeech,
+} from "@/lib/tts/google-translate-tts";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -30,14 +29,14 @@ async function readRequestBody(request: Request): Promise<TtsRequestBody | null>
 }
 
 export async function GET() {
-  const config = getAzureSpeechConfig();
+  const config = getGoogleTranslateTtsConfig();
 
   return NextResponse.json({
-    provider: "azure",
+    provider: GOOGLE_TRANSLATE_TTS_PROVIDER,
     configured: config.configured,
-    voice: config.voice,
-    region: config.region || null,
-    outputFormat: AZURE_TTS_OUTPUT_FORMAT,
+    lang: config.lang,
+    client: config.client,
+    maxChunkLength: config.maxChunkLength,
   });
 }
 
@@ -67,7 +66,11 @@ export async function POST(request: Request) {
   }
 
   try {
-    const audio = await synthesizeAzureSpeech(text);
+    const audio = await synthesizeGoogleTranslateSpeech(text);
+
+    if (audio.byteLength === 0) {
+      return jsonError("Unable to create Arabic audio.", 500, "TTS_EMPTY_AUDIO");
+    }
 
     return new Response(audio, {
       status: 200,
@@ -75,15 +78,16 @@ export async function POST(request: Request) {
         "Content-Type": "audio/mpeg",
         "Cache-Control": "no-store",
         "X-Content-Type-Options": "nosniff",
+        "X-TTS-Provider": GOOGLE_TRANSLATE_TTS_PROVIDER,
       },
     });
   } catch (error) {
-    if (error instanceof AzureSpeechConfigError) {
-      return jsonError(error.message, 503, error.code);
-    }
-
-    if (error instanceof AzureSpeechRequestError) {
-      return jsonError(error.message, 502, "AZURE_TTS_REQUEST_FAILED");
+    if (error instanceof GoogleTranslateTtsRequestError) {
+      return jsonError(
+        error.message,
+        502,
+        "GOOGLE_TRANSLATE_TTS_REQUEST_FAILED",
+      );
     }
 
     return jsonError("Unable to create Arabic audio.", 500, "TTS_UNKNOWN_ERROR");
