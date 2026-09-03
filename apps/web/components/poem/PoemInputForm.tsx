@@ -64,14 +64,14 @@ export function PoemInputForm() {
               htmlFor="poem-title"
               className="block text-sm font-bold text-slate-900"
             >
-              Poem title
+               Title
             </label>
             <input
               id="poem-title"
               data-testid="poem-title-input"
               value={draft.title}
               onChange={(event) => updateDraft({ title: event.target.value })}
-              placeholder="Ù…Ø«Ù„Ø§Ù‹: ÛØ¯ÛŒÛ Ø³Ù„Ø§Ù…"
+              placeholder="Enter title..."
               dir="rtl"
               className="mt-2 min-h-12 w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-right text-lg font-semibold text-slate-950 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100"
             />
@@ -82,14 +82,14 @@ export function PoemInputForm() {
               htmlFor="poem-text"
               className="block text-sm font-bold text-slate-900"
             >
-              Poem text
+              Text
             </label>
             <textarea
               id="poem-text"
               data-testid="poem-text-input"
               value={draft.text}
               onChange={(event) => updateDraft({ text: event.target.value })}
-              placeholder="Ø§Ù¾Ù†ÛŒ Ù†Ø¸Ù…ØŒ Ù†Ø¹ØªØŒ Ø³Ù„Ø§Ù… ÛŒØ§ Ø´Ø¹Ø± ÛŒÛØ§Úº Ù¾ÛŒØ³Ù¹ Ú©Ø±ÛŒÚº..."
+              placeholder="Enter text..."
               dir="rtl"
               lang="ur"
               rows={12}
@@ -150,7 +150,7 @@ export function PoemInputForm() {
                   Single column
                 </span>
                 <span className="mt-1 block text-xs leading-5 text-slate-500">
-                  Best for mobile reading and short poems.
+                  Best for mobile reading and short screen.
                 </span>
               </span>
             </label>
@@ -165,7 +165,7 @@ export function PoemInputForm() {
                 onClick={() => handleFontSizeChange(draft.fontSize - 2)}
                 className="flex size-10 items-center justify-center rounded-2xl border border-slate-300 bg-white text-lg font-bold text-slate-700 transition hover:bg-slate-50"
               >
-                âˆ’
+                -
               </button>
 
               <div
@@ -216,7 +216,7 @@ export function PoemInputForm() {
               onClick={handleClear}
               className="inline-flex min-h-11 items-center justify-center rounded-2xl border border-rose-200 bg-rose-50 px-5 py-3 text-sm font-bold text-rose-700 shadow-sm transition hover:bg-rose-100 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:ring-offset-2"
             >
-              Clear poem
+              Clear Text
             </button>
           </div>
         </aside>

@@ -15,32 +15,31 @@ const workflowCards = [
     href: "/create",
     testId: "home-create-workflow-link",
     title: "Create Quiz",
-    description: "Paste Arabic text and begin the quiz setup flow.",
-    action: "Start creating",
+    description: "Paste Arabic text and start a new memorization quiz.",
+    action: "Create quiz",
   },
   {
     href: "/study",
     testId: "home-study-workflow-link",
     title: "Study",
-    description: "Open the question and answer review screen.",
-    action: "Open study",
+    description: "Continue your quiz and review hidden answers.",
+    action: "Start studying",
   },
   {
-    href: "/import-export",
-    testId: "home-import-export-workflow-link",
-    title: "Import / Export",
-    description: "Save, share, copy, or reopen quiz JSON.",
-    action: "Open sharing",
+    href: "/books",
+    testId: "home-books-workflow-link",
+    title: "Book Library",
+    description: "Browse, upload, verify, and read PDF books.",
+    action: "Open library",
   },
   {
     href: "/history",
     testId: "home-history-workflow-link",
     title: "History",
-    description: "Reopen previous quizzes saved in this browser.",
+    description: "Open quizzes previously saved in this browser.",
     action: "View history",
   },
 ];
-
 export function HomePageView() {
   return (
     <AppShell>
