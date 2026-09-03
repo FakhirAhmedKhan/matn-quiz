@@ -1,42 +1,51 @@
-﻿import { readFileSync } from "node:fs";
+import { readFileSync } from "node:fs";
+
 import { describe, expect, it } from "vitest";
 
 describe("Home page architecture", () => {
-  it("keeps app/page.tsx as a small connector", () => {
+  it("keeps app/page.tsx as a small landing connector", () => {
     const source = readFileSync("app/page.tsx", "utf8");
 
     expect(source).toContain("HomePageView");
-    expect(source).toContain("usePage");
+    expect(source).not.toContain("usePage");
     expect(source).not.toContain("QuranTextInput");
     expect(source).not.toContain("QuizMethodSelector");
-    expect(source).not.toContain("SavedQuizHistory");
+    expect(source).not.toContain("GeneratedQuizSection");
+    expect(source).not.toContain("SavedHistorySection");
   });
 
-  it("moves home sections into page-level components", () => {
+  it("keeps root HomePageView as a clean workflow landing page", () => {
     const viewSource = readFileSync(
       "components/page/home/HomePageView.tsx",
       "utf8",
     );
 
-    expect(viewSource).toContain("QuranTextSection");
-    expect(viewSource).toContain("QuizOptionsSection");
-    expect(viewSource).toContain("QuizSetupSummarySection");
-    expect(viewSource).toContain("ResumeStudySection");
-    expect(viewSource).toContain("ShareableQuizSection");
-    expect(viewSource).toContain("SavedHistorySection");
+    expect(viewSource).toContain("workflowCards");
+    expect(viewSource).toContain("/create");
+    expect(viewSource).toContain("/study");
+    expect(viewSource).toContain("/import-export");
+    expect(viewSource).toContain("/history");
+
+    expect(viewSource).not.toContain("QuranTextSection");
+    expect(viewSource).not.toContain("QuizOptionsSection");
+    expect(viewSource).not.toContain("QuizSetupSummarySection");
+    expect(viewSource).not.toContain("GeneratedQuizSection");
+    expect(viewSource).not.toContain("ShareableQuizSection");
+    expect(viewSource).not.toContain("SavedHistorySection");
   });
 
-  it("keeps dynamic quiz component usage isolated in sections", () => {
-    const textSection = readFileSync(
-      "components/page/home/QuranTextSection.tsx",
-      "utf8",
-    );
-    const optionsSection = readFileSync(
-      "components/page/home/QuizOptionsSection.tsx",
+  it("keeps legacy full workflow available only through the test harness", () => {
+    const harnessSource = readFileSync(
+      "tests/helpers/HomeWorkflowTestPage.tsx",
       "utf8",
     );
 
-    expect(textSection).toContain("@/components/quiz/dynamic-components");
-    expect(optionsSection).toContain("@/components/quiz/dynamic-components");
+    expect(harnessSource).toContain("usePage");
+    expect(harnessSource).toContain("QuranTextSection");
+    expect(harnessSource).toContain("QuizOptionsSection");
+    expect(harnessSource).toContain("QuizSetupSummarySection");
+    expect(harnessSource).toContain("GeneratedQuizSection");
+    expect(harnessSource).toContain("ShareableQuizSection");
+    expect(harnessSource).toContain("SavedHistorySection");
   });
 });
