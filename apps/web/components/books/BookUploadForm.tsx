@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+
 import {
   type FormEvent,
   useRef,
@@ -232,6 +234,13 @@ export function BookUploadForm() {
           <p className="mt-2 text-xs leading-5 text-slate-500">
             The book is stored locally for this MVP and is waiting for verification.
           </p>
+
+          <Link
+            href={`/books/${uploadedBook.id}`}
+            className="mt-4 inline-flex min-h-11 items-center justify-center rounded-2xl bg-slate-950 px-5 py-2.5 text-sm font-bold text-white transition hover:bg-emerald-700"
+          >
+            Review & Verify
+          </Link>
         </div>
       ) : null}
 
