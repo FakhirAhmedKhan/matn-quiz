@@ -69,3 +69,11 @@ export const StudySessionResumePanel = dynamic(
     ssr: false,
   },
 );
+
+export const QuizTtsPanel = dynamic(
+  () => import("./QuizTtsPanel").then((mod) => mod.QuizTtsPanel),
+  {
+    loading: LoadingPanel,
+    ssr: false,
+  },
+);

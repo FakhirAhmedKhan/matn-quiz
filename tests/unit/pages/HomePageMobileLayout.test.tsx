@@ -10,7 +10,7 @@ describe("HomePage mobile layout polish", () => {
     expect(screen.getByTestId("app-safe-area")).toHaveClass("px-4");
     expect(screen.getByTestId("app-container")).toHaveClass("max-w-5xl");
     expect(screen.getByTestId("app-hero-eyebrow")).toHaveTextContent(
-      "Phase 17.5",
+      "Phase 19.5",
     );
     expect(screen.getByTestId("responsive-card-grid")).toHaveClass("space-y-6");
     expect(screen.getByTestId("responsive-two-column-section")).toHaveClass(
@@ -30,6 +30,7 @@ describe("HomePage mobile layout polish", () => {
     expect(screen.getByTestId("saved-quiz-history")).toBeInTheDocument();
   });
 });
+
 
 
 

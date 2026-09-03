@@ -47,7 +47,7 @@ describe("AppResponsiveLayout accessibility and mobile polish", () => {
   it("renders mobile polished hero with aria label target", () => {
     render(
       <AppHero
-        eyebrow="Phase 17.5"
+        eyebrow="Phase 19.5"
         title="Matn Quiz"
         description="Accessible study workspace."
       />,
@@ -62,7 +62,7 @@ describe("AppResponsiveLayout accessibility and mobile polish", () => {
       "app-hero-title",
     );
     expect(screen.getByTestId("app-hero-eyebrow")).toHaveTextContent(
-      "Phase 17.5",
+      "Phase 19.5",
     );
     expect(screen.getByTestId("hero-main-content-anchor")).toHaveAttribute(
       "href",
@@ -134,6 +134,7 @@ describe("AppResponsiveLayout accessibility and mobile polish", () => {
     expect(screen.getByTestId("mobile-action-zone")).toHaveClass("bottom-0");
   });
 });
+
 
 
 

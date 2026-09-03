@@ -98,7 +98,7 @@ export function AppContainer({
 }
 
 export function AppHero({
-  eyebrow = "Matn Quiz",
+  // eyebrow = "Matn Quiz",
   title,
   description,
   className,
@@ -113,12 +113,12 @@ export function AppHero({
         className,
       )}
     >
-      <p
+      {/* <p
         data-testid="app-hero-eyebrow"
         className="inline-flex rounded-full border border-emerald-200 bg-emerald-50 px-4 py-1.5 text-xs font-semibold uppercase tracking-wide text-emerald-800 sm:text-sm"
       >
         {eyebrow}
-      </p>
+      </p> */}
 
       <h1
         id="app-hero-title"

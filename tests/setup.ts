@@ -8,3 +8,5 @@ vi.mock("@/components/quiz/dynamic-components", async () => {
 
   return actual;
 });
+
+

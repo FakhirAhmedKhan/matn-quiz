@@ -7,7 +7,7 @@ describe("HomePage deployment readiness", () => {
     render(<HomePage />);
 
     expect(screen.getByTestId("app-hero-eyebrow")).toHaveTextContent(
-      "Phase 17.5",
+      "Phase 19.5",
     );
     expect(screen.getByTestId("app-hero-title")).toHaveTextContent("Matn Quiz");
   });
@@ -27,5 +27,6 @@ describe("HomePage deployment readiness", () => {
     );
   });
 });
+
 
 

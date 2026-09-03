@@ -43,6 +43,7 @@ import {
 } from "@/lib/ui/design-system";
 import { cn } from "@/lib/utils/cn";
 import type { GeneratedQuiz } from "@/types/quiz";
+import { QuizTtsPanel } from "@/components/quiz/QuizTtsPanel";
 
 interface GeneratedQuizPreviewProps {
   quiz: GeneratedQuiz;
@@ -205,6 +206,8 @@ export function GeneratedQuizPreview({
           {quiz.method === "HIDE_WORD" ? "Word Study" : "Line Study"}
         </span>
       </div>
+
+      <QuizTtsPanel quiz={quiz} />
 
       <AnswerRevealControls
         progress={progress}

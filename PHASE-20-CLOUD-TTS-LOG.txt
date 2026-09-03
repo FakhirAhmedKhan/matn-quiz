@@ -1,0 +1,2446 @@
+﻿**********************
+Windows PowerShell transcript start
+Start time: 20260903050959
+Username: DESKTOP-5ELG7C2\Dell
+RunAs User: DESKTOP-5ELG7C2\Dell
+Configuration Name: 
+Machine: DESKTOP-5ELG7C2 (Microsoft Windows NT 10.0.26200.0)
+Host Application: C:\WINDOWS\System32\WindowsPowerShell\v1.0\powershell.exe -noexit -command try { . "c:\Users\Dell\AppData\Local\Programs\Microsoft VS Code\08d4889f9e\resources\app\out\vs\workbench\contrib\terminal\common\scripts\shellIntegration.ps1" } catch {}
+Process ID: 17004
+PSVersion: 5.1.26100.9278
+PSEdition: Desktop
+PSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1.26100.9278
+BuildVersion: 10.0.26100.9278
+CLRVersion: 4.0.30319.42000
+WSManStackVersion: 3.0
+PSRemotingProtocolVersion: 2.3
+SerializationVersion: 1.1.0.1
+**********************
+]633;D;0]633;A]633;P;Cwd=C:\x5cUsers\x5cDell\x5cOneDrive\x5cDesktop\x5cPrograms\x5cmatn-quizPS C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz> ]633;B
+]633;D]633;A]633;P;Cwd=C:\x5cUsers\x5cDell\x5cOneDrive\x5cDesktop\x5cPrograms\x5cmatn-quizPS C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz> ]633;B
+]633;D]633;A]633;P;Cwd=C:\x5cUsers\x5cDell\x5cOneDrive\x5cDesktop\x5cPrograms\x5cmatn-quizPS C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz> ]633;B
+]633;D]633;A]633;P;Cwd=C:\x5cUsers\x5cDell\x5cOneDrive\x5cDesktop\x5cPrograms\x5cmatn-quizPS C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz> ]633;B
+PS>Yes. Since Chrome shows **0 Arabic voices**, Phase 20 should move audio from browser TTS to **server/provider TTS**. Azure Speech supports Arabic neural voices such as `ar-AE-FatimaNeural`, `ar-AE-HamdanNeural`, and `ar-QA-AmalNeural`, and its REST API can return synthesized audio. ([Microsoft Learn][1])
+
+Run this from `matn-quiz` root:
+
+````powershell id="phase20-cloud-tts-full-cmd"
+$ErrorActionPreference = "Continue"
+
+Write-Host "=== Phase 20 - Reliable Arabic Cloud TTS Provider ===" -ForegroundColor Cyan
+
+if (!(Test-Path "package.json")) {
+  Write-Host "package.json not found. Run from matn-quiz root." -ForegroundColor Red
+  Read-Host "Press Enter to close"
+  exit 1
+}
+
+$logFile = "PHASE-20-CLOUD-TTS-LOG.txt"
+if (Test-Path $logFile) { Remove-Item $logFile -Force }
+Start-Transcript -Path $logFile -Force | Out-Null
+
+try {
+  New-Item -ItemType Directory -Force app\api\tts | Out-Null
+  New-Item -ItemType Directory -Force lib\tts | Out-Null
+  New-Item -ItemType Directory -Force hooks | Out-Null
+  New-Item -ItemType Directory -Force components\quiz | Out-Null
+  New-Item -ItemType Directory -Force tests\unit\api | Out-Null
+  New-Item -ItemType Directory -Force tests\unit\tts | Out-Null
+  New-Item -ItemType Directory -Force tests\unit\components | Out-Null
+  New-Item -ItemType Directory -Force tests\integration | Out-Null
+  New-Item -ItemType Directory -Force scripts | Out-Null
+
+  # ------------------------------------------------------------
+  # 1. Azure Speech provider
+  # ------------------------------------------------------------
+@'
+export const AZURE_TTS_DEFAULT_VOICE = "ar-AE-FatimaNeural";
+export const AZURE_TTS_OUTPUT_FORMAT =
+  "audio-24khz-96kbitrate-mono-mp3";
+
+export interface AzureSpeechConfig {
+  configured: boolean;
+  key: string;
+  region: string;
+  endpoint: string;
+  voice: string;
+  outputFormat: string;
+}
+
+export class AzureSpeechConfigError extends Error {
+  code = "AZURE_TTS_NOT_CONFIGURED" as const;
+
+  constructor() {
+    super(
+      "Azure Speech is not configured. Add AZURE_SPEECH_KEY and AZURE_SPEECH_REGION to .env.local.",
+    );
+    this.name = "AzureSpeechConfigError";
+  }
+}
+
+export class AzureSpeechRequestError extends Error {
+  constructor(
+    message: string,
+    readonly status: number,
+    readonly responseBody: string,
+  ) {
+    super(message);
+    this.name = "AzureSpeechRequestError";
+  }
+}
+
+function trimEnv(value: string | undefined): string {
+  return value?.trim() ?? "";
+}
+
+function normalizeEndpoint(value: string): string {
+  return value.replace(/\/+$/u, "");
+}
+
+export function getAzureSpeechConfig(
+  env: Record<string, string | undefined> = process.env,
+): AzureSpeechConfig {
+  const key = trimEnv(env.AZURE_SPEECH_KEY);
+  const region = trimEnv(env.AZURE_SPEECH_REGION);
+  const endpointFromEnv = normalizeEndpoint(trimEnv(env.AZURE_SPEECH_ENDPOINT));
+  const voice = trimEnv(env.AZURE_SPEECH_VOICE) || AZURE_TTS_DEFAULT_VOICE;
+
+  const endpoint =
+    endpointFromEnv ||
+    (region
+      ? `https://${region}.tts.speech.microsoft.com/cognitiveservices/v1`
+      : "");
+
+  return {
+    configured: key.length > 0 && endpoint.length > 0,
+    key,
+    region,
+    endpoint,
+    voice,
+    outputFormat: AZURE_TTS_OUTPUT_FORMAT,
+  };
+}
+
+export function getVoiceLocale(voice: string): string {
+  const match = /^([a-z]{2}-[A-Z]{2})-/u.exec(voice);
+
+  return match?.[1] ?? "ar-AE";
+}
+
+export function escapeSsmlText(value: string): string {
+  return value
+    .replace(/&/gu, "&amp;")
+    .replace(/</gu, "&lt;")
+    .replace(/>/gu, "&gt;")
+    .replace(/"/gu, "&quot;")
+    .replace(/'/gu, "&apos;");
+}
+
+export function buildAzureSpeechSsml(
+  text: string,
+  voice = AZURE_TTS_DEFAULT_VOICE,
+): string {
+  const locale = getVoiceLocale(voice);
+  const safeText = escapeSsmlText(text.trim());
+
+  return `<speak version="1.0" xml:lang="${locale}"><voice xml:lang="${locale}" name="${voice}">${safeText}</voice></speak>`;
+}
+
+export async function synthesizeAzureSpeech(
+  text: string,
+  config = getAzureSpeechConfig(),
+): Promise<ArrayBuffer> {
+  if (!config.configured) {
+    throw new AzureSpeechConfigError();
+  }
+
+  const response = await fetch(config.endpoint, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/ssml+xml",
+      "Ocp-Apim-Subscription-Key": config.key,
+      "X-Microsoft-OutputFormat": config.outputFormat,
+      "User-Agent": "matn-quiz",
+    },
+    body: buildAzureSpeechSsml(text, config.voice),
+  });
+
+  if (!response.ok) {
+    const responseBody = await response.text().catch(() => "");
+    throw new AzureSpeechRequestError(
+      `Azure Speech request failed with status ${response.status}.`,
+      response.status,
+      responseBody,
+    );
+  }
+
+  return response.arrayBuffer();
+}
+'@ | Set-Content -Encoding UTF8 lib\tts\azure-speech.ts
+
+  # ------------------------------------------------------------
+  # 2. Next.js TTS API route
+  # ------------------------------------------------------------
+@'
+import { NextResponse } from "next/server";
+import {
+  AZURE_TTS_OUTPUT_FORMAT,
+  AzureSpeechConfigError,
+  AzureSpeechRequestError,
+  getAzureSpeechConfig,
+  synthesizeAzureSpeech,
+} from "@/lib/tts/azure-speech";
+
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
+const MAX_TTS_TEXT_LENGTH = 3000;
+const PLACEHOLDER_PATTERN = /_{2,}|□{2,}/u;
+
+interface TtsRequestBody {
+  text?: unknown;
+}
+
+function jsonError(error: string, status: number, code: string) {
+  return NextResponse.json({ error, code }, { status });
+}
+
+async function readRequestBody(request: Request): Promise<TtsRequestBody | null> {
+  try {
+    return (await request.json()) as TtsRequestBody;
+  } catch {
+    return null;
+  }
+}
+
+export async function GET() {
+  const config = getAzureSpeechConfig();
+
+  return NextResponse.json({
+    provider: "azure",
+    configured: config.configured,
+    voice: config.voice,
+    region: config.region || null,
+    outputFormat: AZURE_TTS_OUTPUT_FORMAT,
+  });
+}
+
+export async function POST(request: Request) {
+  const body = await readRequestBody(request);
+
+  if (!body || typeof body.text !== "string") {
+    return jsonError("Text is required.", 400, "TTS_TEXT_REQUIRED");
+  }
+
+  const text = body.text.trim();
+
+  if (!text) {
+    return jsonError("Text is required.", 400, "TTS_TEXT_REQUIRED");
+  }
+
+  if (text.length > MAX_TTS_TEXT_LENGTH) {
+    return jsonError(
+      `Text must be ${MAX_TTS_TEXT_LENGTH} characters or less.`,
+      400,
+      "TTS_TEXT_TOO_LONG",
+    );
+  }
+
+  if (PLACEHOLDER_PATTERN.test(text)) {
+    return jsonError(
+      "Speakable text cannot contain hidden-answer placeholders.",
+      400,
+      "TTS_PLACEHOLDER_BLOCKED",
+    );
+  }
+
+  try {
+    const audio = await synthesizeAzureSpeech(text);
+
+    return new Response(audio, {
+      status: 200,
+      headers: {
+        "Content-Type": "audio/mpeg",
+        "Cache-Control": "no-store",
+        "X-Content-Type-Options": "nosniff",
+      },
+    });
+  } catch (error) {
+    if (error instanceof AzureSpeechConfigError) {
+      return jsonError(error.message, 503, error.code);
+    }
+
+    if (error instanceof AzureSpeechRequestError) {
+      return jsonError(
+        error.message,
+        502,
+        "AZURE_TTS_REQUEST_FAILED",
+      );
+    }
+
+    return jsonError(
+      "Unable to create Arabic audio.",
+      500,
+      "TTS_UNKNOWN_ERROR",
+    );
+  }
+}
+'@ | Set-Content -Encoding UTF8 app\api\tts\route.ts
+
+  # ------------------------------------------------------------
+  # 3. Cloud audio hook
+  # ------------------------------------------------------------
+@'
+"use client";
+
+import { useCallback, useState } from "react";
+
+export type ArabicTtsStatus =
+  | "idle"
+  | "loading"
+  | "speaking"
+  | "stopped"
+  | "unsupported"
+  | "provider-missing"
+  | "empty"
+  | "error";
+
+export interface ArabicTtsSpeakOptions {
+  onStart?: () => void;
+  onEnd?: () => void;
+  onError?: (status: ArabicTtsStatus, message: string) => void;
+}
+
+export interface UseArabicTtsResult {
+  status: ArabicTtsStatus;
+  isSupported: boolean;
+  speak: (text: string, options?: ArabicTtsSpeakOptions) => boolean;
+  stop: () => boolean;
+}
+
+interface ProviderErrorPayload {
+  error?: string;
+  code?: string;
+}
+
+class ArabicTtsPlaybackError extends Error {
+  constructor(
+    message: string,
+    readonly status: ArabicTtsStatus = "error",
+  ) {
+    super(message);
+    this.name = "ArabicTtsPlaybackError";
+  }
+}
+
+let activeAudio: HTMLAudioElement | null = null;
+let activeObjectUrl: string | null = null;
+
+function getAudioConstructor(): typeof Audio | null {
+  if (typeof window !== "undefined" && typeof window.Audio !== "undefined") {
+    return window.Audio;
+  }
+
+  if (typeof Audio !== "undefined") {
+    return Audio;
+  }
+
+  return null;
+}
+
+function canUseObjectUrl(): boolean {
+  return (
+    typeof URL !== "undefined" &&
+    typeof URL.createObjectURL === "function" &&
+    typeof URL.revokeObjectURL === "function"
+  );
+}
+
+export function canUseArabicSpeechSynthesis(): boolean {
+  return (
+    typeof fetch === "function" &&
+    getAudioConstructor() !== null &&
+    canUseObjectUrl()
+  );
+}
+
+function cleanupActiveAudio() {
+  if (activeAudio) {
+    activeAudio.pause();
+    activeAudio.removeAttribute("src");
+    activeAudio.load();
+    activeAudio = null;
+  }
+
+  if (activeObjectUrl) {
+    URL.revokeObjectURL(activeObjectUrl);
+    activeObjectUrl = null;
+  }
+}
+
+async function parseProviderError(
+  response: Response,
+): Promise<ArabicTtsPlaybackError> {
+  let payload: ProviderErrorPayload = {};
+
+  try {
+    payload = (await response.json()) as ProviderErrorPayload;
+  } catch {
+    payload = {};
+  }
+
+  const message =
+    payload.error || `Arabic audio request failed with status ${response.status}.`;
+
+  if (
+    response.status === 503 ||
+    payload.code === "AZURE_TTS_NOT_CONFIGURED"
+  ) {
+    return new ArabicTtsPlaybackError(message, "provider-missing");
+  }
+
+  return new ArabicTtsPlaybackError(message, "error");
+}
+
+async function playCloudArabicText(
+  text: string,
+  options: ArabicTtsSpeakOptions = {},
+) {
+  if (!canUseArabicSpeechSynthesis()) {
+    throw new ArabicTtsPlaybackError(
+      "Audio playback is not supported in this browser.",
+      "unsupported",
+    );
+  }
+
+  const response = await fetch("/api/tts", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ text }),
+  });
+
+  if (!response.ok) {
+    throw await parseProviderError(response);
+  }
+
+  const audioBlob = await response.blob();
+
+  if (audioBlob.size === 0) {
+    throw new ArabicTtsPlaybackError("Audio provider returned an empty file.");
+  }
+
+  cleanupActiveAudio();
+
+  const AudioConstructor = getAudioConstructor();
+
+  if (!AudioConstructor || !canUseObjectUrl()) {
+    throw new ArabicTtsPlaybackError(
+      "Audio playback is not supported in this browser.",
+      "unsupported",
+    );
+  }
+
+  const audioUrl = URL.createObjectURL(audioBlob);
+  const audio = new AudioConstructor(audioUrl);
+
+  activeObjectUrl = audioUrl;
+  activeAudio = audio;
+  audio.volume = 1;
+
+  audio.onplaying = () => {
+    options.onStart?.();
+  };
+
+  audio.onended = () => {
+    cleanupActiveAudio();
+    options.onEnd?.();
+  };
+
+  audio.onerror = () => {
+    cleanupActiveAudio();
+    options.onError?.("error", "Unable to play Arabic audio.");
+  };
+
+  await audio.play();
+  options.onStart?.();
+}
+
+export function speakArabicText(
+  text: string,
+  options: ArabicTtsSpeakOptions = {},
+): boolean {
+  const speakableText = text.trim();
+
+  if (!speakableText) {
+    return false;
+  }
+
+  void playCloudArabicText(speakableText, options).catch((error: unknown) => {
+    if (error instanceof ArabicTtsPlaybackError) {
+      options.onError?.(error.status, error.message);
+      return;
+    }
+
+    options.onError?.("error", "Unable to play Arabic audio.");
+  });
+
+  return true;
+}
+
+export function stopArabicSpeech(): boolean {
+  cleanupActiveAudio();
+
+  return true;
+}
+
+export function useArabicTts(): UseArabicTtsResult {
+  const [status, setStatus] = useState<ArabicTtsStatus>("idle");
+  const [isSupported, setIsSupported] = useState(true);
+
+  const speak = useCallback(
+    (text: string, options: ArabicTtsSpeakOptions = {}) => {
+      if (text.trim().length === 0) {
+        setStatus("empty");
+        return false;
+      }
+
+      if (!canUseArabicSpeechSynthesis()) {
+        setIsSupported(false);
+        setStatus("unsupported");
+        return false;
+      }
+
+      setIsSupported(true);
+      setStatus("loading");
+
+      const didStart = speakArabicText(text, {
+        ...options,
+        onStart: () => {
+          setStatus("speaking");
+          options.onStart?.();
+        },
+        onEnd: () => {
+          setStatus("idle");
+          options.onEnd?.();
+        },
+        onError: (nextStatus, message) => {
+          setStatus(nextStatus);
+          options.onError?.(nextStatus, message);
+        },
+      });
+
+      if (!didStart) {
+        setStatus("error");
+      }
+
+      return didStart;
+    },
+    [],
+  );
+
+  const stop = useCallback(() => {
+    const didStop = stopArabicSpeech();
+
+    if (didStop) {
+      setStatus("stopped");
+    }
+
+    return didStop;
+  }, []);
+
+  return {
+    status,
+    isSupported,
+    speak,
+    stop,
+  };
+}
+'@ | Set-Content -Encoding UTF8 hooks\useArabicTts.ts
+
+  # ------------------------------------------------------------
+  # 4. TTS controls UI
+  # ------------------------------------------------------------
+@'
+"use client";
+
+import { Square, Volume2 } from "lucide-react";
+import { Button } from "@/components/ui";
+import { useArabicTts } from "@/hooks/useArabicTts";
+import { cn } from "@/lib/utils/cn";
+
+export interface ArabicTtsControlsProps {
+  speakableText: string;
+  label?: string;
+  disabled?: boolean;
+  hiddenWarning?: string;
+  className?: string;
+  testId?: string;
+}
+
+export function ArabicTtsControls({
+  speakableText,
+  label = "Speak visible text",
+  disabled = false,
+  hiddenWarning = "Hidden text cannot be played.",
+  className,
+  testId = "arabic-tts-controls",
+}: ArabicTtsControlsProps) {
+  const { status, isSupported, speak, stop } = useArabicTts();
+
+  const hasSpeakableText = speakableText.trim().length > 0;
+  const isBusy = status === "loading" || status === "speaking";
+  const isDisabled = disabled || !hasSpeakableText || !isSupported || isBusy;
+
+  const statusText = !hasSpeakableText
+    ? hiddenWarning
+    : !isSupported || status === "unsupported"
+      ? "Audio playback is not supported in this browser."
+      : status === "provider-missing"
+        ? "Cloud Arabic audio is not configured. Add Azure Speech settings to .env.local."
+        : status === "loading"
+          ? "Preparing Arabic audio..."
+          : status === "speaking"
+            ? "Playing visible Arabic text."
+            : status === "stopped"
+              ? "Audio stopped."
+              : status === "error"
+                ? "Unable to play Arabic audio."
+                : "Ready to play visible Arabic text.";
+
+  return (
+    <div
+      data-testid={testId}
+      className={cn(
+        "rounded-2xl border border-emerald-100 bg-emerald-50/60 p-4",
+        className,
+      )}
+    >
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <p className="text-sm font-semibold text-emerald-950">
+            Arabic Text-to-Speech
+          </p>
+          <p
+            data-testid="arabic-tts-status"
+            role="status"
+            aria-live="polite"
+            className="mt-1 text-sm leading-6 text-emerald-800"
+          >
+            {statusText}
+          </p>
+        </div>
+
+        <div className="flex flex-wrap gap-2">
+          <Button
+            type="button"
+            variant="primary"
+            size="sm"
+            disabled={isDisabled}
+            aria-label={label}
+            onClick={() => speak(speakableText)}
+          >
+            <Volume2 className="h-4 w-4" aria-hidden="true" />
+            <span>{status === "loading" ? "Preparing..." : label}</span>
+          </Button>
+
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            disabled={!isSupported}
+            aria-label="Stop Arabic audio"
+            onClick={stop}
+          >
+            <Square className="h-4 w-4" aria-hidden="true" />
+            <span>Stop</span>
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+'@ | Set-Content -Encoding UTF8 components\quiz\ArabicTtsControls.tsx
+
+  # ------------------------------------------------------------
+  # 5. Keep history-status fix from Phase 19
+  # ------------------------------------------------------------
+@'
+"use client";
+
+import type { HomePageState } from "./types";
+
+interface HistoryStatusSectionProps {
+  page: HomePageState;
+}
+
+export function HistoryStatusSection({ page }: HistoryStatusSectionProps) {
+  if (!page.historyStatus) {
+    return null;
+  }
+
+  return (
+    <div
+      data-testid="history-status"
+      role="status"
+      aria-live="polite"
+      className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-800"
+    >
+      {page.historyStatus}
+    </div>
+  );
+}
+'@ | Set-Content -Encoding UTF8 components\page\home\HistoryStatusSection.tsx
+
+  $viewFile = "components\page\home\HomePageView.tsx"
+  if (Test-Path $viewFile) {
+    $view = Get-Content $viewFile -Raw
+
+    if ($view -notmatch 'HistoryStatusSection') {
+      $view = $view.Replace(
+        'import { HomeHeroSection } from "./HomeHeroSection";',
+        'import { HistoryStatusSection } from "./HistoryStatusSection";' + "`r`n" + 'import { HomeHeroSection } from "./HomeHeroSection";'
+      )
+
+      $view = $view.Replace(
+        '<GeneratedQuizSection page={page} />',
+        '<HistoryStatusSection page={page} />' + "`r`n" + '          <GeneratedQuizSection page={page} />'
+      )
+
+      Set-Content -Encoding UTF8 $viewFile $view
+    }
+  }
+
+  $indexFile = "components\page\home\index.ts"
+  if (Test-Path $indexFile) {
+    $index = Get-Content $indexFile -Raw
+
+    if ($index -notmatch 'HistoryStatusSection') {
+      $index = $index + "`r`n" + 'export * from "./HistoryStatusSection";' + "`r`n"
+      Set-Content -Encoding UTF8 $indexFile $index
+    }
+  }
+
+  # ------------------------------------------------------------
+  # 6. Env templates
+  # ------------------------------------------------------------
+@'
+# Azure Speech TTS
+# Fill these values for real Arabic audio.
+AZURE_SPEECH_KEY=
+AZURE_SPEECH_REGION=eastus
+AZURE_SPEECH_VOICE=ar-AE-FatimaNeural
+
+# Optional override:
+# AZURE_SPEECH_ENDPOINT=https://eastus.tts.speech.microsoft.com/cognitiveservices/v1
+AZURE_SPEECH_ENDPOINT=
+'@ | Set-Content -Encoding UTF8 .env.local.example
+
+  if (!(Test-Path ".env.local")) {
+    Copy-Item ".env.local.example" ".env.local" -Force
+  } else {
+    $envLocal = Get-Content ".env.local" -Raw
+
+    if ($envLocal -notmatch "AZURE_SPEECH_KEY") {
+      Add-Content -Encoding UTF8 ".env.local" "`r`n# Azure Speech TTS`r`nAZURE_SPEECH_KEY=`r`nAZURE_SPEECH_REGION=eastus`r`nAZURE_SPEECH_VOICE=ar-AE-FatimaNeural`r`nAZURE_SPEECH_ENDPOINT=`r`n"
+    }
+  }
+
+  # ------------------------------------------------------------
+  # 7. Unit tests for provider
+  # ------------------------------------------------------------
+@'
+import { describe, expect, it } from "vitest";
+import {
+  AZURE_TTS_DEFAULT_VOICE,
+  buildAzureSpeechSsml,
+  escapeSsmlText,
+  getAzureSpeechConfig,
+  getVoiceLocale,
+} from "@/lib/tts/azure-speech";
+
+describe("azure-speech provider", () => {
+  it("detects missing Azure config", () => {
+    const config = getAzureSpeechConfig({});
+
+    expect(config.configured).toBe(false);
+    expect(config.voice).toBe(AZURE_TTS_DEFAULT_VOICE);
+  });
+
+  it("builds default region endpoint when region is provided", () => {
+    const config = getAzureSpeechConfig({
+      AZURE_SPEECH_KEY: "test-key",
+      AZURE_SPEECH_REGION: "eastus",
+      AZURE_SPEECH_VOICE: "ar-QA-AmalNeural",
+    });
+
+    expect(config.configured).toBe(true);
+    expect(config.endpoint).toBe(
+      "https://eastus.tts.speech.microsoft.com/cognitiveservices/v1",
+    );
+    expect(config.voice).toBe("ar-QA-AmalNeural");
+  });
+
+  it("uses locale from Arabic voice name", () => {
+    expect(getVoiceLocale("ar-AE-FatimaNeural")).toBe("ar-AE");
+    expect(getVoiceLocale("ar-QA-AmalNeural")).toBe("ar-QA");
+  });
+
+  it("escapes SSML text safely", () => {
+    expect(escapeSsmlText('السلام & <test> "ok"')).toBe(
+      "السلام &amp; &lt;test&gt; &quot;ok&quot;",
+    );
+  });
+
+  it("builds Arabic SSML with selected voice", () => {
+    const ssml = buildAzureSpeechSsml("السلام عليكم", "ar-AE-FatimaNeural");
+
+    expect(ssml).toContain('xml:lang="ar-AE"');
+    expect(ssml).toContain('name="ar-AE-FatimaNeural"');
+    expect(ssml).toContain("السلام عليكم");
+  });
+});
+'@ | Set-Content -Encoding UTF8 tests\unit\tts\azure-speech.test.ts
+
+@'
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { GET, POST } from "@/app/api/tts/route";
+
+const originalEnv = { ...process.env };
+
+function makeRequest(body: unknown) {
+  return new Request("http://localhost/api/tts", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(body),
+  });
+}
+
+describe("/api/tts route", () => {
+  beforeEach(() => {
+    process.env = { ...originalEnv };
+    delete process.env.AZURE_SPEECH_KEY;
+    delete process.env.AZURE_SPEECH_REGION;
+    delete process.env.AZURE_SPEECH_ENDPOINT;
+    delete process.env.AZURE_SPEECH_VOICE;
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+    vi.unstubAllGlobals();
+    process.env = { ...originalEnv };
+  });
+
+  it("returns provider status", async () => {
+    const response = await GET();
+    const payload = (await response.json()) as { provider: string };
+
+    expect(response.status).toBe(200);
+    expect(payload.provider).toBe("azure");
+  });
+
+  it("returns 503 when Azure is not configured", async () => {
+    const response = await POST(makeRequest({ text: "السلام عليكم" }));
+    const payload = (await response.json()) as { code: string };
+
+    expect(response.status).toBe(503);
+    expect(payload.code).toBe("AZURE_TTS_NOT_CONFIGURED");
+  });
+
+  it("blocks hidden placeholders before provider call", async () => {
+    process.env.AZURE_SPEECH_KEY = "test-key";
+    process.env.AZURE_SPEECH_REGION = "eastus";
+
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+
+    const response = await POST(makeRequest({ text: "السلام ____ عليكم" }));
+    const payload = (await response.json()) as { code: string };
+
+    expect(response.status).toBe(400);
+    expect(payload.code).toBe("TTS_PLACEHOLDER_BLOCKED");
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("calls Azure Speech and returns audio", async () => {
+    process.env.AZURE_SPEECH_KEY = "test-key";
+    process.env.AZURE_SPEECH_REGION = "eastus";
+    process.env.AZURE_SPEECH_VOICE = "ar-AE-FatimaNeural";
+
+    const fetchMock = vi.fn(async () =>
+      new Response(new Uint8Array([1, 2, 3]), {
+        status: 200,
+        headers: {
+          "Content-Type": "audio/mpeg",
+        },
+      }),
+    );
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    const response = await POST(makeRequest({ text: "السلام عليكم" }));
+    const audio = await response.arrayBuffer();
+    const requestInit = fetchMock.mock.calls[0]?.[1] as RequestInit;
+    const ssml = String(requestInit.body);
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get("Content-Type")).toBe("audio/mpeg");
+    expect(audio.byteLength).toBe(3);
+    expect(fetchMock).toHaveBeenCalledWith(
+      "https://eastus.tts.speech.microsoft.com/cognitiveservices/v1",
+      expect.objectContaining({
+        method: "POST",
+      }),
+    );
+    expect(ssml).toContain("السلام عليكم");
+    expect(ssml).toContain("ar-AE-FatimaNeural");
+  });
+});
+'@ | Set-Content -Encoding UTF8 tests\unit\api\tts-route.test.ts
+
+  # ------------------------------------------------------------
+  # 8. Component tests using cloud audio
+  # ------------------------------------------------------------
+@'
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { ArabicTtsControls } from "@/components/quiz/ArabicTtsControls";
+
+let fetchMock: ReturnType<typeof vi.fn>;
+let audioPlayMock: ReturnType<typeof vi.fn>;
+let audioPauseMock: ReturnType<typeof vi.fn>;
+let createObjectUrlMock: ReturnType<typeof vi.fn>;
+let revokeObjectUrlMock: ReturnType<typeof vi.fn>;
+
+class MockAudio {
+  src: string;
+  volume = 1;
+  onplaying: (() => void) | null = null;
+  onended: (() => void) | null = null;
+  onerror: (() => void) | null = null;
+
+  constructor(src: string) {
+    this.src = src;
+  }
+
+  play() {
+    audioPlayMock();
+    this.onplaying?.();
+    return Promise.resolve();
+  }
+
+  pause() {
+    audioPauseMock();
+  }
+
+  removeAttribute() {}
+
+  load() {}
+}
+
+function setupCloudAudioMocks(response?: Response) {
+  fetchMock = vi.fn(
+    async () =>
+      response ??
+      new Response(new Blob(["audio"], { type: "audio/mpeg" }), {
+        status: 200,
+        headers: {
+          "Content-Type": "audio/mpeg",
+        },
+      }),
+  );
+  audioPlayMock = vi.fn();
+  audioPauseMock = vi.fn();
+  createObjectUrlMock = vi.fn(() => "blob:matn-quiz-audio");
+  revokeObjectUrlMock = vi.fn();
+
+  vi.stubGlobal("fetch", fetchMock);
+  vi.stubGlobal("Audio", MockAudio);
+
+  Object.defineProperty(window, "Audio", {
+    value: MockAudio,
+    configurable: true,
+  });
+  Object.defineProperty(URL, "createObjectURL", {
+    value: createObjectUrlMock,
+    configurable: true,
+  });
+  Object.defineProperty(URL, "revokeObjectURL", {
+    value: revokeObjectUrlMock,
+    configurable: true,
+  });
+}
+
+describe("ArabicTtsControls", () => {
+  beforeEach(() => {
+    vi.restoreAllMocks();
+    vi.unstubAllGlobals();
+    setupCloudAudioMocks();
+  });
+
+  it("requests provider audio for visible Arabic text", async () => {
+    render(
+      <ArabicTtsControls
+        speakableText="بسم الرحمن الرحيم"
+        label="Speak visible quiz text"
+      />,
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", { name: /speak visible quiz text/i }),
+    );
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(audioPlayMock).toHaveBeenCalledTimes(1));
+
+    const requestInit = fetchMock.mock.calls[0]?.[1] as RequestInit;
+    const body = JSON.parse(String(requestInit.body)) as { text: string };
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/tts",
+      expect.objectContaining({
+        method: "POST",
+      }),
+    );
+    expect(body.text).toBe("بسم الرحمن الرحيم");
+  });
+
+  it("does not call provider for empty speakable text", () => {
+    render(
+      <ArabicTtsControls
+        speakableText=""
+        label="Speak visible quiz text"
+        hiddenWarning="Hidden text cannot be played."
+      />,
+    );
+
+    expect(
+      screen.getByRole("button", { name: /speak visible quiz text/i }),
+    ).toBeDisabled();
+    expect(screen.getByTestId("arabic-tts-status")).toHaveTextContent(
+      "Hidden text cannot be played.",
+    );
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("shows provider setup message when Azure is missing", async () => {
+    setupCloudAudioMocks(
+      new Response(
+        JSON.stringify({
+          code: "AZURE_TTS_NOT_CONFIGURED",
+          error: "Azure Speech is not configured.",
+        }),
+        {
+          status: 503,
+          headers: {
+            "Content-Type": "application/json",
+          },
+        },
+      ),
+    );
+
+    render(<ArabicTtsControls speakableText="بسم الله" />);
+
+    fireEvent.click(screen.getByRole("button", { name: /speak visible text/i }));
+
+    await waitFor(() =>
+      expect(screen.getByTestId("arabic-tts-status")).toHaveTextContent(
+        "Cloud Arabic audio is not configured.",
+      ),
+    );
+  });
+
+  it("stops Arabic audio", async () => {
+    render(<ArabicTtsControls speakableText="بسم الله" />);
+
+    fireEvent.click(screen.getByRole("button", { name: /speak visible text/i }));
+
+    await waitFor(() => expect(audioPlayMock).toHaveBeenCalledTimes(1));
+
+    fireEvent.click(screen.getByRole("button", { name: /stop arabic audio/i }));
+
+    expect(audioPauseMock).toHaveBeenCalled();
+  });
+});
+'@ | Set-Content -Encoding UTF8 tests\unit\components\ArabicTtsControls.test.tsx
+
+@'
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import type {
+  GeneratedHideLineQuiz,
+  GeneratedHideWordQuiz,
+} from "@/types/quiz";
+import { QuizTtsPanel } from "@/components/quiz/QuizTtsPanel";
+
+let fetchMock: ReturnType<typeof vi.fn>;
+let audioPlayMock: ReturnType<typeof vi.fn>;
+
+class MockAudio {
+  src: string;
+  volume = 1;
+  onplaying: (() => void) | null = null;
+  onended: (() => void) | null = null;
+  onerror: (() => void) | null = null;
+
+  constructor(src: string) {
+    this.src = src;
+  }
+
+  play() {
+    audioPlayMock();
+    this.onplaying?.();
+    return Promise.resolve();
+  }
+
+  pause() {}
+
+  removeAttribute() {}
+
+  load() {}
+}
+
+function setupCloudAudioMocks() {
+  fetchMock = vi.fn(
+    async () =>
+      new Response(new Blob(["audio"], { type: "audio/mpeg" }), {
+        status: 200,
+      }),
+  );
+  audioPlayMock = vi.fn();
+
+  vi.stubGlobal("fetch", fetchMock);
+  vi.stubGlobal("Audio", MockAudio);
+
+  Object.defineProperty(window, "Audio", {
+    value: MockAudio,
+    configurable: true,
+  });
+  Object.defineProperty(URL, "createObjectURL", {
+    value: vi.fn(() => "blob:matn-quiz-audio"),
+    configurable: true,
+  });
+  Object.defineProperty(URL, "revokeObjectURL", {
+    value: vi.fn(),
+    configurable: true,
+  });
+}
+
+const wordQuiz: GeneratedHideWordQuiz = {
+  originalText: "بسم الله الرحمن الرحيم",
+  quizText: "بسم ____ الرحمن الرحيم",
+  method: "HIDE_WORD",
+  requestedCount: 1,
+  hiddenCount: 1,
+  selectedTokenIndexes: [2],
+  answers: [
+    {
+      index: 1,
+      tokenIndex: 2,
+      wordIndex: 1,
+      answer: "الله",
+      kind: "word",
+    },
+  ],
+};
+
+const lineQuiz: GeneratedHideLineQuiz = {
+  originalText: "بسم الله\nالرحمن الرحيم\nالحمد لله",
+  quizText: "بسم الله\n____\nالحمد لله",
+  method: "HIDE_LINE",
+  requestedCount: 1,
+  hiddenCount: 1,
+  selectedTokenIndexes: [2],
+  selectedLineIndexes: [2],
+  answers: [
+    {
+      index: 1,
+      tokenIndex: 2,
+      lineIndex: 1,
+      answer: "الرحمن الرحيم",
+      kind: "line",
+    },
+  ],
+};
+
+describe("QuizTtsPanel", () => {
+  beforeEach(() => {
+    vi.restoreAllMocks();
+    vi.unstubAllGlobals();
+    setupCloudAudioMocks();
+  });
+
+  it("sends visible word quiz text to provider without hidden words", async () => {
+    render(<QuizTtsPanel quiz={wordQuiz} />);
+
+    fireEvent.click(
+      screen.getByRole("button", { name: /speak visible quiz text/i }),
+    );
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+
+    const requestInit = fetchMock.mock.calls[0]?.[1] as RequestInit;
+    const body = JSON.parse(String(requestInit.body)) as { text: string };
+
+    expect(body.text).toBe("بسم الرحمن الرحيم");
+    expect(body.text).not.toContain("الله");
+    expect(body.text).not.toContain("____");
+  });
+
+  it("sends only requested visible line to provider", async () => {
+    render(<QuizTtsPanel quiz={lineQuiz} />);
+
+    expect(screen.getAllByTestId("tts-line-option")).toHaveLength(3);
+    expect(
+      screen.getByRole("button", {
+        name: /hidden line 2 cannot be played/i,
+      }),
+    ).toBeDisabled();
+
+    fireEvent.click(
+      screen.getByRole("button", { name: /speak visible line 1/i }),
+    );
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+
+    const requestInit = fetchMock.mock.calls[0]?.[1] as RequestInit;
+    const body = JSON.parse(String(requestInit.body)) as { text: string };
+
+    expect(body.text).toBe("بسم الله");
+    expect(body.text).not.toContain("الرحمن الرحيم");
+    expect(body.text).not.toContain("____");
+  });
+
+  it("keeps visible Arabic line text RTL", () => {
+    render(<QuizTtsPanel quiz={lineQuiz} />);
+
+    const visibleLines = screen.getAllByTestId("tts-visible-line-text");
+
+    expect(visibleLines[0]).toHaveAttribute("dir", "rtl");
+    expect(visibleLines[0]).toHaveAttribute("lang", "ar");
+    expect(visibleLines[1]).toHaveAttribute("dir", "rtl");
+    expect(visibleLines[1]).toHaveAttribute("lang", "ar");
+  });
+});
+'@ | Set-Content -Encoding UTF8 tests\unit\components\QuizTtsPanel.test.tsx
+
+@'
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import HomePage from "@/app/page";
+
+let fetchMock: ReturnType<typeof vi.fn>;
+
+class MockAudio {
+  src: string;
+  volume = 1;
+  onplaying: (() => void) | null = null;
+  onended: (() => void) | null = null;
+  onerror: (() => void) | null = null;
+
+  constructor(src: string) {
+    this.src = src;
+  }
+
+  play() {
+    this.onplaying?.();
+    return Promise.resolve();
+  }
+
+  pause() {}
+
+  removeAttribute() {}
+
+  load() {}
+}
+
+function setupCloudAudioMocks() {
+  fetchMock = vi.fn(
+    async () =>
+      new Response(new Blob(["audio"], { type: "audio/mpeg" }), {
+        status: 200,
+      }),
+  );
+
+  vi.stubGlobal("fetch", fetchMock);
+  vi.stubGlobal("Audio", MockAudio);
+
+  Object.defineProperty(window, "Audio", {
+    value: MockAudio,
+    configurable: true,
+  });
+  Object.defineProperty(URL, "createObjectURL", {
+    value: vi.fn(() => "blob:matn-quiz-audio"),
+    configurable: true,
+  });
+  Object.defineProperty(URL, "revokeObjectURL", {
+    value: vi.fn(),
+    configurable: true,
+  });
+}
+
+describe("TTS hidden text safety flow", () => {
+  beforeEach(() => {
+    localStorage.clear();
+    vi.restoreAllMocks();
+    vi.unstubAllGlobals();
+    setupCloudAudioMocks();
+  });
+
+  it("renders TTS controls after quiz generation and never sends placeholders", async () => {
+    render(<HomePage />);
+
+    fireEvent.change(screen.getAllByRole("textbox")[0]!, {
+      target: { value: "بسم الله الرحمن الرحيم" },
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: /continue/i }));
+
+    const ttsPanel = await screen.findByTestId("arabic-tts-panel");
+
+    expect(ttsPanel).toBeInTheDocument();
+
+    fireEvent.click(
+      screen.getByRole("button", { name: /speak visible quiz text/i }),
+    );
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+
+    const requestInit = fetchMock.mock.calls[0]?.[1] as RequestInit;
+    const body = JSON.parse(String(requestInit.body)) as { text: string };
+
+    expect(body.text).not.toContain("____");
+  });
+});
+'@ | Set-Content -Encoding UTF8 tests\integration\tts-hidden-text-safety-flow.test.tsx
+
+  # ------------------------------------------------------------
+  # 9. Phase 20 completion test
+  # ------------------------------------------------------------
+@'
+import { describe, expect, it } from "vitest";
+import { buildAzureSpeechSsml } from "@/lib/tts/azure-speech";
+import type { GeneratedHideWordQuiz } from "@/types/quiz";
+import {
+  assertSpeakableTextDoesNotLeakHiddenAnswers,
+  buildSpeakableTextForVisibleWords,
+} from "@/lib/quiz/tts-safe-text";
+
+describe("Phase 20 complete verification", () => {
+  it("keeps provider payload limited to safe visible text", () => {
+    const quiz: GeneratedHideWordQuiz = {
+      originalText: "بسم الله الرحمن الرحيم",
+      quizText: "بسم ____ الرحمن الرحيم",
+      method: "HIDE_WORD",
+      requestedCount: 1,
+      hiddenCount: 1,
+      selectedTokenIndexes: [2],
+      answers: [
+        {
+          index: 1,
+          tokenIndex: 2,
+          wordIndex: 1,
+          answer: "الله",
+          kind: "word",
+        },
+      ],
+    };
+
+    const speakableText = buildSpeakableTextForVisibleWords(quiz);
+    const ssml = buildAzureSpeechSsml(speakableText, "ar-AE-FatimaNeural");
+
+    expect(speakableText).toBe("بسم الرحمن الرحيم");
+    expect(assertSpeakableTextDoesNotLeakHiddenAnswers(quiz, speakableText)).toBe(
+      true,
+    );
+    expect(ssml).toContain("بسم الرحمن الرحيم");
+    expect(ssml).not.toContain("____");
+  });
+});
+'@ | Set-Content -Encoding UTF8 tests\unit\tts\phase-20-complete.test.ts
+
+  # ------------------------------------------------------------
+  # 10. Docs
+  # ------------------------------------------------------------
+@'
+# Matn Quiz - Phase 20 Status
+
+## Scope
+
+Phase 20 replaces unreliable browser-only Arabic speech with provider-based Arabic cloud TTS.
+
+## Why
+
+Chrome on some Windows machines has no Arabic `speechSynthesis` voice. In that case the browser can show a speaker icon but produce no Arabic audio.
+
+## Architecture
+
+Safe visible quiz text only:
+
+1. Build safe text from quiz.
+2. Remove hidden words or hidden lines.
+3. Block placeholders.
+4. Send safe text to `/api/tts`.
+5. `/api/tts` calls Azure Speech.
+6. Browser plays the returned MP3 blob.
+
+## Environment
+
+Create or update `.env.local`:
+
+```env
+AZURE_SPEECH_KEY=your_key_here
+AZURE_SPEECH_REGION=eastus
+AZURE_SPEECH_VOICE=ar-AE-FatimaNeural
+````
+
+Optional:
+
+```env
+AZURE_SPEECH_ENDPOINT=https://eastus.tts.speech.microsoft.com/cognitiveservices/v1
+```
+
+## Safety Rule
+
+Never send `quiz.originalText` or `quiz.quizText` directly to `/api/tts`.
+
+Only send derived safe text from `tts-safe-text.ts`.
+
+## Verification
+
+```bash
+pnpm run verify:phase20
+```
+
+'@ | Set-Content -Encoding UTF8 PHASE-20-STATUS.md
+
+# ------------------------------------------------------------
+
+# 11. Package scripts
+
+# ------------------------------------------------------------
+
+@'
+/* eslint-disable @typescript-eslint/no-require-imports */
+const fs = require("node:fs");
+
+const file = "package.json";
+const pkg = JSON.parse(fs.readFileSync(file, "utf8"));
+
+pkg.scripts = pkg.scripts || {};
+pkg.scripts.test = "vitest run";
+pkg.scripts["test:watch"] = pkg.scripts["test:watch"] || "vitest";
+pkg.scripts["verify:phase20"] = "node scripts/verify-phase-20.cjs";
+
+fs.writeFileSync(file, `${JSON.stringify(pkg, null, 2)}\n`);
+'@ | Set-Content -Encoding UTF8 scripts\set-phase-20-package.cjs
+
+node scripts\set-phase-20-package.cjs
+
+# ------------------------------------------------------------
+
+# 12. Verify script
+
+# ------------------------------------------------------------
+
+@'
+/* eslint-disable @typescript-eslint/no-require-imports */
+const { existsSync, readFileSync } = require("node:fs");
+const { spawnSync } = require("node:child_process");
+const path = require("node:path");
+
+const root = process.cwd();
+
+const requiredFiles = [
+"lib/tts/azure-speech.ts",
+"app/api/tts/route.ts",
+"hooks/useArabicTts.ts",
+"components/quiz/ArabicTtsControls.tsx",
+"tests/unit/tts/azure-speech.test.ts",
+"tests/unit/api/tts-route.test.ts",
+"tests/unit/components/ArabicTtsControls.test.tsx",
+"tests/unit/components/QuizTtsPanel.test.tsx",
+"tests/integration/tts-hidden-text-safety-flow.test.tsx",
+"tests/unit/tts/phase-20-complete.test.ts",
+"PHASE-20-STATUS.md",
+".env.local.example"
+];
+
+function fail(message) {
+console.error(`\nFAILED: ${message}`);
+process.exit(1);
+}
+
+function pass(message) {
+console.log(`OK ${message}`);
+}
+
+function detectPackageManager() {
+return existsSync(path.join(root, "pnpm-lock.yaml")) ? "pnpm" : "npm";
+}
+
+function run(command, args) {
+console.log(`\n> ${command} ${args.join(" ")}`);
+
+const result = spawnSync(command, args, {
+stdio: "inherit",
+shell: process.platform === "win32",
+cwd: root,
+});
+
+if (result.status !== 0) {
+fail(`Command failed: ${command} ${args.join(" ")}`);
+}
+}
+
+console.log("\n=== Checking Phase 20 files ===");
+
+for (const file of requiredFiles) {
+if (!existsSync(path.join(root, file))) {
+fail(`Missing required file: ${file}`);
+}
+
+pass(file);
+}
+
+const hook = readFileSync(path.join(root, "hooks/useArabicTts.ts"), "utf8");
+
+if (!hook.includes('fetch("/api/tts"')) {
+fail("useArabicTts.ts is not using /api/tts provider route.");
+}
+
+pass("cloud TTS hook uses /api/tts");
+
+const pm = detectPackageManager();
+
+console.log(`\nUsing package manager: ${pm}`);
+
+run(pm, [
+"test",
+"tests/unit/tts/azure-speech.test.ts",
+"tests/unit/api/tts-route.test.ts",
+"tests/unit/components/ArabicTtsControls.test.tsx",
+"tests/unit/components/QuizTtsPanel.test.tsx",
+"tests/integration/tts-hidden-text-safety-flow.test.tsx",
+"tests/unit/tts/phase-20-complete.test.ts"
+]);
+
+run(pm, ["test"]);
+run(pm, ["run", "build"]);
+run(pm, ["run", "lint"]);
+
+console.log("\nPhase 20 cloud Arabic TTS verification passed.");
+'@ | Set-Content -Encoding UTF8 scripts\verify-phase-20.cjs
+
+# ------------------------------------------------------------
+
+# 13. ESLint cjs header safety
+
+# ------------------------------------------------------------
+
+Get-ChildItem scripts -Filter *.cjs -File | ForEach-Object {
+$scriptPath = $_.FullName
+$scriptText = Get-Content $scriptPath -Raw
+
+```
+if ($scriptText -notmatch "@typescript-eslint/no-require-imports") {
+  Set-Content -Encoding UTF8 $scriptPath ("/* eslint-disable @typescript-eslint/no-require-imports */`r`n" + $scriptText)
+}
+```
+
+}
+
+# ------------------------------------------------------------
+
+# 14. Run verification
+
+# ------------------------------------------------------------
+
+$pm = "npm"
+if (Test-Path "pnpm-lock.yaml") { $pm = "pnpm" }
+
+Write-Host ""
+Write-Host "Running Phase 20 verification..." -ForegroundColor Yellow
+
+& $pm run verify:phase20
+Write-Host "verify:phase20 exit code: $LASTEXITCODE"
+}
+catch {
+Write-Host ""
+Write-Host "Phase 20 command caught error:" -ForegroundColor Red
+Write-Host $_.Exception.Message -ForegroundColor Red
+}
+finally {
+Stop-Transcript | Out-Null
+Write-Host ""
+Write-Host "DONE" -ForegroundColor Cyan
+Write-Host "Full log saved: $logFile" -ForegroundColor Green
+Read-Host "Press Enter to close"
+}
+
+````
+
+After it passes, put your real Azure key in `.env.local`:
+
+```env id="phase20-env"
+AZURE_SPEECH_KEY=your_real_key
+AZURE_SPEECH_REGION=eastus
+AZURE_SPEECH_VOICE=ar-AE-FatimaNeural
+````
+
+Then restart:
+
+```powershell id="restart-phase20"
+pnpm dev
+```
+
+Without the real Azure key, the app will correctly show: **Cloud Arabic audio is not configured.**
+
+[1]: https://learn.microsoft.com/en-us/azure/ai-services/Speech-Service/language-support?utm_source=chatgpt.com "Language and Voice Support for Azure Speech - Foundry Tools | Microsoft Learn"
+
+At line:1 char:295
++ ... `, and its REST API can return synthesized audio. ([Microsoft Learn][ ...
++                                                                  ~
+Missing ] at end of attribute or type literal.
+
+At line:1 char:296
++ ... and its REST API can return synthesized audio. ([Microsoft Learn][1])
++                                                                ~~~~~~~~~
+Unexpected token 'Learn][1]' in expression or statement.
+
+At line:1 char:295
++ ... `, and its REST API can return synthesized audio. ([Microsoft Learn][ ...
++                                                                  ~
+Missing closing ')' in expression.
+
+At line:1 char:305
++ ... and its REST API can return synthesized audio. ([Microsoft Learn][1])
++                                                                         ~
+Unexpected token ')' in expression or statement.
+
+At line:1580 char:2
++ [1]: https://learn.microsoft.com/en-us/azure/ai-services/Speech-Servi ...
++  ~
+Missing type name after '['.
+At line:1 char:295
++ ... `, and its REST API can return synthesized audio. ([Microsoft Learn][ ...
++                                                                  ~
+Missing ] at end of attribute or type literal.
+
+At line:1 char:296
++ ... and its REST API can return synthesized audio. ([Microsoft Learn][1])
++                                                                ~~~~~~~~~
+Unexpected token 'Learn][1]' in expression or statement.
+
+At line:1 char:295
++ ... `, and its REST API can return synthesized audio. ([Microsoft Learn][ ...
++                                                                  ~
+Missing closing ')' in expression.
+
+At line:1 char:305
++ ... and its REST API can return synthesized audio. ([Microsoft Learn][1])
++                                                                         ~
+Unexpected token ')' in expression or statement.
+
+At line:1580 char:2
++ [1]: https://learn.microsoft.com/en-us/azure/ai-services/Speech-Servi ...
++  ~
+Missing type name after '['.
+    + CategoryInfo          : ParserError: (:) [], ParentContainsErrorRecordException
+    + FullyQualifiedErrorId : EndSquareBracketExpectedAtEndOfAttribute
+
+]633;D;0]633;A]633;P;Cwd=C:\x5cUsers\x5cDell\x5cOneDrive\x5cDesktop\x5cPrograms\x5cmatn-quizPS C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz> ]633;B
+]633;D]633;A]633;P;Cwd=C:\x5cUsers\x5cDell\x5cOneDrive\x5cDesktop\x5cPrograms\x5cmatn-quizPS C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz> ]633;B
+]633;D]633;A]633;P;Cwd=C:\x5cUsers\x5cDell\x5cOneDrive\x5cDesktop\x5cPrograms\x5cmatn-quizPS C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz> ]633;B
+PS>$ErrorActionPreference = "Continue"
+
+Write-Host "=== Phase 20 Clean Cloud TTS Setup ===" -ForegroundColor Cyan
+
+if (!(Test-Path "package.json")) {
+  Write-Host "package.json not found. Run from matn-quiz root." -ForegroundColor Red
+  exit 1
+}
+
+New-Item -ItemType Directory -Force app\api\tts, lib\tts, tests\unit\tts, tests\unit\api, scripts | Out-Null
+
+@'
+export const AZURE_TTS_DEFAULT_VOICE = "ar-AE-FatimaNeural";
+export const AZURE_TTS_OUTPUT_FORMAT = "audio-24khz-96kbitrate-mono-mp3";
+
+export interface AzureSpeechConfig {
+  configured: boolean;
+  key: string;
+  region: string;
+  endpoint: string;
+  voice: string;
+  outputFormat: string;
+}
+
+export class AzureSpeechConfigError extends Error {
+  code = "AZURE_TTS_NOT_CONFIGURED" as const;
+
+  constructor() {
+    super("Azure Speech is not configured. Add AZURE_SPEECH_KEY and AZURE_SPEECH_REGION to .env.local.");
+    this.name = "AzureSpeechConfigError";
+  }
+}
+
+export class AzureSpeechRequestError extends Error {
+  constructor(
+    message: string,
+    readonly status: number,
+    readonly responseBody: string,
+  ) {
+    super(message);
+    this.name = "AzureSpeechRequestError";
+  }
+}
+
+function trimEnv(value: string | undefined): string {
+  return value?.trim() ?? "";
+}
+
+function normalizeEndpoint(value: string): string {
+  return value.replace(/\/+$/u, "");
+}
+
+export function getAzureSpeechConfig(
+  env: Record<string, string | undefined> = process.env,
+): AzureSpeechConfig {
+  const key = trimEnv(env.AZURE_SPEECH_KEY);
+  const region = trimEnv(env.AZURE_SPEECH_REGION);
+  const endpointFromEnv = normalizeEndpoint(trimEnv(env.AZURE_SPEECH_ENDPOINT));
+  const voice = trimEnv(env.AZURE_SPEECH_VOICE) || AZURE_TTS_DEFAULT_VOICE;
+
+  const endpoint =
+    endpointFromEnv ||
+    (region
+      ? `https://${region}.tts.speech.microsoft.com/cognitiveservices/v1`
+      : "");
+
+  return {
+    configured: key.length > 0 && endpoint.length > 0,
+    key,
+    region,
+    endpoint,
+    voice,
+    outputFormat: AZURE_TTS_OUTPUT_FORMAT,
+  };
+}
+
+export function getVoiceLocale(voice: string): string {
+  const match = /^([a-z]{2}-[A-Z]{2})-/u.exec(voice);
+  return match?.[1] ?? "ar-AE";
+}
+
+export function escapeSsmlText(value: string): string {
+  return value
+    .replace(/&/gu, "&amp;")
+    .replace(/</gu, "&lt;")
+    .replace(/>/gu, "&gt;")
+    .replace(/"/gu, "&quot;")
+    .replace(/'/gu, "&apos;");
+}
+
+export function buildAzureSpeechSsml(
+  text: string,
+  voice = AZURE_TTS_DEFAULT_VOICE,
+): string {
+  const locale = getVoiceLocale(voice);
+  const safeText = escapeSsmlText(text.trim());
+
+  return `<speak version="1.0" xml:lang="${locale}"><voice xml:lang="${locale}" name="${voice}">${safeText}</voice></speak>`;
+}
+
+export async function synthesizeAzureSpeech(
+  text: string,
+  config = getAzureSpeechConfig(),
+): Promise<ArrayBuffer> {
+  if (!config.configured) {
+    throw new AzureSpeechConfigError();
+  }
+
+  const response = await fetch(config.endpoint, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/ssml+xml",
+      "Ocp-Apim-Subscription-Key": config.key,
+      "X-Microsoft-OutputFormat": config.outputFormat,
+      "User-Agent": "matn-quiz",
+    },
+    body: buildAzureSpeechSsml(text, config.voice),
+  });
+
+  if (!response.ok) {
+    const responseBody = await response.text().catch(() => "");
+    throw new AzureSpeechRequestError(
+      `Azure Speech request failed with status ${response.status}.`,
+      response.status,
+      responseBody,
+    );
+  }
+
+  return response.arrayBuffer();
+}
+'@ | Set-Content -Encoding UTF8 lib\tts\azure-speech.ts
+
+@'
+import { NextResponse } from "next/server";
+import {
+  AZURE_TTS_OUTPUT_FORMAT,
+  AzureSpeechConfigError,
+  AzureSpeechRequestError,
+  getAzureSpeechConfig,
+  synthesizeAzureSpeech,
+} from "@/lib/tts/azure-speech";
+
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
+const MAX_TTS_TEXT_LENGTH = 3000;
+const PLACEHOLDER_PATTERN = /_{2,}|□{2,}/u;
+
+interface TtsRequestBody {
+  text?: unknown;
+}
+
+function jsonError(error: string, status: number, code: string) {
+  return NextResponse.json({ error, code }, { status });
+}
+
+async function readRequestBody(request: Request): Promise<TtsRequestBody | null> {
+  try {
+    return (await request.json()) as TtsRequestBody;
+  } catch {
+    return null;
+  }
+}
+
+export async function GET() {
+  const config = getAzureSpeechConfig();
+
+  return NextResponse.json({
+    provider: "azure",
+    configured: config.configured,
+    voice: config.voice,
+    region: config.region || null,
+    outputFormat: AZURE_TTS_OUTPUT_FORMAT,
+  });
+}
+
+export async function POST(request: Request) {
+  const body = await readRequestBody(request);
+
+  if (!body || typeof body.text !== "string") {
+    return jsonError("Text is required.", 400, "TTS_TEXT_REQUIRED");
+  }
+
+  const text = body.text.trim();
+
+  if (!text) {
+    return jsonError("Text is required.", 400, "TTS_TEXT_REQUIRED");
+  }
+
+  if (text.length > MAX_TTS_TEXT_LENGTH) {
+    return jsonError("Text is too long.", 400, "TTS_TEXT_TOO_LONG");
+  }
+
+  if (PLACEHOLDER_PATTERN.test(text)) {
+    return jsonError(
+      "Speakable text cannot contain hidden-answer placeholders.",
+      400,
+      "TTS_PLACEHOLDER_BLOCKED",
+    );
+  }
+
+  try {
+    const audio = await synthesizeAzureSpeech(text);
+
+    return new Response(audio, {
+      status: 200,
+      headers: {
+        "Content-Type": "audio/mpeg",
+        "Cache-Control": "no-store",
+        "X-Content-Type-Options": "nosniff",
+      },
+    });
+  } catch (error) {
+    if (error instanceof AzureSpeechConfigError) {
+      return jsonError(error.message, 503, error.code);
+    }
+
+    if (error instanceof AzureSpeechRequestError) {
+      return jsonError(error.message, 502, "AZURE_TTS_REQUEST_FAILED");
+    }
+
+    return jsonError("Unable to create Arabic audio.", 500, "TTS_UNKNOWN_ERROR");
+  }
+}
+'@ | Set-Content -Encoding UTF8 app\api\tts\route.ts
+
+@'
+"use client";
+
+import { useCallback, useState } from "react";
+
+export type ArabicTtsStatus =
+  | "idle"
+  | "loading"
+  | "speaking"
+  | "stopped"
+  | "unsupported"
+  | "provider-missing"
+  | "empty"
+  | "error";
+
+export interface ArabicTtsSpeakOptions {
+  onStart?: () => void;
+  onEnd?: () => void;
+  onError?: (status: ArabicTtsStatus, message: string) => void;
+}
+
+export interface UseArabicTtsResult {
+  status: ArabicTtsStatus;
+  isSupported: boolean;
+  speak: (text: string, options?: ArabicTtsSpeakOptions) => boolean;
+  stop: () => boolean;
+}
+
+interface ProviderErrorPayload {
+  error?: string;
+  code?: string;
+}
+
+class ArabicTtsPlaybackError extends Error {
+  constructor(
+    message: string,
+    readonly status: ArabicTtsStatus = "error",
+  ) {
+    super(message);
+    this.name = "ArabicTtsPlaybackError";
+  }
+}
+
+let activeAudio: HTMLAudioElement | null = null;
+let activeObjectUrl: string | null = null;
+
+function getAudioConstructor(): typeof Audio | null {
+  if (typeof window !== "undefined" && typeof window.Audio !== "undefined") {
+    return window.Audio;
+  }
+
+  return null;
+}
+
+function canUseObjectUrl(): boolean {
+  return (
+    typeof URL !== "undefined" &&
+    typeof URL.createObjectURL === "function" &&
+    typeof URL.revokeObjectURL === "function"
+  );
+}
+
+export function canUseArabicSpeechSynthesis(): boolean {
+  return (
+    typeof fetch === "function" &&
+    getAudioConstructor() !== null &&
+    canUseObjectUrl()
+  );
+}
+
+function cleanupActiveAudio() {
+  if (activeAudio) {
+    activeAudio.pause();
+    activeAudio.removeAttribute("src");
+    activeAudio.load();
+    activeAudio = null;
+  }
+
+  if (activeObjectUrl) {
+    URL.revokeObjectURL(activeObjectUrl);
+    activeObjectUrl = null;
+  }
+}
+
+async function parseProviderError(
+  response: Response,
+): Promise<ArabicTtsPlaybackError> {
+  let payload: ProviderErrorPayload = {};
+
+  try {
+    payload = (await response.json()) as ProviderErrorPayload;
+  } catch {
+    payload = {};
+  }
+
+  const message =
+    payload.error || `Arabic audio request failed with status ${response.status}.`;
+
+  if (response.status === 503 || payload.code === "AZURE_TTS_NOT_CONFIGURED") {
+    return new ArabicTtsPlaybackError(message, "provider-missing");
+  }
+
+  return new ArabicTtsPlaybackError(message, "error");
+}
+
+async function playCloudArabicText(
+  text: string,
+  options: ArabicTtsSpeakOptions = {},
+) {
+  if (!canUseArabicSpeechSynthesis()) {
+    throw new ArabicTtsPlaybackError(
+      "Audio playback is not supported in this browser.",
+      "unsupported",
+    );
+  }
+
+  const response = await fetch("/api/tts", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ text }),
+  });
+
+  if (!response.ok) {
+    throw await parseProviderError(response);
+  }
+
+  const audioBlob = await response.blob();
+
+  if (audioBlob.size === 0) {
+    throw new ArabicTtsPlaybackError("Audio provider returned an empty file.");
+  }
+
+  cleanupActiveAudio();
+
+  const AudioConstructor = getAudioConstructor();
+
+  if (!AudioConstructor || !canUseObjectUrl()) {
+    throw new ArabicTtsPlaybackError(
+      "Audio playback is not supported in this browser.",
+      "unsupported",
+    );
+  }
+
+  const audioUrl = URL.createObjectURL(audioBlob);
+  const audio = new AudioConstructor(audioUrl);
+
+  activeObjectUrl = audioUrl;
+  activeAudio = audio;
+  audio.volume = 1;
+
+  audio.onplaying = () => {
+    options.onStart?.();
+  };
+
+  audio.onended = () => {
+    cleanupActiveAudio();
+    options.onEnd?.();
+  };
+
+  audio.onerror = () => {
+    cleanupActiveAudio();
+    options.onError?.("error", "Unable to play Arabic audio.");
+  };
+
+  await audio.play();
+}
+
+export function speakArabicText(
+  text: string,
+  options: ArabicTtsSpeakOptions = {},
+): boolean {
+  const speakableText = text.trim();
+
+  if (!speakableText) {
+    return false;
+  }
+
+  void playCloudArabicText(speakableText, options).catch((error: unknown) => {
+    if (error instanceof ArabicTtsPlaybackError) {
+      options.onError?.(error.status, error.message);
+      return;
+    }
+
+    options.onError?.("error", "Unable to play Arabic audio.");
+  });
+
+  return true;
+}
+
+export function stopArabicSpeech(): boolean {
+  cleanupActiveAudio();
+
+  return true;
+}
+
+export function useArabicTts(): UseArabicTtsResult {
+  const [status, setStatus] = useState<ArabicTtsStatus>("idle");
+  const [isSupported, setIsSupported] = useState(true);
+
+  const speak = useCallback(
+    (text: string, options: ArabicTtsSpeakOptions = {}) => {
+      if (text.trim().length === 0) {
+        setStatus("empty");
+        return false;
+      }
+
+      if (!canUseArabicSpeechSynthesis()) {
+        setIsSupported(false);
+        setStatus("unsupported");
+        return false;
+      }
+
+      setIsSupported(true);
+      setStatus("loading");
+
+      const didStart = speakArabicText(text, {
+        ...options,
+        onStart: () => {
+          setStatus("speaking");
+          options.onStart?.();
+        },
+        onEnd: () => {
+          setStatus("idle");
+          options.onEnd?.();
+        },
+        onError: (nextStatus, message) => {
+          setStatus(nextStatus);
+          options.onError?.(nextStatus, message);
+        },
+      });
+
+      if (!didStart) {
+        setStatus("error");
+      }
+
+      return didStart;
+    },
+    [],
+  );
+
+  const stop = useCallback(() => {
+    const didStop = stopArabicSpeech();
+
+    if (didStop) {
+      setStatus("stopped");
+    }
+
+    return didStop;
+  }, []);
+
+  return {
+    status,
+    isSupported,
+    speak,
+    stop,
+  };
+}
+'@ | Set-Content -Encoding UTF8 hooks\useArabicTts.ts
+
+@'
+"use client";
+
+import { Square, Volume2 } from "lucide-react";
+import { Button } from "@/components/ui";
+import { useArabicTts } from "@/hooks/useArabicTts";
+import { cn } from "@/lib/utils/cn";
+
+export interface ArabicTtsControlsProps {
+  speakableText: string;
+  label?: string;
+  disabled?: boolean;
+  hiddenWarning?: string;
+  className?: string;
+  testId?: string;
+}
+
+export function ArabicTtsControls({
+  speakableText,
+  label = "Speak visible text",
+  disabled = false,
+  hiddenWarning = "Hidden text cannot be played.",
+  className,
+  testId = "arabic-tts-controls",
+}: ArabicTtsControlsProps) {
+  const { status, isSupported, speak, stop } = useArabicTts();
+
+  const hasSpeakableText = speakableText.trim().length > 0;
+  const isBusy = status === "loading" || status === "speaking";
+  const isDisabled = disabled || !hasSpeakableText || !isSupported || isBusy;
+
+  const statusText = !hasSpeakableText
+    ? hiddenWarning
+    : !isSupported || status === "unsupported"
+      ? "Audio playback is not supported in this browser."
+      : status === "provider-missing"
+        ? "Cloud Arabic audio is not configured. Add Azure Speech settings to .env.local."
+        : status === "loading"
+          ? "Preparing Arabic audio..."
+          : status === "speaking"
+            ? "Playing visible Arabic text."
+            : status === "stopped"
+              ? "Audio stopped."
+              : status === "error"
+                ? "Unable to play Arabic audio."
+                : "Ready to play visible Arabic text.";
+
+  return (
+    <div
+      data-testid={testId}
+      className={cn(
+        "rounded-2xl border border-emerald-100 bg-emerald-50/60 p-4",
+        className,
+      )}
+    >
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <p className="text-sm font-semibold text-emerald-950">
+            Arabic Text-to-Speech
+          </p>
+          <p
+            data-testid="arabic-tts-status"
+            role="status"
+            aria-live="polite"
+            className="mt-1 text-sm leading-6 text-emerald-800"
+          >
+            {statusText}
+          </p>
+        </div>
+
+        <div className="flex flex-wrap gap-2">
+          <Button
+            type="button"
+            variant="primary"
+            size="sm"
+            disabled={isDisabled}
+            aria-label={label}
+            onClick={() => speak(speakableText)}
+          >
+            <Volume2 className="h-4 w-4" aria-hidden="true" />
+            <span>{status === "loading" ? "Preparing..." : label}</span>
+          </Button>
+
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            disabled={!isSupported}
+            aria-label="Stop Arabic audio"
+            onClick={stop}
+          >
+            <Square className="h-4 w-4" aria-hidden="true" />
+            <span>Stop</span>
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+'@ | Set-Content -Encoding UTF8 components\quiz\ArabicTtsControls.tsx
+
+@'
+# Azure Speech TTS
+AZURE_SPEECH_KEY=
+AZURE_SPEECH_REGION=eastus
+AZURE_SPEECH_VOICE=ar-AE-FatimaNeural
+AZURE_SPEECH_ENDPOINT=
+'@ | Set-Content -Encoding UTF8 .env.local.example
+
+if (!(Test-Path ".env.local")) {
+  Copy-Item ".env.local.example" ".env.local" -Force
+}
+
+node -e "const fs=require('fs');const p=JSON.parse(fs.readFileSync('package.json','utf8'));p.scripts=p.scripts||{};p.scripts.test='vitest run';p.scripts['verify:phase20']='pnpm test tests/unit/tts/azure-speech.test.ts tests/unit/api/tts-route.test.ts tests/unit/components/ArabicTtsControls.test.tsx tests/unit/components/QuizTtsPanel.test.tsx tests/integration/tts-hidden-text-safety-flow.test.tsx tests/unit/tts/phase-20-complete.test.ts && pnpm run build && pnpm run lint';fs.writeFileSync('package.json',JSON.stringify(p,null,2)+'\n');"
+
+@'
+import { describe, expect, it } from "vitest";
+import {
+  AZURE_TTS_DEFAULT_VOICE,
+  buildAzureSpeechSsml,
+  escapeSsmlText,
+  getAzureSpeechConfig,
+  getVoiceLocale,
+} from "@/lib/tts/azure-speech";
+
+describe("azure-speech provider", () => {
+  it("detects missing Azure config", () => {
+    const config = getAzureSpeechConfig({});
+
+    expect(config.configured).toBe(false);
+    expect(config.voice).toBe(AZURE_TTS_DEFAULT_VOICE);
+  });
+
+  it("builds endpoint from region", () => {
+    const config = getAzureSpeechConfig({
+      AZURE_SPEECH_KEY: "test-key",
+      AZURE_SPEECH_REGION: "eastus",
+      AZURE_SPEECH_VOICE: "ar-AE-FatimaNeural",
+    });
+
+    expect(config.configured).toBe(true);
+    expect(config.endpoint).toBe(
+      "https://eastus.tts.speech.microsoft.com/cognitiveservices/v1",
+    );
+  });
+
+  it("gets locale from voice name", () => {
+    expect(getVoiceLocale("ar-AE-FatimaNeural")).toBe("ar-AE");
+  });
+
+  it("escapes SSML text", () => {
+    expect(escapeSsmlText('السلام & <test> "ok"')).toBe(
+      "السلام &amp; &lt;test&gt; &quot;ok&quot;",
+    );
+  });
+
+  it("builds Arabic SSML", () => {
+    const ssml = buildAzureSpeechSsml("السلام عليكم", "ar-AE-FatimaNeural");
+
+    expect(ssml).toContain('xml:lang="ar-AE"');
+    expect(ssml).toContain('name="ar-AE-FatimaNeural"');
+    expect(ssml).toContain("السلام عليكم");
+  });
+});
+'@ | Set-Content -Encoding UTF8 tests\unit\tts\azure-speech.test.ts
+
+@'
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { GET, POST } from "@/app/api/tts/route";
+
+const originalEnv = { ...process.env };
+
+function makeRequest(body: unknown) {
+  return new Request("http://localhost/api/tts", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(body),
+  });
+}
+
+describe("/api/tts route", () => {
+  beforeEach(() => {
+    process.env = { ...originalEnv };
+    delete process.env.AZURE_SPEECH_KEY;
+    delete process.env.AZURE_SPEECH_REGION;
+    delete process.env.AZURE_SPEECH_ENDPOINT;
+    delete process.env.AZURE_SPEECH_VOICE;
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+    vi.unstubAllGlobals();
+    process.env = { ...originalEnv };
+  });
+
+  it("returns provider status", async () => {
+    const response = await GET();
+    const payload = (await response.json()) as { provider: string };
+
+    expect(response.status).toBe(200);
+    expect(payload.provider).toBe("azure");
+  });
+
+  it("returns 503 when Azure is not configured", async () => {
+    const response = await POST(makeRequest({ text: "السلام عليكم" }));
+    const payload = (await response.json()) as { code: string };
+
+    expect(response.status).toBe(503);
+    expect(payload.code).toBe("AZURE_TTS_NOT_CONFIGURED");
+  });
+
+  it("blocks placeholders before provider call", async () => {
+    process.env.AZURE_SPEECH_KEY = "test-key";
+    process.env.AZURE_SPEECH_REGION = "eastus";
+
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+
+    const response = await POST(makeRequest({ text: "السلام ____ عليكم" }));
+    const payload = (await response.json()) as { code: string };
+
+    expect(response.status).toBe(400);
+    expect(payload.code).toBe("TTS_PLACEHOLDER_BLOCKED");
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("calls Azure and returns audio", async () => {
+    process.env.AZURE_SPEECH_KEY = "test-key";
+    process.env.AZURE_SPEECH_REGION = "eastus";
+
+    const fetchMock = vi.fn(async () =>
+      new Response(new Uint8Array([1, 2, 3]), {
+        status: 200,
+        headers: { "Content-Type": "audio/mpeg" },
+      }),
+    );
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    const response = await POST(makeRequest({ text: "السلام عليكم" }));
+    const audio = await response.arrayBuffer();
+
+    expect(response.status).toBe(200);
+    expect(audio.byteLength).toBe(3);
+    expect(fetchMock).toHaveBeenCalled();
+  });
+});
+'@ | Set-Content -Encoding UTF8 tests\unit\api\tts-route.test.ts
+
+@'
+import { describe, expect, it } from "vitest";
+import { buildAzureSpeechSsml } from "@/lib/tts/azure-speech";
+import type { GeneratedHideWordQuiz } from "@/types/quiz";
+import {
+  assertSpeakableTextDoesNotLeakHiddenAnswers,
+  buildSpeakableTextForVisibleWords,
+} from "@/lib/quiz/tts-safe-text";
+
+describe("Phase 20 complete verification", () => {
+  it("keeps provider payload limited to safe visible text", () => {
+    const quiz: GeneratedHideWordQuiz = {
+      originalText: "بسم الله الرحمن الرحيم",
+      quizText: "بسم ____ الرحمن الرحيم",
+      method: "HIDE_WORD",
+      requestedCount: 1,
+      hiddenCount: 1,
+      selectedTokenIndexes: [2],
+      answers: [
+        {
+          index: 1,
+          tokenIndex: 2,
+          wordIndex: 1,
+          answer: "الله",
+          kind: "word",
+        },
+      ],
+    };
+
+    const speakableText = buildSpeakableTextForVisibleWords(quiz);
+    const ssml = buildAzureSpeechSsml(speakableText, "ar-AE-FatimaNeural");
+
+    expect(speakableText).toBe("بسم الرحمن الرحيم");
+    expect(assertSpeakableTextDoesNotLeakHiddenAnswers(quiz, speakableText)).toBe(
+      true,
+    );
+    expect(ssml).toContain("بسم الرحمن الرحيم");
+    expect(ssml).not.toContain("____");
+  });
+});
+'@ | Set-Content -Encoding UTF8 tests\unit\tts\phase-20-complete.test.ts
+
+pnpm test tests/unit/tts/azure-speech.test.ts tests/unit/api/tts-route.test.ts tests/unit/components/ArabicTtsControls.test.tsx tests/unit/components/QuizTtsPanel.test.tsx tests/integration/tts-hidden-text-safety-flow.test.tsx tests/unit/tts/phase-20-complete.test.ts
+pnpm run build
+pnpm run lint
+=== Phase 20 Clean Cloud TTS Setup ===
+
+
+
+
+]633;D;0]633;A]633;P;Cwd=C:\x5cUsers\x5cDell\x5cOneDrive\x5cDesktop\x5cPrograms\x5cmatn-quizPS C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz> ]633;B

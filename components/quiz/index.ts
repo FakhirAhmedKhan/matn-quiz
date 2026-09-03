@@ -10,3 +10,6 @@ export * from "./ShareableQuizPanel";
 export * from "./ReviewAnswerControls";
 export * from "./ReviewProgressSummary";
 export * from "./StudySessionResumePanel";
+
+export * from "./ArabicTtsControls";
+export * from "./QuizTtsPanel";

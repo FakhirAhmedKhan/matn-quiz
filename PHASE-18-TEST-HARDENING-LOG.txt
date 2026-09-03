@@ -1,0 +1,63 @@
+﻿**********************
+Windows PowerShell transcript start
+Start time: 20260903041440
+Username: DESKTOP-5ELG7C2\Dell
+RunAs User: DESKTOP-5ELG7C2\Dell
+Configuration Name: 
+Machine: DESKTOP-5ELG7C2 (Microsoft Windows NT 10.0.26200.0)
+Host Application: C:\WINDOWS\System32\WindowsPowerShell\v1.0\powershell.exe -noexit -command try { . "c:\Users\Dell\AppData\Local\Programs\Microsoft VS Code\08d4889f9e\resources\app\out\vs\workbench\contrib\terminal\common\scripts\shellIntegration.ps1" } catch {}
+Process ID: 16340
+PSVersion: 5.1.26100.9278
+PSEdition: Desktop
+PSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1.26100.9278
+BuildVersion: 10.0.26100.9278
+CLRVersion: 4.0.30319.42000
+WSManStackVersion: 3.0
+PSRemotingProtocolVersion: 2.3
+SerializationVersion: 1.1.0.1
+**********************
+
+Running Phase 18 TTS tests...
+>>   Write-Host "full test exit code: $LASTEXITCODE"
+>> }
+>> catch {
+>>   Write-Host ""
+>>   Write-Host "Phase 18 test hardening caught error:" -ForegroundColor Red
+>>   Write-Host $_.Exception.Message -ForegroundColor Red
+>> }
+>> finally {
+>>   Stop-Transcript | Out-Null
+>>   Write-Host ""
+>>   Write-Host "DONE" -ForegroundColor Cyan
+>>   Write-Host "Full log saved: $logFile" -ForegroundColor Green
+>>   Read-Host "Press Enter to close"
+>> }
+=== Phase 18 Test Hardening ===
+
+Running Phase 18 TTS tests...
+
+> matn-quiz@0.1.0 test C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz
+> vitest run "tests/unit/quiz/tts-safe-text.test.ts" "tests/unit/components/ArabicTtsControls.test.tsx" "tests/unit/components/QuizTtsPanel.test
+.tsx" "tests/integration/tts-hidden-text-safety-flow.test.tsx" "tests/unit/quiz/phase-18-complete.test.ts"
+
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major ve
+rsion of Vite:
+  - ESM syntax in a file loaded as CommonJS (vitest.config.ts:1:2). Use a `.mjs` extension or set `"type": "module"` in the closest package.json
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+
+ RUN  v4.1.11 C:/Users/Dell/OneDrive/Desktop/Programs/matn-quiz
+
+ ✓ tests/unit/quiz/phase-18-complete.test.ts (2 tests) 7ms
+ ✓ tests/unit/quiz/tts-safe-text.test.ts (11 tests) 13ms
+ ✓ tests/unit/components/ArabicTtsControls.test.tsx (3 tests) 419ms
+ ✓ tests/unit/components/QuizTtsPanel.test.tsx (2 tests) 462ms
+ ✓ tests/integration/tts-hidden-text-safety-flow.test.tsx (1 test) 537ms
+     ✓ renders TTS controls after quiz generation and never speaks placeholders  532ms
+
+ Test Files  5 passed (5)
+      Tests  19 passed (19)
+   Start at  04:14:41
+   Duration  4.66s (transform 1.11s, setup 2.37s, import 1.87s, tests 1.44s, environment 10.47s)
+phase18 tests exit code: 0
+
+Running full tests...
