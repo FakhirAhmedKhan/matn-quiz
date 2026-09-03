@@ -1,6 +1,6 @@
-﻿import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import HomePage from "@/app/page";
+import { HomeWorkflowTestPage as HomePage } from "@/tests/helpers/HomeWorkflowTestPage";
 
 let fetchMock: ReturnType<typeof vi.fn>;
 

@@ -1,6 +1,6 @@
-﻿import { render, screen } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import HomePage from "@/app/page";
+import { HomeWorkflowTestPage as HomePage } from "@/tests/helpers/HomeWorkflowTestPage";
 
 describe("HomePage deployment readiness", () => {
   it("renders deployment-ready home page", () => {

@@ -1,7 +1,7 @@
-﻿import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import HomePage from "@/app/page";
+import { HomeWorkflowTestPage as HomePage } from "@/tests/helpers/HomeWorkflowTestPage";
 import { createShareableQuizJsonText } from "@/lib/quiz/shareable-quiz-export";
 import type { GeneratedHideWordQuiz } from "@/types/quiz";
 

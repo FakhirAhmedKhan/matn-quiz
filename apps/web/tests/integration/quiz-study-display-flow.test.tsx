@@ -1,7 +1,7 @@
-﻿import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
-import HomePage from "@/app/page";
+import { HomeWorkflowTestPage as HomePage } from "@/tests/helpers/HomeWorkflowTestPage";
 
 describe("Quiz study display flow", () => {
   const wordText = "بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ";

@@ -1,7 +1,7 @@
-﻿import { fireEvent, render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it } from "vitest";
-import HomePage from "@/app/page";
+import { HomeWorkflowTestPage as HomePage } from "@/tests/helpers/HomeWorkflowTestPage";
 
 describe("HomePage saved quiz history flow", () => {
   const wordText = "بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ";

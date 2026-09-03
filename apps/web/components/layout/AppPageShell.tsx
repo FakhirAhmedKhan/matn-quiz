@@ -16,15 +16,15 @@ export function AppPageShell({ children, className = "" }: AppPageShellProps) {
     >
       <AppTopNav />
 
-      <div
+      <main
         data-testid="app-page-content"
         className={[
-          "mx-auto w-full max-w-5xl px-4 py-6 sm:px-6 sm:py-8 lg:px-8",
+          "mx-auto w-full max-w-6xl px-4 py-5 sm:px-6 sm:py-8 lg:px-8",
           className,
         ].join(" ")}
       >
         {children}
-      </div>
+      </main>
 
       <AppBottomNav />
     </div>
