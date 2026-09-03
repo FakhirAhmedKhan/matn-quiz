@@ -1,0 +1,545 @@
+MATN QUIZ - BOOK LIBRARY PHASE B1 INSPECTION
+Generated: 2026-09-04 02:33:28
+
+================================================================
+CURRENT DIRECTORY
+================================================================
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz
+
+================================================================
+GIT BRANCH
+================================================================
+Mono-Repo
+
+================================================================
+GIT STATUS
+================================================================
+?? docs/MATN-QUIZ-PROJECT-CONTEXT.md
+
+================================================================
+ROOT DIRECTORY
+================================================================
+[DIR]  .git
+[DIR]  .github
+[FILE] .gitignore
+[DIR]  _backups
+[FILE] ~$fe-p5-p6-test-log-20260903-235759.txt
+[FILE] AGENTS.md
+[DIR]  apps
+[FILE] CLAUDE.md
+[DIR]  docs
+[FILE] fix-monorepo-mobile-web-tests.ps1
+[FILE] KEEP-DYNAMIC-FIX-LOG.txt
+[DIR]  node_modules
+[FILE] p5-p6-debug-log-20260903-235439.txt
+[FILE] package.json
+[FILE] package.json.broken-backup-20260903-175316
+[DIR]  packages
+[FILE] phase-m0-migrate-to-monorepo.ps1
+[FILE] phase-m1-create-expo-mobile.ps1
+[FILE] pnpm-lock.yaml
+[FILE] pnpm-workspace.yaml
+[FILE] README.md
+[FILE] safe-p5-p6-test-log-20260903-235759.txt
+[DIR]  utils
+
+================================================================
+ROOT package.json
+================================================================
+PATH: package.json
+
+{
+    "name":  "matn-quiz",
+    "version":  "0.1.0",
+    "private":  true,
+    "packageManager":  "pnpm@11.22.0",
+    "scripts":  {
+                    "dev":  "pnpm --filter @matn-quiz/web dev",
+                    "dev:web":  "pnpm --filter @matn-quiz/web dev",
+                    "dev:mobile":  "pnpm --filter @matn-quiz/mobile start",
+                    "android":  "pnpm --filter @matn-quiz/mobile android",
+                    "ios":  "pnpm --filter @matn-quiz/mobile ios",
+                    "test":  "pnpm --filter @matn-quiz/web test",
+                    "test:web":  "pnpm --filter @matn-quiz/web test",
+                    "build":  "pnpm --filter @matn-quiz/web build",
+                    "build:web":  "pnpm --filter @matn-quiz/web build",
+                    "lint":  "pnpm --filter @matn-quiz/web lint",
+                    "lint:web":  "pnpm --filter @matn-quiz/web lint",
+                    "typecheck:web":  "pnpm --filter @matn-quiz/web typecheck",
+                    "mobile:typecheck":  "pnpm --filter @matn-quiz/mobile typecheck"
+                }
+}
+
+================================================================
+WEB package.json
+================================================================
+PATH: apps\web\package.json
+
+{
+    "name": "@matn-quiz/web",
+    "version": "0.1.0",
+    "private": true,
+    "scripts": {
+        "dev": "next dev --webpack",
+        "build": "next build --webpack",
+        "start": "next start",
+        "lint": "eslint",
+        "test": "vitest run",
+        "test:watch": "vitest",
+        "test:ui": "vitest --ui",
+        "verify:phase1": "node scripts/verify-phase-1.cjs",
+        "verify:phase2": "node scripts/verify-phase-2.cjs",
+        "verify:phase3": "node scripts/verify-phase-3.cjs",
+        "verify:phase4": "node scripts/verify-phase-4.cjs",
+        "verify:phase6": "node scripts/verify-phase-6.cjs",
+        "verify:phase7": "node scripts/verify-phase-7.cjs",
+        "verify:phase8": "node scripts/verify-phase-8.cjs",
+        "verify:phase9": "node scripts/verify-phase-9.cjs",
+        "verify:phase10": "node scripts/verify-phase-10.cjs",
+        "verify:phase11": "node scripts/verify-phase-11.cjs",
+        "verify:phase12": "node scripts/verify-phase-12.cjs",
+        "verify:phase13": "node scripts/verify-phase-13.cjs",
+        "verify:phase14": "node scripts/verify-phase-14.cjs",
+        "smoke:deployment": "node scripts/deployment-smoke.cjs",
+        "deployment:report": "node scripts/deployment-report.cjs",
+        "verify:phase16": "node scripts/verify-phase-16.cjs",
+        "smoke:production": "node scripts/production-smoke.cjs",
+        "monitoring:report": "node scripts/monitoring-report.cjs",
+        "monitoring:budget": "node scripts/performance-budget-check.cjs",
+        "verify:phase17": "node scripts/verify-phase-17.cjs",
+        "verify:phase18": "node scripts/verify-phase-18.cjs",
+        "verify:phase19": "node scripts/verify-phase-19.cjs",
+        "verify:phase20": "pnpm test tests/unit/tts/google-translate-tts.test.ts tests/unit/api/tts-route.test.ts tests/unit/components/ArabicTtsControls.test.tsx tests/unit/components/QuizTtsPanel.test.tsx tests/unit/hooks/useArabicTts.test.ts tests/integration/tts-hidden-text-safety-flow.test.tsx tests/unit/tts/phase-20-complete.test.ts && pnpm run build && pnpm run lint"
+    },
+    "dependencies": {
+        "@elevenlabs/elevenlabs-js": "^2.66.0",
+        "clsx": "^2.1.1",
+        "lucide-react": "^1.39.0",
+        "next": "16.3.4",
+        "react": "19.2.8",
+        "react-dom": "19.2.8",
+        "tailwind-merge": "^3.6.0"
+    },
+    "devDependencies": {
+        "@tailwindcss/postcss": "^4",
+        "@testing-library/jest-dom": "^7.0.1",
+        "@testing-library/react": "^16.3.3",
+        "@testing-library/user-event": "^14.6.6",
+        "@types/node": "^20.19.43",
+        "@types/react": "^19",
+        "@types/react-dom": "^19",
+        "@vitejs/plugin-react": "^6.1.1",
+        "eslint": "^9",
+        "eslint-config-next": "16.3.4",
+        "jsdom": "^30.0.1",
+        "tailwindcss": "^4",
+        "typescript": "^5",
+        "vitest": "^4.1.11"
+    }
+}
+
+
+================================================================
+PNPM WORKSPACE
+================================================================
+PATH: pnpm-workspace.yaml
+
+packages:
+  - "apps/*"
+  - "packages/*"
+
+allowBuilds:
+  unrs-resolver: false
+
+onlyBuiltDependencies:
+  - unrs-resolver
+
+
+================================================================
+PACKAGE JSON VALIDATION
+================================================================
+VALID: package.json
+VALID: apps\web\package.json
+VALID: apps\mobile\package.json
+
+================================================================
+PRISMA SCHEMA FILES
+================================================================
+NO schema.prisma FOUND
+
+================================================================
+PRISMA / DATABASE RELATED FILES
+================================================================
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\lib\quiz\quiz-history-repository.ts
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\lib\quiz\study-session-repository.ts
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\tests\unit\quiz\quiz-history-repository.test.ts
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\tests\unit\quiz\study-session-repository.test.ts
+
+================================================================
+NEXT.JS APP ROUTES
+================================================================
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\app\api\tts\route.ts
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\app\create\count\page.tsx
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\app\create\method\page.tsx
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\app\create\page.tsx
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\app\history\page.tsx
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\app\import-export\page.tsx
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\app\layout.tsx
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\app\page.tsx
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\app\poem\page.tsx
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\app\poem\read\page.tsx
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\app\study\page.tsx
+
+================================================================
+API ROUTES
+================================================================
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\app\api\tts\route.ts
+
+================================================================
+SERVER ACTION / API PATTERN SEARCH
+================================================================
+
+--- SEARCH: "use server" ---
+NO MATCHES
+
+--- SEARCH: NextResponse ---
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\app\api\tts\route.ts:1: import { NextResponse } from "next/server";
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\app\api\tts\route.ts:20: return NextResponse.json({ error, code }, { status });
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\app\api\tts\route.ts:34: return NextResponse.json({
+
+--- SEARCH: NextRequest ---
+NO MATCHES
+
+--- SEARCH: FormData ---
+NO MATCHES
+
+--- SEARCH: request.formData ---
+NO MATCHES
+
+--- SEARCH: prisma. ---
+NO MATCHES
+
+--- SEARCH: PrismaClient ---
+NO MATCHES
+
+--- SEARCH: z.object ---
+NO MATCHES
+
+--- SEARCH: safeParse ---
+NO MATCHES
+
+================================================================
+VALIDATION LIBRARIES
+================================================================
+zod = NOT INSTALLED IN WEB PACKAGE
+yup = NOT INSTALLED IN WEB PACKAGE
+joi = NOT INSTALLED IN WEB PACKAGE
+valibot = NOT INSTALLED IN WEB PACKAGE
+class-validator = NOT INSTALLED IN WEB PACKAGE
+
+================================================================
+EXISTING LIB STRUCTURE
+================================================================
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\lib\constants\quiz.ts
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\lib\deploy\deployment-config.ts
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\lib\deploy\deployment-report.ts
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\lib\monitoring\client-observability.ts
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\lib\monitoring\performance-budget.ts
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\lib\poem\poem-storage.ts
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\lib\quiz\arabic-reading.ts
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\lib\quiz\generate-quiz.ts
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\lib\quiz\generate-quiz-validation.ts
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\lib\quiz\hide-count.ts
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\lib\quiz\hide-line-engine.ts
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\lib\quiz\hide-word-engine.ts
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\lib\quiz\line-selection.ts
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\lib\quiz\line-tokenizer.ts
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\lib\quiz\quiz-export.ts
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\lib\quiz\quiz-flow-storage.ts
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\lib\quiz\quiz-history.ts
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\lib\quiz\quiz-history-repository.ts
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\lib\quiz\review-session.ts
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\lib\quiz\shareable-quiz.ts
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\lib\quiz\shareable-quiz-export.ts
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\lib\quiz\shareable-quiz-import.ts
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\lib\quiz\study-session.ts
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\lib\quiz\study-session-persistence.ts
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\lib\quiz\study-session-repository.ts
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\lib\quiz\tts-safe-text.ts
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\lib\quiz\unified-quiz.ts
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\lib\quiz\validation.ts
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\lib\quiz\word-selection.ts
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\lib\quiz\word-tokenizer.ts
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\lib\release\product-metadata.ts
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\lib\tts\google-translate-tts.ts
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\lib\ui\accessibility.ts
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\lib\ui\accessibility-final-pass.ts
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\lib\ui\design-system.ts
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\lib\ui\feedback-state.ts
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\lib\ui\mobile-ux.ts
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\lib\utils\arabic.ts
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\lib\utils\cn.ts
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\lib\utils\random.ts
+
+================================================================
+EXISTING COMPONENT STRUCTURE
+================================================================
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\components\layout
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\components\page
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\components\poem
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\components\quiz
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\components\ui
+
+================================================================
+TEST STRUCTURE
+================================================================
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\tests\integration\accessibility-study-flow.test.tsx
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\tests\integration\arabic-reading-ux-flow.test.tsx
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\tests\integration\hide-count-selection-flow.test.tsx
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\tests\integration\poem-reader-flow.test.tsx
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\tests\integration\quiz-method-selection-flow.test.tsx
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\tests\integration\quiz-study-display-flow.test.tsx
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\tests\integration\quran-text-input-flow.test.tsx
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\tests\integration\review-mode-study-flow.test.tsx
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\tests\integration\saved-quiz-history-flow.test.tsx
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\tests\integration\shareable-quiz-import-export-flow.test.tsx
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\tests\integration\study-session-resume-flow.test.tsx
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\tests\integration\tts-hidden-text-safety-flow.test.tsx
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\tests\integration\unified-quiz-generation-flow.test.tsx
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\tests\unit\api\tts-route.test.ts
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\tests\unit\components\AccessibleSkipLink.test.tsx
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\tests\unit\components\AnswerRevealControls.test.tsx
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\tests\unit\components\ArabicReadingPanel.test.tsx
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\tests\unit\components\ArabicTtsControls.test.tsx
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\tests\unit\components\Button.test.tsx
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\tests\unit\components\Card.test.tsx
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\tests\unit\components\Counter.test.tsx
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\tests\unit\components\EmptyState.test.tsx
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\tests\unit\components\FeedbackStatePanel.test.tsx
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\tests\unit\components\GeneratedQuizPreview.test.tsx
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\tests\unit\components\GeneratedQuizPreviewReview.test.tsx
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\tests\unit\components\HideCountSelector.test.tsx
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\tests\unit\components\Input.test.tsx
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\tests\unit\components\PoemInputForm.test.tsx
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\tests\unit\components\PoemReader.test.tsx
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\tests\unit\components\QuizActionBar.test.tsx
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\tests\unit\components\QuizMethodSelector.test.tsx
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\tests\unit\components\QuizTtsPanel.test.tsx
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\tests\unit\components\QuranTextInput.test.tsx
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\tests\unit\components\RadioCard.test.tsx
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\tests\unit\components\ReviewAnswerControls.test.tsx
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\tests\unit\components\ReviewProgressSummary.test.tsx
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\tests\unit\components\SavedQuizHistory.test.tsx
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\tests\unit\components\SavedQuizHistoryStatePolish.test.tsx
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\tests\unit\components\ShareableQuizPanel.test.tsx
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\tests\unit\components\StudySessionResumePanel.test.tsx
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\tests\unit\components\Textarea.test.tsx
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\tests\unit\deploy\deployment-config.test.ts
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\tests\unit\deploy\deployment-report.test.ts
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\tests\unit\deploy\phase-16-complete.test.ts
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\tests\unit\hooks\useArabicTts.test.ts
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\tests\unit\layout\AppNavigationResponsivePolish.test.tsx
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\tests\unit\layout\AppNavigationShell.test.tsx
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\tests\unit\layout\AppResponsiveLayout.test.tsx
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\tests\unit\monitoring\client-observability.test.ts
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\tests\unit\monitoring\performance-budget.test.ts
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\tests\unit\monitoring\phase-17-complete.test.ts
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\tests\unit\pages\CreateWorkflowPages.test.tsx
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\tests\unit\pages\HistoryPage.test.tsx
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\tests\unit\pages\HomeLandingPage.test.tsx
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\tests\unit\pages\HomePage.test.tsx
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\tests\unit\pages\HomePageAccessibilityFinalPass.test.tsx
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\tests\unit\pages\HomePageActions.test.tsx
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\tests\unit\pages\HomePageArchitecture.test.ts
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\tests\unit\pages\HomePageDeploymentReadiness.test.tsx
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\tests\unit\pages\HomePageFeedbackPolish.test.tsx
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\tests\unit\pages\HomePageHistoryFlow.test.tsx
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\tests\unit\pages\HomePageMobileLayout.test.tsx
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\tests\unit\pages\HomePageResponsiveLayout.test.tsx
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\tests\unit\pages\HomePageSections.test.tsx
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\tests\unit\pages\ImportExportPage.test.tsx
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\tests\unit\pages\MultiPageWorkflowArchitecture.test.tsx
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\tests\unit\pages\PoemInputAndReaderPages.test.tsx
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\tests\unit\pages\PoemRoutes.test.tsx
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\tests\unit\pages\StudyPage.test.tsx
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\tests\unit\poem\poem-storage.test.ts
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\tests\unit\quiz\arabic-reading.test.ts
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\tests\unit\quiz\generate-quiz.test.ts
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\tests\unit\quiz\generate-quiz-validation.test.ts
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\tests\unit\quiz\hide-count.test.ts
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\tests\unit\quiz\hide-line-edge-cases.test.ts
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\tests\unit\quiz\hide-line-engine.test.ts
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\tests\unit\quiz\hide-word-edge-cases.test.ts
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\tests\unit\quiz\hide-word-engine.test.ts
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\tests\unit\quiz\line-selection.test.ts
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\tests\unit\quiz\line-tokenizer.test.ts
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\tests\unit\quiz\method-types.test.ts
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\tests\unit\quiz\phase-10-complete.test.ts
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\tests\unit\quiz\phase-11-complete.test.ts
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\tests\unit\quiz\phase-12-complete.test.ts
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\tests\unit\quiz\phase-13-complete.test.ts
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\tests\unit\quiz\phase-18-complete.test.ts
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\tests\unit\quiz\phase-6-complete.test.ts
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\tests\unit\quiz\phase-7-complete.test.ts
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\tests\unit\quiz\phase-8-complete.test.ts
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\tests\unit\quiz\quiz-export.test.ts
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\tests\unit\quiz\quiz-flow-storage.test.ts
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\tests\unit\quiz\quiz-history.test.ts
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\tests\unit\quiz\quiz-history-repository.test.ts
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\tests\unit\quiz\review-session.test.ts
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\tests\unit\quiz\shareable-quiz.test.ts
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\tests\unit\quiz\shareable-quiz-export.test.ts
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\tests\unit\quiz\shareable-quiz-import.test.ts
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\tests\unit\quiz\study-session.test.ts
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\tests\unit\quiz\study-session-persistence.test.ts
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\tests\unit\quiz\study-session-repository.test.ts
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\tests\unit\quiz\tts-safe-text.test.ts
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\tests\unit\quiz\unified-quiz.test.ts
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\tests\unit\quiz\validation.test.ts
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\tests\unit\quiz\word-selection.test.ts
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\tests\unit\quiz\word-tokenizer.test.ts
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\tests\unit\tts\google-translate-tts.test.ts
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\tests\unit\tts\phase-20-complete.test.ts
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\tests\unit\ui\accessibility.test.ts
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\tests\unit\ui\accessibility-final-pass.test.ts
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\tests\unit\ui\design-system.test.ts
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\tests\unit\ui\feedback-state.test.ts
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\tests\unit\ui\mobile-ux.test.ts
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\tests\unit\ui\phase-14-complete.test.ts
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\tests\unit\ui\phase-9-complete.test.ts
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\tests\unit\utils\arabic.test.ts
+
+================================================================
+TEST CONFIG FILES
+================================================================
+apps\web\vitest.config.ts
+
+================================================================
+ENVIRONMENT VARIABLE NAMES ONLY
+================================================================
+
+FILE: C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\.env.example
+NEXT_PUBLIC_SITE_URL=<REDACTED>
+
+FILE: C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\.env.local
+AZURE_SPEECH_KEY=<REDACTED>
+AZURE_SPEECH_REGION=<REDACTED>
+AZURE_SPEECH_VOICE=<REDACTED>
+AZURE_SPEECH_ENDPOINT=<REDACTED>
+ELEVENLABS_API_KEY=<REDACTED>
+ELEVENLABS_VOICE_ID=<REDACTED>
+ELEVENLABS_MODEL_ID=<REDACTED>
+ELEVENLABS_OUTPUT_FORMAT=<REDACTED>
+
+FILE: C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\.env.local.example
+GOOGLE_TRANSLATE_TTS_LANG=<REDACTED>
+GOOGLE_TRANSLATE_TTS_CLIENT=<REDACTED>
+GOOGLE_TRANSLATE_TTS_MAX_CHUNK=<REDACTED>
+GOOGLE_TRANSLATE_TTS_ENDPOINT=<REDACTED>
+
+================================================================
+UPLOAD / FILE STORAGE SEARCH
+================================================================
+
+--- SEARCH: public/uploads ---
+NO MATCHES
+
+--- SEARCH: writeFile ---
+NO MATCHES
+
+--- SEARCH: writeFileSync ---
+NO MATCHES
+
+--- SEARCH: mkdir ---
+NO MATCHES
+
+--- SEARCH: arrayBuffer ---
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\lib\tts\google-translate-tts.ts:115: function concatArrayBuffers(buffers: ArrayBuffer[]): ArrayBuffer {
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\lib\tts\google-translate-tts.ts:131: ): Promise<ArrayBuffer> {
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\lib\tts\google-translate-tts.ts:135: return new ArrayBuffer(0);
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\lib\tts\google-translate-tts.ts:138: const audioParts: ArrayBuffer[] = [];
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\lib\tts\google-translate-tts.ts:159: audioParts.push(await response.arrayBuffer());
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\lib\tts\google-translate-tts.ts:162: return concatArrayBuffers(audioParts);
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\tests\unit\api\tts-route.test.ts:66: const audio = await response.arrayBuffer();
+
+--- SEARCH: File ---
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\components\quiz\QuizActionBar.tsx:7: exportQuizAsTextFile,
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\components\quiz\QuizActionBar.tsx:59: exportQuizAsTextFile(quiz);
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\components\quiz\QuizActionBar.tsx:69: exported: "Text file exported.",
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\components\quiz\QuizMethodSelector.tsx:4: import { FileText, Type } from "lucide-react";
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\components\quiz\QuizMethodSelector.tsx:21: [QUIZ_METHODS.HIDE_LINE]: <FileText className="h-5 w-5" />,
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\components\quiz\ShareableQuizPanel.tsx:3: import { Clipboard, Download, FileJson, Upload } from "lucide-react";
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\components\quiz\ShareableQuizPanel.tsx:7: exportShareableQuizAsJsonFile,
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\components\quiz\ShareableQuizPanel.tsx:58: const exported = exportShareableQuizAsJsonFile(quiz);
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\components\quiz\ShareableQuizPanel.tsx:63: ? "Shareable JSON file exported."
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\components\quiz\ShareableQuizPanel.tsx:145: <FileJson className="h-4 w-4" />
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\hooks\useArabicTts.ts:131: throw new ArabicTtsPlaybackError("Audio provider returned an empty file.");
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\lib\quiz\quiz-export.ts:26: export function createQuizExportFileName(
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\lib\quiz\quiz-export.ts:49: export function exportQuizAsTextFile(quiz: GeneratedQuiz): void {
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\lib\quiz\quiz-export.ts:55: const fileName = createQuizExportFileName(quiz);
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\lib\quiz\quiz-export.ts:64: link.download = fileName;
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\lib\quiz\shareable-quiz-export.ts:4: getShareableQuizFileName,
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\lib\quiz\shareable-quiz-export.ts:15: export interface ExportShareableQuizFileOptions
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\lib\quiz\shareable-quiz-export.ts:17: fileName?: string;
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\lib\quiz\shareable-quiz-export.ts:20: export interface DownloadTextFileOptions {
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\lib\quiz\shareable-quiz-export.ts:21: fileName: string;
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\lib\quiz\shareable-quiz-export.ts:76: export function downloadTextFile({
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\lib\quiz\shareable-quiz-export.ts:77: fileName,
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\lib\quiz\shareable-quiz-export.ts:80: }: DownloadTextFileOptions): boolean {
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\lib\quiz\shareable-quiz-export.ts:91: link.download = fileName;
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\lib\quiz\shareable-quiz-export.ts:106: export function exportShareableQuizAsJsonFile(
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\lib\quiz\shareable-quiz-export.ts:108: options: ExportShareableQuizFileOptions = {},
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\lib\quiz\shareable-quiz-export.ts:117: const fileName =
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\lib\quiz\shareable-quiz-export.ts:118: options.fileName ?? getShareableQuizFileName(quiz, exportedAt);
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\lib\quiz\shareable-quiz-export.ts:120: return downloadTextFile({
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\lib\quiz\shareable-quiz-export.ts:121: fileName,
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\lib\quiz\shareable-quiz-export.ts:156: options: ExportShareableQuizFileOptions = {},
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\lib\quiz\shareable-quiz-export.ts:157: ): DownloadTextFileOptions {
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\lib\quiz\shareable-quiz-export.ts:161: fileName: options.fileName ?? getShareableQuizFileName(quiz, exportedAt),
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\lib\quiz\shareable-quiz-import.ts:403: "Paste or choose a Matn Quiz JSON file before importing.",
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\lib\quiz\shareable-quiz-import.ts:422: "Imported file is not valid JSON.",
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\lib\quiz\shareable-quiz.ts:9: export const SHAREABLE_QUIZ_FILE_EXTENSION = ".json";
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\lib\quiz\shareable-quiz.ts:138: export function getShareableQuizFileName(
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\lib\quiz\shareable-quiz.ts:145: return `matn-quiz-${method}-${date}${SHAREABLE_QUIZ_FILE_EXTENSION}`;
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\tests\integration\shareable-quiz-import-export-flow.test.tsx:113: "Imported file is not valid JSON.",
+C:\Users\Dell\OneDrive\Desktop\Programs\matn-quiz\apps\web\tests\unit\components\QuizActionBar.test.tsx:77: it("exports txt file", async () => {
+
+--- SEARCH: multipart ---
+NO MATCHES
+
+================================================================
+BOOK FEATURE COLLISION CHECK
+================================================================
+NO EXISTING BOOK FEATURE FILES FOUND
+
+================================================================
+PROPOSED B1 FILES - NOT CREATED YET
+================================================================
+Potential files after inspection:
+apps/web/lib/books/book-types.ts
+apps/web/lib/books/book-validation.ts
+apps/web/lib/books/book-storage.ts
+apps/web/lib/books/book-repository.ts
+apps/web/lib/books/demo-book-repository.ts
+Prisma schema file - exact path depends on inspection
+Environment example file - exact path depends on inspection
+B1 unit tests - exact paths will follow existing test conventions
+
+================================================================
+B1 GOAL
+================================================================
+Phase B1 will implement:
+- Book model/types
+- Validation
+- Local storage abstraction
+- Demo repository abstraction
+- Prisma repository foundation if Prisma exists
+- BOOKS_DEMO_MODE configuration
+- Tests
+
+Phase B1 will NOT yet implement:
+- /books/upload page
+- Upload API
+- Public /books library
+- Verification UI
+- PDF reader
