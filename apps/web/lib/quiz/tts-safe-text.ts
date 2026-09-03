@@ -1,4 +1,4 @@
-﻿import type {
+import type {
   GeneratedHideLineQuiz,
   GeneratedHideWordQuiz,
   GeneratedQuiz,
@@ -97,7 +97,19 @@ export function buildSpeakableTextForVisibleWords(
 }
 
 export function buildTtsLineOptions(quiz: GeneratedHideLineQuiz): TtsLineOption[] {
-  const hiddenLineIndexes = new Set(quiz.selectedLineIndexes);
+  // HIDE_LINE uses token indexes from the newline-preserving tokenizer:
+  // line 1 = 0, line 2 = 2, line 3 = 4, ...
+  //
+  // Keep that existing contract. As a safety fallback, also trust the
+  // tokenIndex stored on hidden-answer records and selectedTokenIndexes.
+  const hiddenTokenIndexes = new Set<number>([
+    ...quiz.selectedLineIndexes,
+    ...quiz.selectedTokenIndexes,
+    ...quiz.answers
+      .filter((answer) => answer.kind === "line")
+      .map((answer) => answer.tokenIndex),
+  ]);
+
   const parts = normalizeLineEndings(quiz.originalText).split(/(\n)/u);
   let lineNumber = 0;
 
@@ -109,7 +121,7 @@ export function buildTtsLineOptions(quiz: GeneratedHideLineQuiz): TtsLineOption[
 
       lineNumber += 1;
 
-      const hidden = hiddenLineIndexes.has(tokenIndex);
+      const hidden = hiddenTokenIndexes.has(tokenIndex);
       const speakableText = hidden ? "" : normalizeSpeakableArabicText(part);
 
       return {

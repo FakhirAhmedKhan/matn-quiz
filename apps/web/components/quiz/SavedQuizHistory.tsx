@@ -1,5 +1,6 @@
-﻿"use client";
+"use client";
 
+import Link from "next/link";
 import { Clock3, FolderOpen, Trash2 } from "lucide-react";
 import { EmptyStatePanel } from "@/components/ui/FeedbackStatePanel";
 import { getGeneratedQuizMethodLabel } from "@/lib/quiz/unified-quiz";
@@ -17,6 +18,7 @@ interface SavedQuizHistoryProps {
   onOpen: (record: SavedQuizRecord) => void;
   onDelete: (id: string) => void;
   onClear: () => void;
+  openHref?: string;
   disabled?: boolean;
   className?: string;
 }
@@ -25,6 +27,7 @@ interface SavedQuizHistoryItemProps {
   record: SavedQuizRecord;
   onOpen: (record: SavedQuizRecord) => void;
   onDelete: (id: string) => void;
+  openHref?: string;
   disabled?: boolean;
 }
 
@@ -50,6 +53,7 @@ export function SavedQuizHistoryItem({
   record,
   onOpen,
   onDelete,
+  openHref,
   disabled = false,
 }: SavedQuizHistoryItemProps) {
   const methodLabel = getGeneratedQuizMethodLabel(record.quiz.method);
@@ -59,6 +63,11 @@ export function SavedQuizHistoryItem({
     focusRingClasses,
     interactiveTransitionClasses,
     pressableClasses,
+  );
+
+  const openClasses = cn(
+    buttonClasses,
+    "bg-emerald-700 text-white hover:bg-emerald-800",
   );
 
   return (
@@ -101,18 +110,27 @@ export function SavedQuizHistoryItem({
         </div>
 
         <div className="flex shrink-0 flex-wrap gap-2">
-          <button
-            type="button"
-            disabled={disabled}
-            onClick={() => onOpen(record)}
-            className={cn(
-              buttonClasses,
-              "bg-emerald-700 text-white hover:bg-emerald-800",
-            )}
-          >
-            <FolderOpen className="h-4 w-4" />
-            Open Quiz
-          </button>
+          {disabled || !openHref ? (
+            <button
+              type="button"
+              disabled={disabled}
+              onClick={() => onOpen(record)}
+              className={openClasses}
+            >
+              <FolderOpen className="h-4 w-4" />
+              Open Quiz
+            </button>
+          ) : (
+            <Link
+              href={openHref}
+              role="button"
+              onClick={() => onOpen(record)}
+              className={openClasses}
+            >
+              <FolderOpen className="h-4 w-4" />
+              Open Quiz
+            </Link>
+          )}
 
           <button
             type="button"
@@ -138,6 +156,7 @@ export function SavedQuizHistory({
   onOpen,
   onDelete,
   onClear,
+  openHref,
   disabled = false,
   className,
 }: SavedQuizHistoryProps) {
@@ -184,6 +203,7 @@ export function SavedQuizHistory({
               record={record}
               onOpen={onOpen}
               onDelete={onDelete}
+              openHref={openHref}
               disabled={disabled}
             />
           ))}
@@ -200,4 +220,3 @@ export function SavedQuizHistory({
     </section>
   );
 }
-

@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { ResponsiveCard } from "@/components/layout";
 // import { SavedQuizHistory } from "@/components/quiz/dynamic-components";
@@ -14,6 +14,7 @@ export function SavedHistorySection({ page }: SavedHistorySectionProps) {
     <ResponsiveCard>
       <section data-testid="saved-history-section">
         <SavedQuizHistory
+        openHref="/study"
           items={page.savedQuizzes}
           onOpen={page.handleOpenSavedQuiz}
           onDelete={page.handleDeleteSavedQuiz}
