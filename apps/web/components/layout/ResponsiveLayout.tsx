@@ -1,5 +1,8 @@
 import type { ReactNode } from "react";
 
+import { AppBottomNav } from "./AppBottomNav";
+import { AppTopNav } from "./AppTopNav";
+
 interface AppShellProps {
   children: ReactNode;
   className?: string;

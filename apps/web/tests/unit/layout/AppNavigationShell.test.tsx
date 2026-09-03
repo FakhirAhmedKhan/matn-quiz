@@ -22,6 +22,10 @@ describe("App navigation shell", () => {
       "aria-current",
       "page",
     );
+    expect(screen.getByTestId("top-nav-import-export")).toHaveAttribute(
+      "href",
+      "/import-export",
+    );
   });
 
   it("renders mobile bottom navigation", () => {
@@ -31,6 +35,10 @@ describe("App navigation shell", () => {
     expect(screen.getByTestId("bottom-nav-create")).toHaveAttribute(
       "aria-current",
       "page",
+    );
+    expect(screen.getByTestId("bottom-nav-share")).toHaveAttribute(
+      "href",
+      "/import-export",
     );
   });
 

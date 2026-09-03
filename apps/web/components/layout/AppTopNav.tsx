@@ -4,11 +4,11 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const navItems = [
-  { href: "/", label: "Home" },
-  { href: "/create", label: "Create" },
-  { href: "/study", label: "Study" },
-  { href: "/import-export", label: "Import / Export" },
-  { href: "/history", label: "History" },
+  { href: "/", label: "Home", testId: "home" },
+  { href: "/create", label: "Create", testId: "create" },
+  { href: "/study", label: "Study", testId: "study" },
+  { href: "/import-export", label: "Import / Export", testId: "import-export" },
+  { href: "/history", label: "History", testId: "history" },
 ];
 
 function isActiveRoute(pathname: string, href: string) {
@@ -57,7 +57,7 @@ export function AppTopNav() {
               <Link
                 key={item.href}
                 href={item.href}
-                data-testid={`top-nav-${item.label.toLowerCase().replaceAll(" ", "-").replaceAll("/", "")}`}
+                data-testid={`top-nav-${item.testId}`}
                 aria-current={active ? "page" : undefined}
                 className={[
                   "rounded-xl px-3 py-2 text-sm font-semibold transition",
