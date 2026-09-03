@@ -11,12 +11,14 @@ const navItems = [
   { href: "/history", label: "History", testId: "history", icon: "□" },
 ];
 
-function isActiveRoute(pathname: string, href: string) {
+function isActiveRoute(pathname: string | null | undefined, href: string) {
+  const currentPathname = pathname ?? "/";
+
   if (href === "/") {
-    return pathname === "/";
+    return currentPathname === "/";
   }
 
-  return pathname === href || pathname.startsWith(`${href}/`);
+  return currentPathname === href || currentPathname.startsWith(`${href}/`);
 }
 
 export function AppBottomNav() {
