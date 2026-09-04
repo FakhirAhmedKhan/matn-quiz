@@ -34,7 +34,7 @@ export function ArabicText({
   numberOfLines,
 }: ArabicTextProps) {
   return (
-    <Text
+    <Text allowFontScaling maxFontSizeMultiplier={2}
       selectable
       numberOfLines={numberOfLines}
       style={[

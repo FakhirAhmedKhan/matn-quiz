@@ -43,6 +43,8 @@ type AppScreenProps =
 
     testID?: string;
 
+    accessibilityLabel?: string;
+
     keyboardShouldPersistTaps?:
       ScrollViewProps["keyboardShouldPersistTaps"];
   }>;
@@ -56,6 +58,7 @@ export function AppScreen({
   backgroundColor =
     colors.backgroundSoft,
   testID,
+  accessibilityLabel,
   keyboardShouldPersistTaps =
     "handled",
 }: AppScreenProps) {
@@ -66,6 +69,14 @@ export function AppScreen({
     <View
       testID={
         testID
+      }
+      accessible={
+        Boolean(
+          accessibilityLabel,
+        )
+      }
+      accessibilityLabel={
+        accessibilityLabel
       }
       style={[
         styles.inner,

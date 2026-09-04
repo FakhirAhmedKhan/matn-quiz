@@ -1,3 +1,4 @@
+import { AccessibilityStatusCard } from "../../src/components/accessibility";
 import { PersistenceStatusCard } from "../../src/components/persistence";
 import { useAppHydration } from "../../src/hooks/useAppHydration";
 import {
@@ -829,6 +830,8 @@ export default function SettingsScreen() {
             </AppText>
           </View>
         </SettingsSection>
+
+        <AccessibilityStatusCard />
 
         <AppCard style={styles.aboutCard}>
           <View style={styles.aboutIcon}>

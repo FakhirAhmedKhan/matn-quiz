@@ -140,7 +140,7 @@ export default function BookDetailsScreen() {
 
   function openReader() {
     markBookOpened(
-      book.id,
+      book!.id,
     );
 
     router.push({
@@ -148,7 +148,7 @@ export default function BookDetailsScreen() {
         "/books/[bookId]/read",
       params: {
         bookId:
-          book.id,
+          book!.id,
       },
     });
   }
@@ -173,7 +173,7 @@ export default function BookDetailsScreen() {
           style: "destructive",
           onPress: () =>
             updateReadingProgress(
-              book.id,
+              book!.id,
               0,
             ),
         },
@@ -183,7 +183,7 @@ export default function BookDetailsScreen() {
 
   function handleFavorite() {
     toggleFavorite(
-      book.id,
+      book!.id,
     );
   }
 

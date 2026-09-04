@@ -47,7 +47,7 @@ export async function getMatnQuizStorageKeys(): Promise<string[]> {
     );
 
   return allKeys.filter(
-    (key) =>
+    (key: string) =>
       appKeys.has(key),
   );
 }

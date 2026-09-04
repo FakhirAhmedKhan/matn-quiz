@@ -46,7 +46,7 @@ export function AppText({
       : colors.text;
 
   return (
-    <Text
+    <Text allowFontScaling maxFontSizeMultiplier={2}
       numberOfLines={numberOfLines}
       style={[
         styles.base,

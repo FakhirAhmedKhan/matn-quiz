@@ -1,45 +1,98 @@
-import { StyleSheet, View } from "react-native";
+import {
+  StyleSheet,
+  View,
+  type StyleProp,
+  type ViewStyle,
+} from "react-native";
 
-import { colors, radius } from "../../theme";
+import {
+  buildProgressAccessibilityValue,
+} from "../../accessibility/accessibility";
+
+import {
+  colors,
+  radius,
+} from "../../theme";
 
 type ProgressBarProps = {
   value: number;
-  height?: number;
+
+  accessibilityLabel?:
+    string;
+
+  style?:
+    StyleProp<ViewStyle>;
 };
 
 export function ProgressBar({
   value,
-  height = 8,
+  accessibilityLabel =
+    "Progress",
+  style,
 }: ProgressBarProps) {
-  const clamped = Math.max(0, Math.min(1, value));
-  const width = `${Math.round(clamped * 100)}%` as `${number}%`;
+  const normalized =
+    Math.min(
+      1,
+      Math.max(
+        0,
+        Number.isFinite(value)
+          ? value
+          : 0,
+      ),
+    );
+
+  const accessibilityValue =
+    buildProgressAccessibilityValue(
+      normalized,
+    );
 
   return (
     <View
       accessibilityRole="progressbar"
-      accessibilityValue={{
-        min: 0,
-        max: 100,
-        now: Math.round(clamped * 100),
-      }}
-      style={[styles.track, { height }]}
+      accessibilityLabel={
+        accessibilityLabel
+      }
+      accessibilityValue={
+        accessibilityValue
+      }
+      style={[
+        styles.track,
+        style,
+      ]}
     >
-      <View style={[styles.fill, { width }]} />
+      <View
+        importantForAccessibility="no"
+        accessible={false}
+        style={[
+          styles.progress,
+
+          {
+            width:
+              `${normalized * 100}%`,
+          },
+        ]}
+      />
     </View>
   );
 }
 
-const styles = StyleSheet.create({
-  track: {
-    width: "100%",
-    overflow: "hidden",
-    backgroundColor: colors.backgroundSoft,
-    borderRadius: radius.pill,
-  },
+const styles =
+  StyleSheet.create({
+    track: {
+      width: "100%",
+      height: 8,
+      overflow: "hidden",
+      borderRadius:
+        radius.pill,
+      backgroundColor:
+        colors.border,
+    },
 
-  fill: {
-    height: "100%",
-    backgroundColor: colors.primary,
-    borderRadius: radius.pill,
-  },
-});
+    progress: {
+      height: "100%",
+      borderRadius:
+        radius.pill,
+      backgroundColor:
+        colors.primary,
+    },
+  });

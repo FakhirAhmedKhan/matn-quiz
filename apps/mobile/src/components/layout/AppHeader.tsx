@@ -9,7 +9,7 @@ type AppHeaderProps = {
   subtitle?: string;
   showBack?: boolean;
   onBack?: () => void;
-  rightIcon?: "help-circle-outline" | "settings-outline" | "ellipsis-horizontal";
+  rightIcon?: "help-circle-outline" | "settings-outline" | "ellipsis-horizontal" | "add-circle-outline";
   onRightPress?: () => void;
 };
 

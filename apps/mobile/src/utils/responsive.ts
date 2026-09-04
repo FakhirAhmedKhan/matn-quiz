@@ -90,8 +90,7 @@ export function getResponsiveLayout(
     safeWidth >=
     MOBILE_LAYOUT.desktopLikeMin;
 
-  let horizontalPadding =
-    MOBILE_LAYOUT.phoneHorizontalPadding;
+  let horizontalPadding: number = MOBILE_LAYOUT.phoneHorizontalPadding;
 
   if (isCompactPhone) {
     horizontalPadding =

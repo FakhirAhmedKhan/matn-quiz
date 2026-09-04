@@ -120,7 +120,7 @@ export default function BookReaderScreen() {
     );
 
     markBookOpened(
-      book.id,
+      book!.id,
     );
   }, [
     book?.id,
@@ -225,7 +225,7 @@ export default function BookReaderScreen() {
     );
 
     updateReadingProgress(
-      book.id,
+      book!.id,
       nextPage,
     );
   }
@@ -264,7 +264,7 @@ export default function BookReaderScreen() {
         "/books/[bookId]",
       params: {
         bookId:
-          book.id,
+          book!.id,
       },
     });
   }
