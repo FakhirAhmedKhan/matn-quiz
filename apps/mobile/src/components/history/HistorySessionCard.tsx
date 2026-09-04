@@ -256,7 +256,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "stretch",
     borderRadius: radius.lg,
-    backgroundColor: colors.surfaceMuted,
+    backgroundColor: colors.backgroundSoft,
   },
 
   metric: {

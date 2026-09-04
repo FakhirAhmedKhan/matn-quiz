@@ -33,7 +33,7 @@ const styles = StyleSheet.create({
   track: {
     width: "100%",
     overflow: "hidden",
-    backgroundColor: colors.surfaceMuted,
+    backgroundColor: colors.backgroundSoft,
     borderRadius: radius.pill,
   },
 

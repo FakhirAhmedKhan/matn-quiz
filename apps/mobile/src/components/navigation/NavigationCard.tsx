@@ -55,7 +55,7 @@ export function NavigationCard({
       <Ionicons
         name="chevron-forward"
         size={iconSize.md}
-        color={colors.textLight}
+        color={colors.textMuted}
       />
     </Pressable>
   );

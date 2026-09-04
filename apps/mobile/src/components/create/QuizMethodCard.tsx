@@ -75,7 +75,7 @@ export function QuizMethodCard({
               selected
                 ? colors.textInverse
                 : disabled
-                  ? colors.textLight
+                  ? colors.textMuted
                   : colors.primary
             }
           />
@@ -113,7 +113,7 @@ export function QuizMethodCard({
           size={iconSize.sm}
           color={
             disabled
-              ? colors.textLight
+              ? colors.textMuted
               : colors.textMuted
           }
         />
@@ -249,7 +249,7 @@ const styles = StyleSheet.create({
   },
 
   disabledBadge: {
-    backgroundColor: colors.surfaceMuted,
+    backgroundColor: colors.backgroundSoft,
   },
 
   countText: {

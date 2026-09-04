@@ -57,6 +57,6 @@ const styles = StyleSheet.create({
   },
 
   pressed: {
-    backgroundColor: colors.surfaceMuted,
+    backgroundColor: colors.backgroundSoft,
   },
 });

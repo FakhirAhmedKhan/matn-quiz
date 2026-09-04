@@ -29,7 +29,7 @@ export function AppInput({
       <TextInput
         {...props}
         multiline={multiline}
-        placeholderTextColor={colors.textLight}
+        placeholderTextColor={colors.textMuted}
         style={[
           styles.input,
           multiline && styles.multiline,

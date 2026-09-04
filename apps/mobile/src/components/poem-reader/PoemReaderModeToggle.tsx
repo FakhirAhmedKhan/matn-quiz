@@ -125,7 +125,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
     borderRadius: radius.lg,
-    backgroundColor: colors.surfaceMuted,
+    backgroundColor: colors.backgroundSoft,
   },
 
   option: {

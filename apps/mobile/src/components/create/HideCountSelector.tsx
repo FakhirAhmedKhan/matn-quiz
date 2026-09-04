@@ -79,7 +79,7 @@ export function HideCountSelector({
           color={
             canDecrease
               ? colors.primary
-              : colors.textLight
+              : colors.textMuted
           }
         />
       </Pressable>
@@ -128,7 +128,7 @@ export function HideCountSelector({
           color={
             canIncrease
               ? colors.primary
-              : colors.textLight
+              : colors.textMuted
           }
         />
       </Pressable>
