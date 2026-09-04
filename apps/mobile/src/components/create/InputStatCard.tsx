@@ -7,9 +7,7 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
-import {
-  AppText,
-} from "../ui";
+import { AppText } from "../ui";
 import {
   colors,
   iconSize,

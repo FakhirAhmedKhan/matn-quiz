@@ -1,6 +1,4 @@
-import {
-  router,
-} from "expo-router";
+import { router } from "expo-router";
 import {
   StyleSheet,
   View,
@@ -23,9 +21,7 @@ import {
   AppText,
   StepIndicator,
 } from "../../src/components/ui";
-import {
-  useQuizStore,
-} from "../../src/store/quizStore";
+import { useQuizStore } from "../../src/store/quizStore";
 import {
   getArabicInputStats,
   validateArabicInput,
@@ -80,9 +76,7 @@ export default function CreateScreen() {
           title="Create Quiz"
           subtitle="Step 1 of 3"
           rightIcon="help-circle-outline"
-          onRightPress={() =>
-            undefined
-          }
+          onRightPress={() => undefined}
         />
 
         <View style={styles.intro}>
@@ -112,30 +106,6 @@ export default function CreateScreen() {
         />
 
         <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <View>
-              <AppText variant="subheading">
-                Arabic Text
-              </AppText>
-
-              <AppText
-                variant="bodySmall"
-                muted
-              >
-                Enter the source material for your quiz.
-              </AppText>
-            </View>
-
-            {text.length > 0 ? (
-              <AppButton
-                label="Clear"
-                size="sm"
-                variant="ghost"
-                onPress={clearText}
-              />
-            ) : null}
-          </View>
-
           <AppInput
             value={text}
             onChangeText={setText}
@@ -157,7 +127,13 @@ export default function CreateScreen() {
                 setText(DEMO_TEXT)
               }
             />
-          ) : null}
+          ) : (
+            <AppButton
+              label="Clear Text"
+              variant="ghost"
+              onPress={clearText}
+            />
+          )}
         </View>
 
         <ArabicInputStats
@@ -169,9 +145,7 @@ export default function CreateScreen() {
           message={validation.message}
         />
 
-        <AppCard
-          style={styles.previewCard}
-        >
+        <AppCard style={styles.previewCard}>
           <View style={styles.previewHeader}>
             <Ionicons
               name="eye-outline"
@@ -250,8 +224,8 @@ export default function CreateScreen() {
             muted
             align="center"
           >
-            Your text stays in the mobile demo while
-            you move through quiz setup.
+            Your text stays available while moving
+            through quiz setup.
           </AppText>
         </View>
       </View>
@@ -291,13 +265,6 @@ const styles = StyleSheet.create({
   },
 
   section: {
-    gap: spacing.md,
-  },
-
-  sectionHeader: {
-    flexDirection: "row",
-    alignItems: "flex-end",
-    justifyContent: "space-between",
     gap: spacing.md,
   },
 

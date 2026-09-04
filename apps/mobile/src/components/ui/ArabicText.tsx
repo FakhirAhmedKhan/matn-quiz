@@ -1,8 +1,20 @@
-import { StyleSheet, Text, type StyleProp, type TextStyle } from "react-native";
+import {
+  StyleSheet,
+  Text,
+  type StyleProp,
+  type TextStyle,
+} from "react-native";
 
-import { colors, lineHeight, typography } from "../../theme";
+import {
+  colors,
+  lineHeight,
+  typography,
+} from "../../theme";
 
-type ArabicTextSize = "large" | "medium" | "small";
+type ArabicTextSize =
+  | "large"
+  | "medium"
+  | "small";
 
 type ArabicTextProps = {
   children: string;
@@ -10,6 +22,7 @@ type ArabicTextProps = {
   muted?: boolean;
   center?: boolean;
   style?: StyleProp<TextStyle>;
+  numberOfLines?: number;
 };
 
 export function ArabicText({
@@ -18,10 +31,12 @@ export function ArabicText({
   muted = false,
   center = false,
   style,
+  numberOfLines,
 }: ArabicTextProps) {
   return (
     <Text
       selectable
+      numberOfLines={numberOfLines}
       style={[
         styles.base,
         styles[size],

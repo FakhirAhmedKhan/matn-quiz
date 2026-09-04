@@ -9,9 +9,7 @@ import { SectionHeader } from "../ui";
 import { spacing } from "../../theme";
 import { StatCard } from "./StatCard";
 
-type HomeStatsProps = {
-  stats: HomeStat[];
-};
+type HomeStatsProps = { stats: HomeStat[]; };
 
 function getStatIcon(
   id: HomeStat["id"],

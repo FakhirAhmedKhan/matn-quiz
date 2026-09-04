@@ -55,7 +55,8 @@ export function getArabicInputStats(
 export function validateArabicInput(
   text: string,
 ): ArabicInputValidation {
-  const trimmed = text.trim();
+  const trimmed =
+    text.trim();
 
   if (!trimmed) {
     return {
