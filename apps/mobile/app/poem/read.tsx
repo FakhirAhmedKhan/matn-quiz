@@ -1,4 +1,9 @@
 import {
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
+import {
   router,
 } from "expo-router";
 import {
@@ -10,6 +15,15 @@ import {
 } from "@expo/vector-icons";
 
 import {
+  AllVersesReader,
+  FocusedVerseCard,
+  PoemFontControls,
+  PoemNavigationControls,
+  PoemReaderModeToggle,
+  type PoemFontSize,
+  type PoemReaderMode,
+} from "../../src/components/poem-reader";
+import {
   AppHeader,
   AppScreen,
 } from "../../src/components/layout";
@@ -18,12 +32,14 @@ import {
   AppCard,
   AppText,
   ArabicText,
+  ProgressBar,
 } from "../../src/components/ui";
 import {
   usePoemStore,
 } from "../../src/store/poemStore";
 import {
   getPoemStats,
+  getPoemVerses,
   validatePoemDraft,
 } from "../../src/utils/poem";
 import {
@@ -33,7 +49,7 @@ import {
   spacing,
 } from "../../src/theme";
 
-export default function PoemReaderHandoffScreen() {
+export default function PoemReaderScreen() {
   const title =
     usePoemStore(
       (state) =>
@@ -56,6 +72,106 @@ export default function PoemReaderHandoffScreen() {
     getPoemStats(
       text,
     );
+
+  const verses =
+    useMemo(
+      () =>
+        getPoemVerses(
+          text,
+        ),
+      [text],
+    );
+
+  const [
+    currentIndex,
+    setCurrentIndex,
+  ] = useState(0);
+
+  const [
+    mode,
+    setMode,
+  ] = useState<PoemReaderMode>(
+    "FOCUS",
+  );
+
+  const [
+    fontSize,
+    setFontSize,
+  ] = useState<PoemFontSize>(
+    "MEDIUM",
+  );
+
+  useEffect(() => {
+    setCurrentIndex(
+      (current) => {
+        if (
+          verses.length === 0
+        ) {
+          return 0;
+        }
+
+        return Math.min(
+          current,
+          verses.length - 1,
+        );
+      },
+    );
+  }, [verses.length]);
+
+  const currentVerse =
+    verses[
+      currentIndex
+    ] ?? "";
+
+  const progress =
+    verses.length <= 0
+      ? 0
+      : (currentIndex + 1) /
+        verses.length;
+
+  const percentage =
+    Math.round(
+      progress * 100,
+    );
+
+  function previousVerse() {
+    setCurrentIndex(
+      (current) =>
+        Math.max(
+          0,
+          current - 1,
+        ),
+    );
+  }
+
+  function nextVerse() {
+    setCurrentIndex(
+      (current) =>
+        Math.min(
+          verses.length - 1,
+          current + 1,
+        ),
+    );
+  }
+
+  function firstVerse() {
+    setCurrentIndex(0);
+  }
+
+  function lastVerse() {
+    setCurrentIndex(
+      Math.max(
+        0,
+        verses.length - 1,
+      ),
+    );
+  }
+
+  function resetReader() {
+    setCurrentIndex(0);
+    setMode("FOCUS");
+    setFontSize("MEDIUM");
+  }
 
   if (!validation.valid) {
     return (
@@ -89,12 +205,12 @@ export default function PoemReaderHandoffScreen() {
               muted
               align="center"
             >
-              Create a valid Arabic poem draft
-              before opening reader mode.
+              Create a valid Arabic poem before
+              opening focused reader mode.
             </AppText>
 
             <AppButton
-              label="Go to Poem Editor"
+              label="Open Poem Editor"
               onPress={() =>
                 router.replace(
                   "/poem",
@@ -112,121 +228,236 @@ export default function PoemReaderHandoffScreen() {
       <View style={styles.page}>
         <AppHeader
           title="Poem Reader"
-          subtitle={`${stats.verses} verses`}
+          subtitle={`${verses.length} verses`}
           showBack
           onBack={() =>
             router.back()
           }
         />
 
-        <View style={styles.ready}>
-          <Ionicons
-            name="checkmark-circle-outline"
-            size={iconSize.md}
-            color={colors.success}
-          />
+        <AppCard style={styles.poemHeader}>
+          <View style={styles.poemIcon}>
+            <Ionicons
+              name="book-outline"
+              size={iconSize.lg}
+              color={colors.primary}
+            />
+          </View>
 
-          <AppText
-            variant="bodySmall"
-            style={styles.readyText}
-          >
-            Poem draft loaded successfully.
-          </AppText>
-        </View>
-
-        <AppCard style={styles.readerCard}>
-          <View style={styles.title}>
+          <View style={styles.poemTitle}>
             <ArabicText
               size="large"
               center
             >
               {title}
             </ArabicText>
+
+            <AppText
+              variant="caption"
+              muted
+              align="center"
+            >
+              {stats.words} words · {stats.stanzas} stanzas
+            </AppText>
           </View>
-
-          <View style={styles.divider} />
-
-          <ArabicText
-            size="medium"
-          >
-            {text}
-          </ArabicText>
         </AppCard>
 
-        <View style={styles.summary}>
-          <View style={styles.summaryItem}>
+        <AppCard style={styles.progressCard}>
+          <View style={styles.progressHeader}>
+            <View style={styles.progressTitle}>
+              <Ionicons
+                name="footsteps-outline"
+                size={iconSize.md}
+                color={colors.primary}
+              />
+
+              <AppText variant="subheading">
+                Reading Progress
+              </AppText>
+            </View>
+
+            <AppText
+              variant="subheading"
+              style={styles.progressValue}
+            >
+              {percentage}%
+            </AppText>
+          </View>
+
+          <ProgressBar
+            value={progress}
+          />
+
+          <View style={styles.progressFooter}>
             <AppText
               variant="caption"
               muted
             >
-              Verses
+              Verse {currentIndex + 1}
             </AppText>
 
-            <AppText
-              variant="subheading"
-              style={styles.summaryValue}
-            >
-              {stats.verses}
-            </AppText>
-          </View>
-
-          <View style={styles.summaryItem}>
             <AppText
               variant="caption"
               muted
             >
-              Words
-            </AppText>
-
-            <AppText
-              variant="subheading"
-              style={styles.summaryValue}
-            >
-              {stats.words}
+              {verses.length} total
             </AppText>
           </View>
+        </AppCard>
 
-          <View style={styles.summaryItem}>
-            <AppText
-              variant="caption"
-              muted
-            >
-              Stanzas
-            </AppText>
-
-            <AppText
-              variant="subheading"
-              style={styles.summaryValue}
-            >
-              {stats.stanzas}
-            </AppText>
-          </View>
-        </View>
-
-        <AppButton
-          label="Edit Poem"
-          variant="secondary"
-          onPress={() =>
-            router.back()
-          }
+        <PoemReaderModeToggle
+          mode={mode}
+          onChange={setMode}
         />
 
-        <View style={styles.nextPhase}>
+        <PoemFontControls
+          value={fontSize}
+          onChange={setFontSize}
+        />
+
+        {mode === "FOCUS" ? (
+          <>
+            <FocusedVerseCard
+              verse={currentVerse}
+              verseNumber={
+                currentIndex + 1
+              }
+              totalVerses={
+                verses.length
+              }
+              fontSize={
+                fontSize
+              }
+            />
+
+            <PoemNavigationControls
+              currentIndex={
+                currentIndex
+              }
+              total={
+                verses.length
+              }
+              onPrevious={
+                previousVerse
+              }
+              onNext={
+                nextVerse
+              }
+              onFirst={
+                firstVerse
+              }
+              onLast={
+                lastVerse
+              }
+            />
+          </>
+        ) : (
+          <>
+            <View style={styles.allHeading}>
+              <View style={styles.allTitle}>
+                <Ionicons
+                  name="reader-outline"
+                  size={iconSize.md}
+                  color={colors.primary}
+                />
+
+                <AppText variant="subheading">
+                  Full Poem
+                </AppText>
+              </View>
+
+              <AppText
+                variant="caption"
+                muted
+              >
+                Current verse highlighted
+              </AppText>
+            </View>
+
+            <AllVersesReader
+              verses={verses}
+              activeIndex={
+                currentIndex
+              }
+              fontSize={
+                fontSize
+              }
+            />
+
+            <PoemNavigationControls
+              currentIndex={
+                currentIndex
+              }
+              total={
+                verses.length
+              }
+              onPrevious={
+                previousVerse
+              }
+              onNext={
+                nextVerse
+              }
+              onFirst={
+                firstVerse
+              }
+              onLast={
+                lastVerse
+              }
+            />
+          </>
+        )}
+
+        <View style={styles.memorizationTip}>
           <Ionicons
-            name="information-circle-outline"
+            name="school-outline"
             size={iconSize.md}
             color={colors.primary}
           />
 
-          <AppText
-            variant="bodySmall"
-            style={styles.nextPhaseText}
-          >
-            The poem draft and reader handoff are
-            complete. M14 will add the full focused
-            reader experience and reading controls.
-          </AppText>
+          <View style={styles.tipText}>
+            <AppText variant="subheading">
+              Memorization Tip
+            </AppText>
+
+            <AppText
+              variant="bodySmall"
+              muted
+            >
+              Read the current verse several times,
+              look away, recite it from memory, then
+              move to the next verse.
+            </AppText>
+          </View>
         </View>
+
+        <View style={styles.actions}>
+          <AppButton
+            label="Edit Poem"
+            variant="secondary"
+            onPress={() =>
+              router.push(
+                "/poem",
+              )
+            }
+          />
+
+          <AppButton
+            label="Reset Reader"
+            variant="ghost"
+            onPress={
+              resetReader
+            }
+          />
+        </View>
+
+        <AppText
+          variant="caption"
+          muted
+          align="center"
+        >
+          Reader controls affect only this reading
+          session and do not modify your poem text.
+        </AppText>
       </View>
     </AppScreen>
   );
@@ -241,72 +472,87 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.section,
   },
 
-  ready: {
-    flexDirection: "row",
+  poemHeader: {
     alignItems: "center",
-    gap: spacing.sm,
-    padding: spacing.md,
-    borderWidth: 1,
-    borderColor: colors.success,
+    gap: spacing.md,
+    paddingVertical: spacing.xl,
+  },
+
+  poemIcon: {
+    width: 52,
+    height: 52,
+    alignItems: "center",
+    justifyContent: "center",
     borderRadius: radius.lg,
-    backgroundColor: colors.successSoft,
+    backgroundColor: colors.primarySoft,
   },
 
-  readyText: {
-    flex: 1,
-    color: colors.success,
-    fontWeight: "700",
-  },
-
-  readerCard: {
-    gap: spacing.xl,
-    paddingVertical: spacing.xxl,
-  },
-
-  title: {
-    paddingHorizontal: spacing.md,
-  },
-
-  divider: {
-    height: 1,
-    backgroundColor: colors.border,
-  },
-
-  summary: {
-    flexDirection: "row",
+  poemTitle: {
+    width: "100%",
     gap: spacing.sm,
   },
 
-  summaryItem: {
-    flex: 1,
-    alignItems: "center",
-    gap: spacing.xs,
-    padding: spacing.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: radius.lg,
-    backgroundColor: colors.surface,
+  progressCard: {
+    gap: spacing.md,
   },
 
-  summaryValue: {
-    color: colors.primaryDark,
+  progressHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: spacing.md,
+  },
+
+  progressTitle: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm,
+  },
+
+  progressValue: {
+    color: colors.primary,
     fontWeight: "900",
   },
 
-  nextPhase: {
+  progressFooter: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+
+  allHeading: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: spacing.md,
+  },
+
+  allTitle: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm,
+  },
+
+  memorizationTip: {
     flexDirection: "row",
     alignItems: "flex-start",
-    gap: spacing.sm,
-    padding: spacing.md,
+    gap: spacing.md,
+    padding: spacing.lg,
     borderWidth: 1,
     borderColor: colors.primary,
     borderRadius: radius.lg,
     backgroundColor: colors.primarySoft,
   },
 
-  nextPhaseText: {
+  tipText: {
     flex: 1,
-    color: colors.primaryDark,
+    gap: spacing.xs,
+  },
+
+  actions: {
+    gap: spacing.md,
   },
 
   emptyState: {
