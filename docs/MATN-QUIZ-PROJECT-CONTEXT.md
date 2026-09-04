@@ -656,3 +656,110 @@ When continuing this project in another AI/model/chat, provide this file and say
 > Read this context first. Do not redesign or restart the project. Continue from the current architecture and verify the latest Git/test/deployment state before making changes.
 
 Do not assume old test counts, commit hashes, or deployment status are still current.
+
+---
+
+## Project Update — 2026-09-04
+
+### Book Library
+- Book Library is integrated into the web application.
+- Main routes:
+  - `/books`
+  - `/books/upload`
+  - `/books/[bookId]`
+  - `/books/[bookId]/read`
+- Books is now part of desktop and mobile navigation.
+- Import / Export was removed from the main navigation/home workflow, while the `/import-export` route remains available.
+- Books navigation uses its own test identifiers:
+  - `top-nav-books`
+  - `bottom-nav-books`
+- Mobile navigation uses six workflow destinations.
+
+### Current Navigation
+Primary navigation:
+- Home
+- Create
+- Study
+- Poem
+- Books
+- History
+
+### Create Quiz Workflow
+Create flow is split into three routes:
+1. `/create` — Paste Arabic text
+2. `/create/method` — Choose Hide Words or Hide Lines
+3. `/create/count` — Select hide count and generate quiz
+
+Quiz workflow state persistence across these routes has been introduced using browser session storage.
+
+Storage key:
+`matn-quiz:quiz-workflow-draft:v1`
+
+This prevents Arabic text, selected quiz method, hide count, and generated quiz data from disappearing when moving between Create steps.
+
+### Create Page UI Cleanup
+- Resume Study Session component is being removed from the `/create` page.
+- Create page should focus only on the new quiz creation workflow.
+
+### Poem Feature
+Poem functionality remains available at:
+- `/poem`
+- `/poem/read`
+
+Poem form Arabic placeholders:
+- Title: `أدخل العنوان`
+- Text: `أدخل النص`
+
+Existing poem persistence and reader functionality should remain unchanged.
+
+### Saved Quiz / History
+- Saved quiz history remains available at `/history`.
+- Import / Export functionality route remains available even though it is no longer shown in the primary navigation.
+- Workflow draft persistence can be used to carry opened/generated quiz data between pages.
+
+### Arabic TTS Safety
+- HIDE_WORD must continue strict hidden-answer protection.
+- Hidden words must never be sent to `/api/tts`.
+- HIDE_LINE must use line visibility/index state:
+  - visible line => TTS allowed
+  - hidden line => TTS disabled
+- Hidden lines must never be sent to `/api/tts`.
+- HIDE_LINE visible-line TTS regression still requires final browser verification.
+
+### Testing Improvements
+Vitest tests use:
+- React Testing Library
+- jsdom
+- `tests/setup.ts`
+- test timeout: 20 seconds
+
+Quiz workflow session storage is cleared between independent tests to avoid persisted wizard state leaking between tests.
+
+### Latest Test Status
+Recent navigation regression run:
+
+- Test files: 4
+- Tests: 20
+- Passed: 19
+- Failed: 1
+
+The remaining failure was a stale assertion inside:
+
+`tests/unit/pages/MultiPageWorkflowArchitecture.test.tsx`
+
+It incorrectly expected an active navigation item through `aria-current="page"` in a test whose purpose is only to verify that workflow navigation destinations exist.
+
+A fix was prepared to remove that stale active-route assertion.
+
+Full test suite must be run again after this final test cleanup before considering the web suite fully green.
+
+### Important Current Verification Order
+1. Finish the remaining `MultiPageWorkflowArchitecture` test.
+2. Run the complete web Vitest suite.
+3. Run the production Next.js build.
+4. Verify Create wizard state across all three routes in the browser.
+5. Verify History -> Study quiz data handoff.
+6. Verify HIDE_LINE TTS:
+   - visible line plays audio
+   - hidden line cannot play audio
+7. Continue remaining Book Library final verification only after current regressions are green.

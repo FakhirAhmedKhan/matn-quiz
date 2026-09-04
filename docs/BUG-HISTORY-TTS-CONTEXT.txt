@@ -1,0 +1,1490 @@
+MATN QUIZ - HISTORY + HIDE LINE TTS BUG CONTEXT
+
+============================================================
+FILE: apps\web\app\history\page.tsx
+============================================================
+"use client";
+
+import Link from "next/link";
+
+import { AppPageShell, AppStepHeader } from "@/components/layout";
+import {
+  HistoryStatusSection,
+  SavedHistorySection,
+} from "@/components/page/home";
+import usePage from "@/hooks/usePage";
+
+export default function HistoryPage() {
+  const page = usePage();
+
+  return (
+    <AppPageShell>
+      <AppStepHeader
+        eyebrow="History"
+        title="Saved Quiz History"
+        description="Open previous quizzes, continue studying, delete old items, or clear your saved quiz history."
+        action={
+          <div className="flex flex-wrap gap-3">
+            <Link
+              href="/create"
+              data-testid="history-create-link"
+              className="inline-flex min-h-11 items-center justify-center rounded-2xl border border-slate-300 bg-white px-5 py-3 text-sm font-bold text-slate-700 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
+            >
+              Create Quiz
+            </Link>
+
+            <Link
+              href="/study"
+              data-testid="history-study-link"
+              className="inline-flex min-h-11 items-center justify-center rounded-2xl bg-slate-950 px-5 py-3 text-sm font-bold text-white shadow-sm shadow-slate-950/20 transition hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2"
+            >
+              Study
+            </Link>
+          </div>
+        }
+      />
+
+      <div className="space-y-6">
+        <HistoryStatusSection page={page} />
+        <SavedHistorySection page={page} />
+      </div>
+    </AppPageShell>
+  );
+}
+
+============================================================
+FILE: apps\web\components\quiz\SavedQuizHistory.tsx
+============================================================
+"use client";
+
+import { Clock3, FolderOpen, Trash2 } from "lucide-react";
+import { EmptyStatePanel } from "@/components/ui/FeedbackStatePanel";
+import { getGeneratedQuizMethodLabel } from "@/lib/quiz/unified-quiz";
+import type { SavedQuizRecord } from "@/lib/quiz/quiz-history";
+import {
+  focusRingClasses,
+  interactiveTransitionClasses,
+  pressableClasses,
+} from "@/lib/ui/accessibility";
+import { getMethodAccentClasses } from "@/lib/ui/design-system";
+import { cn } from "@/lib/utils/cn";
+
+interface SavedQuizHistoryProps {
+  items: SavedQuizRecord[];
+  onOpen: (record: SavedQuizRecord) => void;
+  onDelete: (id: string) => void;
+  onClear: () => void;
+  disabled?: boolean;
+  className?: string;
+}
+
+interface SavedQuizHistoryItemProps {
+  record: SavedQuizRecord;
+  onOpen: (record: SavedQuizRecord) => void;
+  onDelete: (id: string) => void;
+  disabled?: boolean;
+}
+
+export function formatSavedQuizDate(value: string): string {
+  if (!value || Number.isNaN(Date.parse(value))) {
+    return "Unknown date";
+  }
+
+  return value.slice(0, 16).replace("T", " ");
+}
+
+export function getSavedQuizPreview(record: SavedQuizRecord): string {
+  const preview = record.quiz.quizText.replace(/\s+/g, " ").trim();
+
+  if (preview.length === 0) {
+    return "No preview available.";
+  }
+
+  return preview.length > 90 ? `${preview.slice(0, 90)}...` : preview;
+}
+
+export function SavedQuizHistoryItem({
+  record,
+  onOpen,
+  onDelete,
+  disabled = false,
+}: SavedQuizHistoryItemProps) {
+  const methodLabel = getGeneratedQuizMethodLabel(record.quiz.method);
+
+  const buttonClasses = cn(
+    "inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-3 py-2 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-50",
+    focusRingClasses,
+    interactiveTransitionClasses,
+    pressableClasses,
+  );
+
+  return (
+    <li
+      data-testid="saved-quiz-item"
+      className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm shadow-slate-100"
+    >
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0">
+          <span
+            data-testid="saved-quiz-method"
+            className={cn(
+              "inline-flex rounded-full border px-3 py-1 text-xs font-semibold",
+              getMethodAccentClasses(record.quiz.method),
+            )}
+          >
+            {methodLabel}
+          </span>
+
+          <h3
+            data-testid="saved-quiz-title"
+            className="mt-3 text-base font-semibold text-slate-950"
+          >
+            {record.title}
+          </h3>
+
+          <p
+            data-testid="saved-quiz-preview"
+            dir="rtl"
+            lang="ar"
+            className="mt-2 text-right text-sm leading-7 text-slate-600"
+          >
+            {getSavedQuizPreview(record)}
+          </p>
+
+          <p className="mt-3 inline-flex items-center gap-2 text-xs text-slate-500">
+            <Clock3 className="h-3.5 w-3.5" />
+            {formatSavedQuizDate(record.updatedAt)}
+          </p>
+        </div>
+
+        <div className="flex shrink-0 flex-wrap gap-2">
+          <button
+            type="button"
+            disabled={disabled}
+            onClick={() => onOpen(record)}
+            className={cn(
+              buttonClasses,
+              "bg-emerald-700 text-white hover:bg-emerald-800",
+            )}
+          >
+            <FolderOpen className="h-4 w-4" />
+            Open Quiz
+          </button>
+
+          <button
+            type="button"
+            disabled={disabled}
+            aria-label={`Delete saved quiz ${record.title}`}
+            onClick={() => onDelete(record.id)}
+            className={cn(
+              buttonClasses,
+              "border border-red-200 bg-white text-red-700 hover:border-red-300 hover:bg-red-50",
+            )}
+          >
+            <Trash2 className="h-4 w-4" />
+            Delete
+          </button>
+        </div>
+      </div>
+    </li>
+  );
+}
+
+export function SavedQuizHistory({
+  items,
+  onOpen,
+  onDelete,
+  onClear,
+  disabled = false,
+  className,
+}: SavedQuizHistoryProps) {
+  const hasItems = items.length > 0;
+
+  return (
+    <section
+      data-testid="saved-quiz-history"
+      aria-label="Saved quiz history"
+      className={cn("space-y-4", className)}
+    >
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <h2 className="text-2xl font-semibold tracking-tight text-slate-950">
+            Saved Quiz History
+          </h2>
+
+          <p className="mt-1 text-sm leading-6 text-slate-600">
+            Reopen, review, or delete quizzes saved in this browser.
+          </p>
+        </div>
+
+        <button
+          type="button"
+          disabled={!hasItems || disabled}
+          onClick={onClear}
+          className={cn(
+            "inline-flex min-h-11 w-fit items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:border-red-300 hover:text-red-700 disabled:cursor-not-allowed disabled:opacity-50",
+            focusRingClasses,
+            interactiveTransitionClasses,
+            pressableClasses,
+          )}
+        >
+          <Trash2 className="h-4 w-4" />
+          Clear History
+        </button>
+      </div>
+
+      {hasItems ? (
+        <ol data-testid="saved-quiz-list" className="space-y-3">
+          {items.map((record) => (
+            <SavedQuizHistoryItem
+              key={record.id}
+              record={record}
+              onOpen={onOpen}
+              onDelete={onDelete}
+              disabled={disabled}
+            />
+          ))}
+        </ol>
+      ) : (
+        <div data-testid="saved-quiz-empty">
+          <EmptyStatePanel
+            compact
+            title="No saved quizzes yet."
+            description="Generate a quiz and use Save Quiz to keep it here for later."
+          />
+        </div>
+      )}
+    </section>
+  );
+}
+
+
+
+============================================================
+FILE: apps\web\lib\quiz\quiz-history-repository.ts
+============================================================
+import type { GeneratedQuiz } from "@/types/quiz";
+import {
+  createEmptyQuizHistoryDocument,
+  createQuizHistoryDocument,
+  createSavedQuizRecord,
+  parseQuizHistoryDocument,
+  QUIZ_HISTORY_STORAGE_KEY,
+  removeSavedQuizRecord,
+  serializeQuizHistoryDocument,
+  upsertSavedQuizRecord,
+  type CreateSavedQuizRecordOptions,
+  type QuizHistoryDocument,
+  type SavedQuizRecord,
+} from "@/lib/quiz/quiz-history";
+
+export interface QuizHistoryStorage {
+  getItem(key: string): string | null;
+  setItem(key: string, value: string): void;
+  removeItem(key: string): void;
+}
+
+export interface QuizHistoryRepositoryOptions {
+  storage?: QuizHistoryStorage | null;
+  now?: Date;
+}
+
+export interface SaveQuizToHistoryOptions extends CreateSavedQuizRecordOptions {
+  storage?: QuizHistoryStorage | null;
+}
+
+export function getBrowserQuizHistoryStorage(): QuizHistoryStorage | null {
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  try {
+    return window.localStorage;
+  } catch {
+    return null;
+  }
+}
+
+function resolveQuizHistoryStorage(
+  options: QuizHistoryRepositoryOptions | SaveQuizToHistoryOptions = {},
+): QuizHistoryStorage | null {
+  if ("storage" in options) {
+    return options.storage ?? null;
+  }
+
+  return getBrowserQuizHistoryStorage();
+}
+
+export function isQuizHistoryStorageAvailable(
+  storage: QuizHistoryStorage | null = getBrowserQuizHistoryStorage(),
+): boolean {
+  if (!storage) {
+    return false;
+  }
+
+  const testKey = "matn-quiz:storage-test";
+
+  try {
+    storage.setItem(testKey, "1");
+    storage.removeItem(testKey);
+
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export function readQuizHistoryDocument(
+  options: QuizHistoryRepositoryOptions = {},
+): QuizHistoryDocument {
+  const storage = resolveQuizHistoryStorage(options);
+  const now = options.now ?? new Date();
+
+  if (!storage) {
+    return createEmptyQuizHistoryDocument(now);
+  }
+
+  try {
+    const raw = storage.getItem(QUIZ_HISTORY_STORAGE_KEY);
+    const parsed = parseQuizHistoryDocument(raw);
+
+    return parsed ?? createEmptyQuizHistoryDocument(now);
+  } catch {
+    return createEmptyQuizHistoryDocument(now);
+  }
+}
+
+export function writeQuizHistoryDocument(
+  document: QuizHistoryDocument,
+  options: QuizHistoryRepositoryOptions = {},
+): boolean {
+  const storage = resolveQuizHistoryStorage(options);
+
+  if (!storage) {
+    return false;
+  }
+
+  try {
+    storage.setItem(
+      QUIZ_HISTORY_STORAGE_KEY,
+      serializeQuizHistoryDocument(document),
+    );
+
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export function loadSavedQuizHistory(
+  options: QuizHistoryRepositoryOptions = {},
+): SavedQuizRecord[] {
+  return readQuizHistoryDocument(options).items;
+}
+
+export function findSavedQuizRecord(
+  id: string,
+  options: QuizHistoryRepositoryOptions = {},
+): SavedQuizRecord | undefined {
+  return loadSavedQuizHistory(options).find((item) => item.id === id);
+}
+
+export function saveQuizToHistory(
+  quiz: GeneratedQuiz,
+  options: SaveQuizToHistoryOptions = {},
+): SavedQuizRecord | null {
+  const storage = resolveQuizHistoryStorage(options);
+
+  if (!storage) {
+    return null;
+  }
+
+  const now = options.now ?? new Date();
+  const currentDocument = readQuizHistoryDocument({
+    storage,
+    now,
+  });
+
+  const record = createSavedQuizRecord(quiz, {
+    id: options.id,
+    now,
+    random: options.random,
+    title: options.title,
+  });
+
+  const nextItems = upsertSavedQuizRecord(currentDocument.items, record);
+  const nextDocument = createQuizHistoryDocument(nextItems, now);
+
+  const saved = writeQuizHistoryDocument(nextDocument, {
+    storage,
+    now,
+  });
+
+  return saved ? record : null;
+}
+
+export function deleteSavedQuizFromHistory(
+  id: string,
+  options: QuizHistoryRepositoryOptions = {},
+): boolean {
+  const storage = resolveQuizHistoryStorage(options);
+
+  if (!storage) {
+    return false;
+  }
+
+  const now = options.now ?? new Date();
+  const currentDocument = readQuizHistoryDocument({
+    storage,
+    now,
+  });
+
+  const nextItems = removeSavedQuizRecord(currentDocument.items, id);
+  const nextDocument = createQuizHistoryDocument(nextItems, now);
+
+  return writeQuizHistoryDocument(nextDocument, {
+    storage,
+    now,
+  });
+}
+
+export function clearQuizHistoryStorage(
+  options: QuizHistoryRepositoryOptions = {},
+): boolean {
+  const storage = resolveQuizHistoryStorage(options);
+
+  if (!storage) {
+    return false;
+  }
+
+  try {
+    storage.removeItem(QUIZ_HISTORY_STORAGE_KEY);
+
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+
+============================================================
+FILE: apps\web\lib\quiz\quiz-history.ts
+============================================================
+import type { GeneratedQuiz } from "@/types/quiz";
+
+export const QUIZ_HISTORY_VERSION = 1;
+
+export const QUIZ_HISTORY_STORAGE_KEY = "matn-quiz:history:v1";
+
+export const MAX_SAVED_QUIZ_HISTORY = 20;
+
+export interface SavedQuizRecord {
+  id: string;
+  version: typeof QUIZ_HISTORY_VERSION;
+  title: string;
+  quiz: GeneratedQuiz;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface QuizHistoryDocument {
+  version: typeof QUIZ_HISTORY_VERSION;
+  savedAt: string;
+  items: SavedQuizRecord[];
+}
+
+export interface CreateSavedQuizRecordOptions {
+  id?: string;
+  now?: Date;
+  random?: () => number;
+  title?: string;
+}
+
+function isObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+export function createSavedQuizId(
+  now = new Date(),
+  random: () => number = Math.random,
+): string {
+  const timestamp = now
+    .toISOString()
+    .replace(/[-:.TZ]/g, "")
+    .slice(0, 14);
+
+  const suffix = Math.floor(random() * 1_000_000)
+    .toString(36)
+    .padStart(4, "0");
+
+  return `quiz_${timestamp}_${suffix}`;
+}
+
+export function createSavedQuizTitle(quiz: GeneratedQuiz): string {
+  const methodLabel = quiz.method === "HIDE_WORD" ? "Hide Words" : "Hide Lines";
+  const textPreview = quiz.originalText.replace(/\s+/g, " ").trim();
+  const safePreview = textPreview.length > 0 ? textPreview : "Untitled Quiz";
+  const preview =
+    safePreview.length > 40 ? `${safePreview.slice(0, 40)}...` : safePreview;
+
+  return `${methodLabel} · ${quiz.hiddenCount} hidden · ${preview}`;
+}
+
+export function createSavedQuizRecord(
+  quiz: GeneratedQuiz,
+  options: CreateSavedQuizRecordOptions = {},
+): SavedQuizRecord {
+  const now = options.now ?? new Date();
+  const timestamp = now.toISOString();
+
+  return {
+    id: options.id ?? createSavedQuizId(now, options.random),
+    version: QUIZ_HISTORY_VERSION,
+    title: options.title ?? createSavedQuizTitle(quiz),
+    quiz,
+    createdAt: timestamp,
+    updatedAt: timestamp,
+  };
+}
+
+export function createEmptyQuizHistoryDocument(
+  now = new Date(),
+): QuizHistoryDocument {
+  return {
+    version: QUIZ_HISTORY_VERSION,
+    savedAt: now.toISOString(),
+    items: [],
+  };
+}
+
+export function isGeneratedQuiz(value: unknown): value is GeneratedQuiz {
+  if (!isObject(value)) {
+    return false;
+  }
+
+  const method = value.method;
+
+  return (
+    (method === "HIDE_WORD" || method === "HIDE_LINE") &&
+    typeof value.originalText === "string" &&
+    typeof value.quizText === "string" &&
+    typeof value.requestedCount === "number" &&
+    typeof value.hiddenCount === "number" &&
+    Array.isArray(value.answers) &&
+    Array.isArray(value.selectedTokenIndexes)
+  );
+}
+
+export function isSavedQuizRecord(value: unknown): value is SavedQuizRecord {
+  if (!isObject(value)) {
+    return false;
+  }
+
+  return (
+    value.version === QUIZ_HISTORY_VERSION &&
+    typeof value.id === "string" &&
+    value.id.trim().length > 0 &&
+    typeof value.title === "string" &&
+    value.title.trim().length > 0 &&
+    typeof value.createdAt === "string" &&
+    typeof value.updatedAt === "string" &&
+    isGeneratedQuiz(value.quiz)
+  );
+}
+
+export function isQuizHistoryDocument(
+  value: unknown,
+): value is QuizHistoryDocument {
+  if (!isObject(value)) {
+    return false;
+  }
+
+  return (
+    value.version === QUIZ_HISTORY_VERSION &&
+    typeof value.savedAt === "string" &&
+    Array.isArray(value.items) &&
+    value.items.every(isSavedQuizRecord)
+  );
+}
+
+export function serializeQuizHistoryDocument(
+  document: QuizHistoryDocument,
+): string {
+  return JSON.stringify(document);
+}
+
+export function parseQuizHistoryDocument(
+  value: string | null | undefined,
+): QuizHistoryDocument | null {
+  if (!value) {
+    return null;
+  }
+
+  try {
+    const parsed: unknown = JSON.parse(value);
+
+    return isQuizHistoryDocument(parsed) ? parsed : null;
+  } catch {
+    return null;
+  }
+}
+
+export function normalizeQuizHistoryItems(
+  items: SavedQuizRecord[],
+  maxItems = MAX_SAVED_QUIZ_HISTORY,
+): SavedQuizRecord[] {
+  const seenIds = new Set<string>();
+  const normalized: SavedQuizRecord[] = [];
+
+  for (const item of items) {
+    if (seenIds.has(item.id)) {
+      continue;
+    }
+
+    seenIds.add(item.id);
+    normalized.push(item);
+
+    if (normalized.length >= maxItems) {
+      break;
+    }
+  }
+
+  return normalized;
+}
+
+export function upsertSavedQuizRecord(
+  items: SavedQuizRecord[],
+  record: SavedQuizRecord,
+  maxItems = MAX_SAVED_QUIZ_HISTORY,
+): SavedQuizRecord[] {
+  const withoutDuplicate = items.filter((item) => item.id !== record.id);
+
+  return normalizeQuizHistoryItems([record, ...withoutDuplicate], maxItems);
+}
+
+export function removeSavedQuizRecord(
+  items: SavedQuizRecord[],
+  id: string,
+): SavedQuizRecord[] {
+  return items.filter((item) => item.id !== id);
+}
+
+export function clearSavedQuizHistory(): SavedQuizRecord[] {
+  return [];
+}
+
+export function createQuizHistoryDocument(
+  items: SavedQuizRecord[],
+  now = new Date(),
+): QuizHistoryDocument {
+  return {
+    version: QUIZ_HISTORY_VERSION,
+    savedAt: now.toISOString(),
+    items: normalizeQuizHistoryItems(items),
+  };
+}
+
+
+============================================================
+FILE: apps\web\app\study\page.tsx
+============================================================
+"use client";
+
+import Link from "next/link";
+
+import { AppPageShell, AppStepHeader } from "@/components/layout";
+import {
+  GeneratedQuizSection,
+  ResumeStudySection,
+} from "@/components/page/home";
+import usePage from "@/hooks/usePage";
+
+export default function StudyPage() {
+  const page = usePage();
+
+  return (
+    <AppPageShell>
+      <AppStepHeader
+        eyebrow="Study"
+        title="Question & Answer"
+        description="Review your generated quiz, reveal answers safely, mark progress, and listen only to visible Arabic text."
+        action={
+          <div className="flex flex-wrap gap-3">
+            <Link
+              href="/create/count"
+              data-testid="study-back-create-link"
+              className="inline-flex min-h-11 items-center justify-center rounded-2xl border border-slate-300 bg-white px-5 py-3 text-sm font-bold text-slate-700 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
+            >
+              Back to Setup
+            </Link>
+
+            <Link
+              href="/history"
+              data-testid="study-open-history-link"
+              className="inline-flex min-h-11 items-center justify-center rounded-2xl bg-slate-950 px-5 py-3 text-sm font-bold text-white shadow-sm shadow-slate-950/20 transition hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2"
+            >
+              History
+            </Link>
+          </div>
+        }
+      />
+
+      <div className="space-y-6">
+        <ResumeStudySection page={page} />
+        <GeneratedQuizSection page={page} />
+      </div>
+    </AppPageShell>
+  );
+}
+
+============================================================
+FILE: apps\web\components\quiz\QuizTtsPanel.tsx
+============================================================
+"use client";
+
+import type { GeneratedQuiz } from "@/types/quiz";
+import { QUIZ_METHODS } from "@/lib/constants/quiz";
+import {
+  assertSpeakableTextDoesNotLeakHiddenAnswers,
+  buildSpeakableTextForVisibleWords,
+  buildTtsLineOptions,
+} from "@/lib/quiz/tts-safe-text";
+import { cn } from "@/lib/utils/cn";
+import { ArabicTtsControls } from "@/components/quiz/ArabicTtsControls";
+
+export interface QuizTtsPanelProps {
+  quiz: GeneratedQuiz;
+  className?: string;
+}
+
+export function QuizTtsPanel({ quiz, className }: QuizTtsPanelProps) {
+  if (quiz.method === QUIZ_METHODS.HIDE_WORD) {
+    const speakableText = buildSpeakableTextForVisibleWords(quiz);
+    const safe = assertSpeakableTextDoesNotLeakHiddenAnswers(
+      quiz,
+      speakableText,
+    );
+
+    return (
+      <section
+        data-testid="arabic-tts-panel"
+        aria-label="Arabic text to speech"
+        className={cn("space-y-3", className)}
+      >
+        <div>
+          <h3 className="text-base font-semibold text-slate-950">
+            Listen to Visible Words
+          </h3>
+          <p className="mt-1 text-sm leading-6 text-slate-600">
+            Hidden words are removed before audio starts.
+          </p>
+        </div>
+
+        <ArabicTtsControls
+          speakableText={safe ? speakableText : ""}
+          label="Speak visible quiz text"
+          hiddenWarning="No visible words are safe to play."
+        />
+      </section>
+    );
+  }
+
+  const lines = buildTtsLineOptions(quiz);
+
+  return (
+    <section
+      data-testid="arabic-tts-panel"
+      aria-label="Arabic line text to speech"
+      className={cn("space-y-4", className)}
+    >
+      <div>
+        <h3 className="text-base font-semibold text-slate-950">
+          Listen to Visible Lines
+        </h3>
+        <p className="mt-1 text-sm leading-6 text-slate-600">
+          Only visible lines can be played. Hidden lines stay silent.
+        </p>
+      </div>
+
+      <div className="space-y-3">
+        {lines.map((line) => {
+          const safe = assertSpeakableTextDoesNotLeakHiddenAnswers(
+            quiz,
+            line.speakableText,
+          );
+
+          return (
+            <div
+              key={line.tokenIndex}
+              data-testid="tts-line-option"
+              className="rounded-2xl border border-slate-200 bg-white p-4"
+            >
+              <p className="text-sm font-semibold text-slate-700">
+                Line {line.lineNumber}
+              </p>
+
+              {!line.hidden && (
+                <p
+                  data-testid="tts-visible-line-text"
+                  dir="rtl"
+                  lang="ar"
+                  className="mt-2 rounded-xl bg-slate-50 p-3 text-right text-lg leading-9 text-slate-950"
+                >
+                  {line.text}
+                </p>
+              )}
+
+              <div className="mt-3">
+                <ArabicTtsControls
+                  speakableText={!line.hidden && safe ? line.speakableText : ""}
+                  label={
+                    line.hidden
+                      ? `Hidden line ${line.lineNumber} cannot be played`
+                      : `Speak visible line ${line.lineNumber}`
+                  }
+                  disabled={line.hidden || !safe}
+                  hiddenWarning="This line is hidden, so audio is disabled."
+                />
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
+
+============================================================
+FILE: apps\web\components\quiz\ArabicTtsControls.tsx
+============================================================
+"use client";
+
+import { Square, Volume2 } from "lucide-react";
+import { Button } from "@/components/ui";
+import { useArabicTts } from "@/hooks/useArabicTts";
+import { cn } from "@/lib/utils/cn";
+
+export interface ArabicTtsControlsProps {
+  speakableText: string;
+  label?: string;
+  disabled?: boolean;
+  hiddenWarning?: string;
+  className?: string;
+  testId?: string;
+}
+
+export function ArabicTtsControls({
+  speakableText,
+  label = "Speak visible text",
+  disabled = false,
+  hiddenWarning = "Hidden text cannot be played.",
+  className,
+  testId = "arabic-tts-controls",
+}: ArabicTtsControlsProps) {
+  const { status, isSupported, speak, stop } = useArabicTts();
+
+  const hasSpeakableText = speakableText.trim().length > 0;
+  const isBusy = status === "loading" || status === "speaking";
+  const isDisabled = disabled || !hasSpeakableText || !isSupported || isBusy;
+
+  const statusText = !hasSpeakableText
+    ? hiddenWarning
+    : !isSupported || status === "unsupported"
+      ? "Audio playback is not supported in this browser."
+      : status === "provider-missing"
+        ? "Arabic audio provider is not available."
+        : status === "loading"
+          ? "Preparing Arabic audio..."
+          : status === "speaking"
+            ? "Playing visible Arabic text."
+            : status === "stopped"
+              ? "Audio stopped."
+              : status === "error"
+                ? "Unable to play Arabic audio."
+                : "Ready to play visible Arabic text.";
+
+  return (
+    <div
+      data-testid={testId}
+      className={cn(
+        "rounded-2xl border border-emerald-100 bg-emerald-50/60 p-4",
+        className,
+      )}
+    >
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <p className="text-sm font-semibold text-emerald-950">
+            Arabic Text-to-Speech
+          </p>
+          <p
+            data-testid="arabic-tts-status"
+            role="status"
+            aria-live="polite"
+            className="mt-1 text-sm leading-6 text-emerald-800"
+          >
+            {statusText}
+          </p>
+        </div>
+
+        <div className="flex flex-wrap gap-2">
+          <Button
+            type="button"
+            variant="primary"
+            size="sm"
+            disabled={isDisabled}
+            aria-label={label}
+            onClick={() => speak(speakableText)}
+          >
+            <Volume2 className="h-4 w-4" aria-hidden="true" />
+            <span>{status === "loading" ? "Preparing..." : label}</span>
+          </Button>
+
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            disabled={!isSupported}
+            aria-label="Stop Arabic audio"
+            onClick={stop}
+          >
+            <Square className="h-4 w-4" aria-hidden="true" />
+            <span>Stop</span>
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
+============================================================
+FILE: apps\web\lib\quiz\tts-safe-text.ts
+============================================================
+import type {
+  GeneratedHideLineQuiz,
+  GeneratedHideWordQuiz,
+  GeneratedQuiz,
+} from "@/types/quiz";
+import { QUIZ_METHODS } from "@/lib/constants/quiz";
+import { normalizeLineEndings } from "@/lib/utils/arabic";
+
+export interface TtsTextToken {
+  index: number;
+  value: string;
+  type: "word" | "whitespace" | "text";
+  hidden: boolean;
+}
+
+export interface TtsLineOption {
+  tokenIndex: number;
+  lineNumber: number;
+  text: string;
+  hidden: boolean;
+  speakableText: string;
+}
+
+export interface BuildSpeakableTextFromQuizOptions {
+  quiz: GeneratedQuiz;
+  lineTokenIndex?: number;
+}
+
+const WHITESPACE_REGEX = /^\s+$/u;
+
+function splitTextPreservingWhitespace(text: string): string[] {
+  return text.split(/(\s+)/u).filter((part) => part.length > 0);
+}
+
+export function normalizeSpeakableArabicText(value: string): string {
+  return normalizeLineEndings(value)
+    .split("\n")
+    .map((line) => line.replace(/[ \t\f\v]+/gu, " ").trim())
+    .filter((line) => line.length > 0)
+    .join("\n")
+    .trim();
+}
+
+export function getHiddenAnswerValues(quiz: GeneratedQuiz): string[] {
+  return quiz.answers
+    .map((answer) => answer.answer.trim())
+    .filter((answer) => answer.length > 0);
+}
+
+export function containsHiddenAnswerText(
+  speakableText: string,
+  hiddenAnswers: string[],
+): boolean {
+  const normalizedText = normalizeSpeakableArabicText(speakableText);
+
+  return hiddenAnswers.some((answer) => {
+    const normalizedAnswer = normalizeSpeakableArabicText(answer);
+
+    return (
+      normalizedAnswer.length > 0 && normalizedText.includes(normalizedAnswer)
+    );
+  });
+}
+
+export function buildTtsWordTokens(quiz: GeneratedHideWordQuiz): TtsTextToken[] {
+  const hiddenTokenIndexes = new Set(quiz.selectedTokenIndexes);
+
+  return splitTextPreservingWhitespace(quiz.originalText).map(
+    (value, index): TtsTextToken => {
+      const isWhitespace = WHITESPACE_REGEX.test(value);
+
+      return {
+        index,
+        value,
+        type: isWhitespace ? "whitespace" : "word",
+        hidden: hiddenTokenIndexes.has(index),
+      };
+    },
+  );
+}
+
+export function buildSpeakableTextForVisibleWords(
+  quiz: GeneratedHideWordQuiz,
+): string {
+  const visibleText = buildTtsWordTokens(quiz)
+    .filter((token) => !token.hidden)
+    .map((token) => token.value)
+    .join("");
+
+  const speakableText = normalizeSpeakableArabicText(visibleText);
+
+  if (containsHiddenAnswerText(speakableText, getHiddenAnswerValues(quiz))) {
+    return "";
+  }
+
+  return speakableText;
+}
+
+export function buildTtsLineOptions(quiz: GeneratedHideLineQuiz): TtsLineOption[] {
+  const hiddenLineIndexes = new Set(quiz.selectedLineIndexes);
+  const parts = normalizeLineEndings(quiz.originalText).split(/(\n)/u);
+  let lineNumber = 0;
+
+  return parts
+    .map((part, tokenIndex): TtsLineOption | null => {
+      if (part === "\n" || part.trim().length === 0) {
+        return null;
+      }
+
+      lineNumber += 1;
+
+      const hidden = hiddenLineIndexes.has(tokenIndex);
+      const speakableText = hidden ? "" : normalizeSpeakableArabicText(part);
+
+      return {
+        tokenIndex,
+        lineNumber,
+        text: part,
+        hidden,
+        speakableText,
+      };
+    })
+    .filter((line): line is TtsLineOption => line !== null);
+}
+
+export function buildSpeakableTextForVisibleLine(
+  quiz: GeneratedHideLineQuiz,
+  lineTokenIndex: number,
+): string {
+  const line = buildTtsLineOptions(quiz).find(
+    (item) => item.tokenIndex === lineTokenIndex,
+  );
+
+  if (!line || line.hidden) {
+    return "";
+  }
+
+  const speakableText = normalizeSpeakableArabicText(line.speakableText);
+
+  if (containsHiddenAnswerText(speakableText, getHiddenAnswerValues(quiz))) {
+    return "";
+  }
+
+  return speakableText;
+}
+
+export function getFirstVisibleSpeakableLine(
+  quiz: GeneratedHideLineQuiz,
+): string {
+  const firstVisibleLine = buildTtsLineOptions(quiz).find(
+    (line) => !line.hidden && line.speakableText.trim().length > 0,
+  );
+
+  return firstVisibleLine?.speakableText ?? "";
+}
+
+export function buildSpeakableTextFromQuiz({
+  quiz,
+  lineTokenIndex,
+}: BuildSpeakableTextFromQuizOptions): string {
+  if (quiz.method === QUIZ_METHODS.HIDE_WORD) {
+    return buildSpeakableTextForVisibleWords(quiz);
+  }
+
+  if (typeof lineTokenIndex === "number") {
+    return buildSpeakableTextForVisibleLine(quiz, lineTokenIndex);
+  }
+
+  return getFirstVisibleSpeakableLine(quiz);
+}
+
+export function assertSpeakableTextDoesNotLeakHiddenAnswers(
+  quiz: GeneratedQuiz,
+  speakableText: string,
+): boolean {
+  if (speakableText.includes("____")) {
+    return false;
+  }
+
+  return !containsHiddenAnswerText(speakableText, getHiddenAnswerValues(quiz));
+}
+
+export function canSpeakQuizText(quiz: GeneratedQuiz): boolean {
+  if (quiz.method === QUIZ_METHODS.HIDE_WORD) {
+    return buildSpeakableTextForVisibleWords(quiz).trim().length > 0;
+  }
+
+  return buildTtsLineOptions(quiz).some(
+    (line) => !line.hidden && line.speakableText.trim().length > 0,
+  );
+}
+
+
+============================================================
+FILE: apps\web\lib\quiz\unified-quiz.ts
+============================================================
+import { QUIZ_METHODS } from "@/lib/constants/quiz";
+import type {
+  GenerateQuizInput,
+  GeneratedHideLineQuiz,
+  GeneratedHideWordQuiz,
+  GeneratedQuiz,
+  GeneratedQuizAnswerKind,
+  QuizMethod,
+} from "@/types/quiz";
+
+export function getGeneratedQuizAnswerKind(
+  method: QuizMethod,
+): GeneratedQuizAnswerKind {
+  if (method === QUIZ_METHODS.HIDE_WORD) {
+    return "word";
+  }
+
+  return "line";
+}
+
+export function createGenerateQuizInput(
+  text: string,
+  method: QuizMethod,
+  hideCount: number,
+): GenerateQuizInput {
+  return {
+    text,
+    method,
+    hideCount,
+  };
+}
+
+export function isGeneratedHideWordQuiz(
+  quiz: GeneratedQuiz,
+): quiz is GeneratedHideWordQuiz {
+  return quiz.method === QUIZ_METHODS.HIDE_WORD;
+}
+
+export function isGeneratedHideLineQuiz(
+  quiz: GeneratedQuiz,
+): quiz is GeneratedHideLineQuiz {
+  return quiz.method === QUIZ_METHODS.HIDE_LINE;
+}
+
+export function hasGeneratedQuizContent(quiz: GeneratedQuiz): boolean {
+  return quiz.hiddenCount > 0 && quiz.answers.length > 0;
+}
+
+export function getGeneratedQuizAnswerCount(quiz: GeneratedQuiz): number {
+  return quiz.answers.length;
+}
+
+export function getGeneratedQuizMethodLabel(method: QuizMethod): string {
+  if (method === QUIZ_METHODS.HIDE_WORD) {
+    return "Hide Words";
+  }
+
+  return "Hide Lines";
+}
+
+export function getGeneratedQuizSummary(quiz: GeneratedQuiz): string {
+  const methodLabel = getGeneratedQuizMethodLabel(quiz.method);
+  const itemLabel = quiz.hiddenCount === 1 ? "item" : "items";
+
+  return `${methodLabel}: ${quiz.hiddenCount} hidden ${itemLabel}`;
+}
+
+
+============================================================
+FILE: apps\web\hooks\useArabicTts.ts
+============================================================
+"use client";
+
+import { useCallback, useState } from "react";
+
+export type ArabicTtsStatus =
+  | "idle"
+  | "loading"
+  | "speaking"
+  | "stopped"
+  | "unsupported"
+  | "provider-missing"
+  | "empty"
+  | "error";
+
+export interface ArabicTtsSpeakOptions {
+  onStart?: () => void;
+  onEnd?: () => void;
+  onError?: (status: ArabicTtsStatus, message: string) => void;
+}
+
+export interface UseArabicTtsResult {
+  status: ArabicTtsStatus;
+  isSupported: boolean;
+  speak: (text: string, options?: ArabicTtsSpeakOptions) => boolean;
+  stop: () => boolean;
+}
+
+interface ProviderErrorPayload {
+  error?: string;
+  code?: string;
+}
+
+class ArabicTtsPlaybackError extends Error {
+  constructor(
+    message: string,
+    readonly status: ArabicTtsStatus = "error",
+  ) {
+    super(message);
+    this.name = "ArabicTtsPlaybackError";
+  }
+}
+
+let activeAudio: HTMLAudioElement | null = null;
+let activeObjectUrl: string | null = null;
+
+function getAudioConstructor(): typeof Audio | null {
+  if (typeof window !== "undefined" && typeof window.Audio !== "undefined") {
+    return window.Audio;
+  }
+
+  return null;
+}
+
+function canUseObjectUrl(): boolean {
+  return (
+    typeof URL !== "undefined" &&
+    typeof URL.createObjectURL === "function" &&
+    typeof URL.revokeObjectURL === "function"
+  );
+}
+
+export function canUseArabicSpeechSynthesis(): boolean {
+  return (
+    typeof fetch === "function" &&
+    getAudioConstructor() !== null &&
+    canUseObjectUrl()
+  );
+}
+
+function cleanupActiveAudio() {
+  if (activeAudio) {
+    activeAudio.pause();
+    activeAudio.removeAttribute("src");
+    activeAudio.load();
+    activeAudio = null;
+  }
+
+  if (activeObjectUrl) {
+    URL.revokeObjectURL(activeObjectUrl);
+    activeObjectUrl = null;
+  }
+}
+
+async function parseProviderError(
+  response: Response,
+): Promise<ArabicTtsPlaybackError> {
+  let payload: ProviderErrorPayload = {};
+
+  try {
+    payload = (await response.json()) as ProviderErrorPayload;
+  } catch {
+    payload = {};
+  }
+
+  const message =
+    payload.error || `Arabic audio request failed with status ${response.status}.`;
+
+  if (response.status === 503 || payload.code === "TTS_PROVIDER_MISSING") {
+    return new ArabicTtsPlaybackError(message, "provider-missing");
+  }
+
+  return new ArabicTtsPlaybackError(message, "error");
+}
+
+async function playCloudArabicText(
+  text: string,
+  options: ArabicTtsSpeakOptions = {},
+) {
+  if (!canUseArabicSpeechSynthesis()) {
+    throw new ArabicTtsPlaybackError(
+      "Audio playback is not supported in this browser.",
+      "unsupported",
+    );
+  }
+
+  const response = await fetch("/api/tts", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ text }),
+  });
+
+  if (!response.ok) {
+    throw await parseProviderError(response);
+  }
+
+  const audioBlob = await response.blob();
+
+  if (audioBlob.size === 0) {
+    throw new ArabicTtsPlaybackError("Audio provider returned an empty file.");
+  }
+
+  cleanupActiveAudio();
+
+  const AudioConstructor = getAudioConstructor();
+
+  if (!AudioConstructor || !canUseObjectUrl()) {
+    throw new ArabicTtsPlaybackError(
+      "Audio playback is not supported in this browser.",
+      "unsupported",
+    );
+  }
+
+  const audioUrl = URL.createObjectURL(audioBlob);
+  const audio = new AudioConstructor(audioUrl);
+
+  activeObjectUrl = audioUrl;
+  activeAudio = audio;
+  audio.volume = 1;
+
+  audio.onplaying = () => {
+    options.onStart?.();
+  };
+
+  audio.onended = () => {
+    cleanupActiveAudio();
+    options.onEnd?.();
+  };
+
+  audio.onerror = () => {
+    cleanupActiveAudio();
+    options.onError?.("error", "Unable to play Arabic audio.");
+  };
+
+  await audio.play();
+}
+
+export function speakArabicText(
+  text: string,
+  options: ArabicTtsSpeakOptions = {},
+): boolean {
+  const speakableText = text.trim();
+
+  if (!speakableText) {
+    return false;
+  }
+
+  void playCloudArabicText(speakableText, options).catch((error: unknown) => {
+    if (error instanceof ArabicTtsPlaybackError) {
+      options.onError?.(error.status, error.message);
+      return;
+    }
+
+    options.onError?.("error", "Unable to play Arabic audio.");
+  });
+
+  return true;
+}
+
+export function stopArabicSpeech(): boolean {
+  cleanupActiveAudio();
+
+  return true;
+}
+
+export function useArabicTts(): UseArabicTtsResult {
+  const [status, setStatus] = useState<ArabicTtsStatus>("idle");
+  const [isSupported, setIsSupported] = useState(true);
+
+  const speak = useCallback(
+    (text: string, options: ArabicTtsSpeakOptions = {}) => {
+      if (text.trim().length === 0) {
+        setStatus("empty");
+        return false;
+      }
+
+      if (!canUseArabicSpeechSynthesis()) {
+        setIsSupported(false);
+        setStatus("unsupported");
+        return false;
+      }
+
+      setIsSupported(true);
+      setStatus("loading");
+
+      const didStart = speakArabicText(text, {
+        ...options,
+        onStart: () => {
+          setStatus("speaking");
+          options.onStart?.();
+        },
+        onEnd: () => {
+          setStatus("idle");
+          options.onEnd?.();
+        },
+        onError: (nextStatus, message) => {
+          setStatus(nextStatus);
+          options.onError?.(nextStatus, message);
+        },
+      });
+
+      if (!didStart) {
+        setStatus("error");
+      }
+
+      return didStart;
+    },
+    [],
+  );
+
+  const stop = useCallback(() => {
+    const didStop = stopArabicSpeech();
+
+    if (didStop) {
+      setStatus("stopped");
+    }
+
+    return didStop;
+  }, []);
+
+  return {
+    status,
+    isSupported,
+    speak,
+    stop,
+  };
+}
+
+

@@ -23,7 +23,7 @@ describe("Home page architecture", () => {
     expect(viewSource).toContain("workflowCards");
     expect(viewSource).toContain("/create");
     expect(viewSource).toContain("/study");
-    expect(viewSource).toContain("/import-export");
+    expect(viewSource).toContain("/books");
     expect(viewSource).toContain("/history");
 
     expect(viewSource).not.toContain("QuranTextSection");

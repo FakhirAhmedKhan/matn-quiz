@@ -3,7 +3,7 @@
 import Link from "next/link";
 
 import { AppPageShell, AppStepHeader } from "@/components/layout";
-import { QuranTextSection, ResumeStudySection } from "@/components/page/home";
+import { QuranTextSection } from "@/components/page/home";
 import usePage from "@/hooks/usePage";
 
 export default function CreateTextPage() {
@@ -28,7 +28,6 @@ export default function CreateTextPage() {
 
       <div className="space-y-6">
         <QuranTextSection page={page} />
-        <ResumeStudySection page={page} />
       </div>
     </AppPageShell>
   );

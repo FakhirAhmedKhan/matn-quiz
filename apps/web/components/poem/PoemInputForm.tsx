@@ -68,10 +68,11 @@ export function PoemInputForm() {
             </label>
             <input
               id="poem-title"
+              aria-label="Poem title"
               data-testid="poem-title-input"
               value={draft.title}
               onChange={(event) => updateDraft({ title: event.target.value })}
-              placeholder="Enter title..."
+              placeholder="أدخل العنوان"
               dir="rtl"
               className="mt-2 min-h-12 w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-right text-lg font-semibold text-slate-950 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100"
             />
@@ -86,10 +87,11 @@ export function PoemInputForm() {
             </label>
             <textarea
               id="poem-text"
+              aria-label="Poem text"
               data-testid="poem-text-input"
               value={draft.text}
               onChange={(event) => updateDraft({ text: event.target.value })}
-              placeholder="Enter text..."
+              placeholder="أدخل النص"
               dir="rtl"
               lang="ur"
               rows={12}

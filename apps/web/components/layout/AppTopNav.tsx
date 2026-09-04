@@ -8,7 +8,7 @@ const navItems = [
   { href: "/create", label: "Create", testId: "create" },
   { href: "/study", label: "Study", testId: "study" },
   { href: "/poem", label: "Poem", testId: "poem" },
-{ href: "/books", label: "Books", testId: "poem" },
+{ href: "/books", label: "Books", testId: "books" },
   // { href: "/import-export", label: "Import / Export", testId: "import-export" },
   { href: "/history", label: "History", testId: "history" },
 ];

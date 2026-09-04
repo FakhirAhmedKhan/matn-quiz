@@ -147,13 +147,7 @@ export function buildSpeakableTextForVisibleLine(
     return "";
   }
 
-  const speakableText = normalizeSpeakableArabicText(line.speakableText);
-
-  if (containsHiddenAnswerText(speakableText, getHiddenAnswerValues(quiz))) {
-    return "";
-  }
-
-  return speakableText;
+  return normalizeSpeakableArabicText(line.speakableText);
 }
 
 export function getFirstVisibleSpeakableLine(

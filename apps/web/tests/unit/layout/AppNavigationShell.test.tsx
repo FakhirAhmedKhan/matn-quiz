@@ -22,9 +22,9 @@ describe("App navigation shell", () => {
       "aria-current",
       "page",
     );
-    expect(screen.getByTestId("top-nav-import-export")).toHaveAttribute(
+    expect(screen.getByTestId("top-nav-books")).toHaveAttribute(
       "href",
-      "/import-export",
+      "/books",
     );
   });
 
@@ -36,9 +36,9 @@ describe("App navigation shell", () => {
       "aria-current",
       "page",
     );
-    expect(screen.getByTestId("bottom-nav-share")).toHaveAttribute(
+    expect(screen.getByTestId("bottom-nav-books")).toHaveAttribute(
       "href",
-      "/import-export",
+      "/books",
     );
   });
 

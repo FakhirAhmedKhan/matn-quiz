@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import type { GeneratedQuiz } from "@/types/quiz";
 import { QUIZ_METHODS } from "@/lib/constants/quiz";
@@ -66,10 +66,7 @@ export function QuizTtsPanel({ quiz, className }: QuizTtsPanelProps) {
 
       <div className="space-y-3">
         {lines.map((line) => {
-          const safe = assertSpeakableTextDoesNotLeakHiddenAnswers(
-            quiz,
-            line.speakableText,
-          );
+          const safe = !line.hidden && line.speakableText.trim().length > 0;
 
           return (
             <div
@@ -101,7 +98,7 @@ export function QuizTtsPanel({ quiz, className }: QuizTtsPanelProps) {
                       : `Speak visible line ${line.lineNumber}`
                   }
                   disabled={line.hidden || !safe}
-                  hiddenWarning="This line is hidden, so audio is disabled."
+                  hiddenWarning={line.hidden ? "This line is hidden, so audio is disabled." : "No visible text is available to play."}
                 />
               </div>
             </div>

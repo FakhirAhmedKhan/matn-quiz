@@ -1,0 +1,1223 @@
+MATN QUIZ - SPLIT CREATE FLOW DATA CONTEXT
+
+============================================================
+FILE: apps\web\app\create\page.tsx
+============================================================
+"use client";
+
+import Link from "next/link";
+
+import { AppPageShell, AppStepHeader } from "@/components/layout";
+import { QuranTextSection, ResumeStudySection } from "@/components/page/home";
+import usePage from "@/hooks/usePage";
+
+export default function CreateTextPage() {
+  const page = usePage();
+
+  return (
+    <AppPageShell>
+      <AppStepHeader
+        eyebrow="Step 1 of 3"
+        title="Paste Arabic Text"
+        description="Start by adding the Quran, hadith, or matn text you want to memorize."
+        action={
+          <Link
+            href="/create/method"
+            data-testid="create-next-method-link"
+            className="inline-flex min-h-11 items-center justify-center rounded-2xl bg-emerald-700 px-5 py-3 text-sm font-bold text-white shadow-sm shadow-emerald-900/20 transition hover:bg-emerald-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
+          >
+            Continue
+          </Link>
+        }
+      />
+
+      <div className="space-y-6">
+        <QuranTextSection page={page} />
+        <ResumeStudySection page={page} />
+      </div>
+    </AppPageShell>
+  );
+}
+
+============================================================
+FILE: apps\web\app\create\method\page.tsx
+============================================================
+"use client";
+
+import Link from "next/link";
+
+import { AppPageShell, AppStepHeader } from "@/components/layout";
+import { QuizOptionsSection } from "@/components/page/home";
+import usePage from "@/hooks/usePage";
+
+export default function CreateMethodPage() {
+  const page = usePage();
+
+  return (
+    <AppPageShell>
+      <AppStepHeader
+        eyebrow="Step 2 of 3"
+        title="Choose Quiz Method"
+        description="Decide whether the quiz should hide individual words or complete lines."
+        action={
+          <div className="flex flex-wrap gap-3">
+            <Link
+              href="/create"
+              data-testid="create-back-text-link"
+              className="inline-flex min-h-11 items-center justify-center rounded-2xl border border-slate-300 bg-white px-5 py-3 text-sm font-bold text-slate-700 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
+            >
+              Back
+            </Link>
+
+            <Link
+              href="/create/count"
+              data-testid="create-next-count-link"
+              className="inline-flex min-h-11 items-center justify-center rounded-2xl bg-emerald-700 px-5 py-3 text-sm font-bold text-white shadow-sm shadow-emerald-900/20 transition hover:bg-emerald-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
+            >
+              Continue
+            </Link>
+          </div>
+        }
+      />
+
+      <QuizOptionsSection page={page} />
+    </AppPageShell>
+  );
+}
+
+============================================================
+FILE: apps\web\app\create\count\page.tsx
+============================================================
+"use client";
+
+import Link from "next/link";
+
+import { AppPageShell, AppStepHeader } from "@/components/layout";
+import {
+  GeneratedQuizSection,
+  QuizSetupSummarySection,
+} from "@/components/page/home";
+import usePage from "@/hooks/usePage";
+
+export default function CreateCountPage() {
+  const page = usePage();
+
+  return (
+    <AppPageShell>
+      <AppStepHeader
+        eyebrow="Step 3 of 3"
+        title="Set Hide Count"
+        description="Choose how many words or lines should be hidden, then generate your study quiz."
+        action={
+          <div className="flex flex-wrap gap-3">
+            <Link
+              href="/create/method"
+              data-testid="create-back-method-link"
+              className="inline-flex min-h-11 items-center justify-center rounded-2xl border border-slate-300 bg-white px-5 py-3 text-sm font-bold text-slate-700 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
+            >
+              Back
+            </Link>
+
+            <Link
+              href="/study"
+              data-testid="create-open-study-link"
+              className="inline-flex min-h-11 items-center justify-center rounded-2xl bg-slate-950 px-5 py-3 text-sm font-bold text-white shadow-sm shadow-slate-950/20 transition hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2"
+            >
+              Open Study
+            </Link>
+          </div>
+        }
+      />
+
+      <div className="space-y-6">
+        <QuizSetupSummarySection page={page} />
+        <GeneratedQuizSection page={page} />
+      </div>
+    </AppPageShell>
+  );
+}
+
+============================================================
+FILE: apps\web\hooks\usePage.ts
+============================================================
+"use client";
+
+import { DEFAULT_QUIZ_METHOD, HIDE_COUNT_DEFAULT, QUIZ_METHOD_OPTIONS } from '@/lib/constants/quiz';
+import { safeGenerateQuiz } from '@/lib/quiz/generate-quiz';
+import { isValidHideCount, normalizeHideCount } from '@/lib/quiz/hide-count';
+import type { SavedQuizRecord } from '@/lib/quiz/quiz-history';
+import { loadSavedQuizHistory, saveQuizToHistory, deleteSavedQuizFromHistory, clearQuizHistoryStorage } from '@/lib/quiz/quiz-history-repository';
+import type { QuizReviewState } from '@/lib/quiz/review-session';
+import type { ShareableQuizDocument } from '@/lib/quiz/shareable-quiz';
+import type { QuizStudyState } from '@/lib/quiz/study-session';
+import type { PersistedStudySessionDocument } from '@/lib/quiz/study-session-persistence';
+import { loadPersistedStudySession, clearPersistedStudySession } from '@/lib/quiz/study-session-repository';
+import { validateQuranTextInput, getQuranTextInputError } from '@/lib/quiz/validation';
+import { getArabicTextStats } from '@/lib/utils/arabic';
+import type { QuizMethod, GeneratedQuiz } from '@/types/quiz';
+import { useEffect, useMemo, useState } from 'react'
+
+const usePage = () => {
+    const [quranText, setQuranText] = useState("");
+    const [quizMethod, setQuizMethod] =
+        useState<QuizMethod>(DEFAULT_QUIZ_METHOD);
+    const [hideCount, setHideCount] = useState(HIDE_COUNT_DEFAULT);
+    const [generatedQuiz, setGeneratedQuiz] =
+        useState<GeneratedQuiz | null>(null);
+    const [savedQuizzes, setSavedQuizzes] = useState<SavedQuizRecord[]>([]);
+    const [persistedStudySession, setPersistedStudySession] =
+        useState<PersistedStudySessionDocument | null>(null);
+    const [resumeStudyState, setResumeStudyState] =
+        useState<QuizStudyState | undefined>();
+    const [resumeReviewState, setResumeReviewState] =
+        useState<QuizReviewState | undefined>();
+    const [resumeSessionId, setResumeSessionId] = useState<string | undefined>();
+    const [generateError, setGenerateError] = useState<string | undefined>();
+    const [historyStatus, setHistoryStatus] = useState<string | undefined>();
+
+    const stats = useMemo(() => getArabicTextStats(quranText), [quranText]);
+
+    const validation = useMemo(
+        () => validateQuranTextInput(quranText),
+        [quranText],
+    );
+
+    const hideCountValid = useMemo(
+        () => isValidHideCount(hideCount, quranText, quizMethod),
+        [hideCount, quranText, quizMethod],
+    );
+
+    const selectedMethod = QUIZ_METHOD_OPTIONS.find(
+        (method) => method.value === quizMethod,
+    );
+
+    const error =
+        quranText.trim().length > 0
+            ? getQuranTextInputError(quranText)
+            : undefined;
+
+    const canGenerate = validation.valid && hideCountValid;
+
+    const refreshSavedQuizzes = () => {
+        setSavedQuizzes(loadSavedQuizHistory());
+    };
+
+    const refreshPersistedStudySession = () => {
+        setPersistedStudySession(loadPersistedStudySession());
+    };
+
+    useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        refreshSavedQuizzes();
+        refreshPersistedStudySession();
+    }, []);
+
+    useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setHideCount((current) =>
+            normalizeHideCount(current, quranText, quizMethod),
+        );
+    }, [quranText, quizMethod]);
+
+    const clearResumeState = () => {
+        setResumeStudyState(undefined);
+        setResumeReviewState(undefined);
+        setResumeSessionId(undefined);
+    };
+
+    const handleTextChange = (value: string) => {
+        setQuranText(value);
+        setGeneratedQuiz(null);
+        setGenerateError(undefined);
+        setHistoryStatus(undefined);
+        clearResumeState();
+    };
+
+    const handleMethodChange = (value: QuizMethod) => {
+        setQuizMethod(value);
+        setGeneratedQuiz(null);
+        setGenerateError(undefined);
+        setHistoryStatus(undefined);
+        clearResumeState();
+    };
+
+    const handleHideCountChange = (value: number) => {
+        setHideCount(normalizeHideCount(value, quranText, quizMethod));
+        setGeneratedQuiz(null);
+        setGenerateError(undefined);
+        setHistoryStatus(undefined);
+        clearResumeState();
+    };
+
+    const handleGenerate = () => {
+        const result = safeGenerateQuiz({
+            text: quranText,
+            method: quizMethod,
+            hideCount,
+        });
+
+        if (!result.ok) {
+            setGeneratedQuiz(null);
+            setGenerateError(result.errors[0]?.message ?? "Unable to generate quiz.");
+            return;
+        }
+
+        setGeneratedQuiz(result.quiz);
+        setGenerateError(undefined);
+        setHistoryStatus(undefined);
+        setPersistedStudySession(null);
+        clearResumeState();
+    };
+
+    const handleSaveQuiz = () => {
+        if (!generatedQuiz) {
+            setHistoryStatus("Generate a quiz before saving.");
+            return;
+        }
+
+        const saved = saveQuizToHistory(generatedQuiz);
+
+        if (!saved) {
+            setHistoryStatus("Unable to save quiz in this browser.");
+            return;
+        }
+
+        refreshSavedQuizzes();
+        setHistoryStatus("Quiz saved to history.");
+    };
+
+    const openQuizPayload = (
+        quiz: GeneratedQuiz,
+        statusMessage: string,
+    ) => {
+        setQuranText(quiz.originalText);
+        setQuizMethod(quiz.method);
+        setHideCount(
+            normalizeHideCount(quiz.requestedCount, quiz.originalText, quiz.method),
+        );
+        setGeneratedQuiz(quiz);
+        setGenerateError(undefined);
+        setHistoryStatus(statusMessage);
+    };
+
+    const handleOpenSavedQuiz = (record: SavedQuizRecord) => {
+        clearResumeState();
+        openQuizPayload(record.quiz, "Saved quiz opened.");
+    };
+
+    const handleImportShareableQuiz = (
+        quiz: GeneratedQuiz,
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        _document: ShareableQuizDocument,
+    ) => {
+        clearResumeState();
+        openQuizPayload(quiz, "Imported quiz opened.");
+    };
+
+    const handleResumeStudySession = (document: PersistedStudySessionDocument) => {
+        const quiz = document.studyState.quiz;
+
+        setResumeStudyState(document.studyState);
+        setResumeReviewState(document.reviewState);
+        setResumeSessionId(document.sessionId);
+        openQuizPayload(quiz, "Study session resumed.");
+    };
+
+    const handleClearStudySession = () => {
+        const cleared = clearPersistedStudySession();
+
+        if (!cleared) {
+            setHistoryStatus("Unable to clear study session.");
+            return;
+        }
+
+        setPersistedStudySession(null);
+        clearResumeState();
+        setHistoryStatus("Study session cleared.");
+    };
+
+    const handleDeleteSavedQuiz = (id: string) => {
+        const deleted = deleteSavedQuizFromHistory(id);
+
+        if (!deleted) {
+            setHistoryStatus("Unable to delete saved quiz.");
+            return;
+        }
+
+        refreshSavedQuizzes();
+        setHistoryStatus("Saved quiz deleted.");
+    };
+
+    const handleClearHistory = () => {
+        const cleared = clearQuizHistoryStorage();
+
+        if (!cleared) {
+            setHistoryStatus("Unable to clear saved history.");
+            return;
+        }
+
+        setSavedQuizzes([]);
+        setHistoryStatus("Saved history cleared.");
+    };
+
+    const usePageState = {
+        handleTextChange,
+        handleMethodChange,
+        handleHideCountChange,
+        handleGenerate,
+        handleSaveQuiz,
+        handleOpenSavedQuiz,
+        handleImportShareableQuiz,
+        handleResumeStudySession,
+        handleClearStudySession,
+        handleDeleteSavedQuiz,
+        handleClearHistory,
+        setPersistedStudySession,
+        setGeneratedQuiz,
+        setResumeStudyState,
+        setResumeReviewState,
+        setResumeSessionId,
+        clearResumeState,
+        quranText,
+        quizMethod,
+        hideCount,
+        generatedQuiz,
+        savedQuizzes,
+        persistedStudySession,
+        resumeStudyState,
+        resumeReviewState,
+        resumeSessionId,
+        generateError,
+        historyStatus,
+        stats,
+        validation,
+        hideCountValid,
+        selectedMethod,
+        error,
+        canGenerate
+    };
+
+    return usePageState;
+}
+
+export default usePage
+
+
+============================================================
+FILE: apps\web\components\page\home\QuizOptionsSection.tsx
+============================================================
+"use client";
+
+import {
+  ResponsiveCard,
+  ResponsiveTwoColumnSection,
+} from "@/components/layout";
+// import {
+//   HideCountSelector,
+//   QuizMethodSelector,
+// } from "@/components/quiz/dynamic-components";
+import type { HomePageState } from "./types";
+import { HideCountSelector, QuizMethodSelector } from "@/components/quiz";
+
+interface QuizOptionsSectionProps {
+  page: HomePageState;
+}
+
+export function QuizOptionsSection({ page }: QuizOptionsSectionProps) {
+  return (
+    <ResponsiveTwoColumnSection>
+      <ResponsiveCard className="h-full">
+        <QuizMethodSelector
+          value={page.quizMethod}
+          onChange={page.handleMethodChange}
+        />
+      </ResponsiveCard>
+
+      <ResponsiveCard className="h-full">
+        <HideCountSelector
+          value={page.hideCount}
+          text={page.quranText}
+          method={page.quizMethod}
+          onChange={page.handleHideCountChange}
+        />
+      </ResponsiveCard>
+    </ResponsiveTwoColumnSection>
+  );
+}
+
+
+============================================================
+FILE: apps\web\components\page\home\QuizSetupSummarySection.tsx
+============================================================
+"use client";
+
+import { Button } from "@/components/ui";
+import { ResponsiveCard } from "@/components/layout";
+import type { HomePageState } from "./types";
+
+interface QuizSetupSummarySectionProps {
+  page: HomePageState;
+}
+
+function SummaryMetric({
+  label,
+  value,
+  testId,
+  compact = false,
+}: {
+  label: string;
+  value: string | number;
+  testId: string;
+  compact?: boolean;
+}) {
+  return (
+    <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+      <p className="text-sm text-slate-500">{label}</p>
+      <p
+        data-testid={testId}
+        className={
+          compact
+            ? "mt-2 text-lg font-bold text-slate-950"
+            : "mt-2 text-3xl font-bold text-slate-950"
+        }
+      >
+        {value}
+      </p>
+    </div>
+  );
+}
+
+export function QuizSetupSummarySection({
+  page,
+}: QuizSetupSummarySectionProps) {
+  const statusText =
+    page.generateError ??
+    page.historyStatus ??
+    (page.canGenerate
+      ? "Ready to generate quiz"
+      : "Waiting for valid Arabic text and hide count");
+
+  return (
+    <ResponsiveCard>
+      <section data-testid="quiz-setup-summary" aria-labelledby="quiz-summary-title">
+        <div className="space-y-1">
+          <h2
+            id="quiz-summary-title"
+            className="text-2xl font-semibold tracking-tight text-slate-950"
+          >
+            Quiz Setup Summary
+          </h2>
+          <p className="max-w-2xl text-sm leading-6 text-slate-600">
+            These values are used by the unified quiz generator.
+          </p>
+        </div>
+
+        <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+          <SummaryMetric
+            label="Arabic Words"
+            value={page.stats.arabicWords}
+            testId="arabic-word-count"
+          />
+          <SummaryMetric
+            label="Valid Lines"
+            value={page.stats.validLines}
+            testId="valid-line-count"
+          />
+          <SummaryMetric
+            label="Characters"
+            value={page.stats.characters}
+            testId="character-count"
+          />
+          <SummaryMetric
+            label="Selected Method"
+            value={page.selectedMethod?.label ?? "Hide Words"}
+            testId="selected-method"
+            compact
+          />
+          <SummaryMetric
+            label="Hide Count"
+            value={page.hideCount}
+            testId="selected-hide-count"
+          />
+        </div>
+
+        <div className="mt-6 flex flex-col gap-4 rounded-2xl border border-slate-200 bg-white p-4 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-sm text-slate-600" role="status" aria-live="polite">
+            Status:{" "}
+            <strong
+              className={page.generateError ? "text-red-700" : "text-slate-500"}
+            >
+              {statusText}
+            </strong>
+          </p>
+
+          <Button
+            type="button"
+            variant="primary"
+            size="md"
+            disabled={!page.canGenerate}
+            onClick={page.handleGenerate}
+          >
+            Continue
+          </Button>
+        </div>
+      </section>
+    </ResponsiveCard>
+  );
+}
+
+
+============================================================
+FILE: apps\web\components\page\home\QuranTextSection.tsx
+============================================================
+"use client";
+
+import { ResponsiveCard } from "@/components/layout";
+// import { QuranTextInput } from "@/components/quiz/dynamic-components";
+import type { HomePageState } from "./types";
+import { QuranTextInput } from "@/components/quiz";
+
+interface QuranTextSectionProps {
+  page: HomePageState;
+}
+
+export function QuranTextSection({ page }: QuranTextSectionProps) {
+  return (
+    <ResponsiveCard>
+      <QuranTextInput
+        value={page.quranText}
+        onChange={page.handleTextChange}
+        error={page.error}
+      />
+    </ResponsiveCard>
+  );
+}
+
+
+============================================================
+FILE: apps\web\components\quiz\dynamic-components.tsx
+============================================================
+"use client";
+
+import dynamic from "next/dynamic";
+
+function LoadingEditor() {
+  return <p>Loading editor...</p>;
+}
+
+function LoadingPreview() {
+  return <p>Loading preview...</p>;
+}
+
+function LoadingPanel() {
+  return <p>Loading panel...</p>;
+}
+
+export const QuranTextInput = dynamic(
+  () => import("./QuranTextInput").then((mod) => mod.QuranTextInput),
+  {
+    loading: LoadingEditor,
+  },
+);
+
+export const QuizMethodSelector = dynamic(
+  () => import("./QuizMethodSelector").then((mod) => mod.QuizMethodSelector),
+  {
+    loading: LoadingPanel,
+  },
+);
+
+export const HideCountSelector = dynamic(
+  () => import("./HideCountSelector").then((mod) => mod.HideCountSelector),
+  {
+    loading: LoadingPanel,
+  },
+);
+
+export const GeneratedQuizPreview = dynamic(
+  () => import("./GeneratedQuizPreview").then((mod) => mod.GeneratedQuizPreview),
+  {
+    loading: LoadingPreview,
+    ssr: false,
+  },
+);
+
+export const SavedQuizHistory = dynamic(
+  () => import("./SavedQuizHistory").then((mod) => mod.SavedQuizHistory),
+  {
+    loading: LoadingPanel,
+    ssr: false,
+  },
+);
+
+export const ShareableQuizPanel = dynamic(
+  () => import("./ShareableQuizPanel").then((mod) => mod.ShareableQuizPanel),
+  {
+    loading: LoadingPanel,
+    ssr: false,
+  },
+);
+
+export const StudySessionResumePanel = dynamic(
+  () =>
+    import("./StudySessionResumePanel").then(
+      (mod) => mod.StudySessionResumePanel,
+    ),
+  {
+    loading: LoadingPanel,
+    ssr: false,
+  },
+);
+
+export const QuizTtsPanel = dynamic(
+  () => import("./QuizTtsPanel").then((mod) => mod.QuizTtsPanel),
+  {
+    loading: LoadingPanel,
+    ssr: false,
+  },
+);
+
+
+============================================================
+FILE: apps\web\components\quiz\HideCountSelector.tsx
+============================================================
+"use client";
+
+import { useMemo } from "react";
+import { Counter } from "@/components/ui/Counter";
+import { cn } from "@/lib/utils/cn";
+import {
+  getHideCountLimits,
+  normalizeHideCount,
+} from "@/lib/quiz/hide-count";
+import type { QuizMethod } from "@/types/quiz";
+
+interface HideCountSelectorProps {
+  value: number;
+  text: string;
+  method: QuizMethod;
+  onChange: (value: number) => void;
+  disabled?: boolean;
+  className?: string;
+}
+
+export function HideCountSelector({
+  value,
+  text,
+  method,
+  onChange,
+  disabled = false,
+  className,
+}: HideCountSelectorProps) {
+  const limits = useMemo(
+    () => getHideCountLimits(text, method),
+    [text, method],
+  );
+
+  const isDisabled = disabled || limits.disabled;
+
+  const safeValue = limits.disabled
+    ? limits.defaultValue
+    : normalizeHideCount(value, text, method);
+
+  const handleChange = (nextValue: number) => {
+    if (isDisabled) return;
+
+    onChange(normalizeHideCount(nextValue, text, method));
+  };
+
+  return (
+    <section className={cn("space-y-4", className)}>
+      <div>
+        <h2 className="text-xl font-semibold text-slate-950">
+          {limits.label}
+        </h2>
+
+        <p className="mt-1 text-sm leading-6 text-slate-600">
+          {limits.helperText}
+        </p>
+      </div>
+
+      <div className="rounded-2xl border border-slate-200 bg-white p-5">
+        <Counter
+          value={safeValue}
+          min={limits.min}
+          max={limits.max}
+          disabled={isDisabled}
+          onChange={handleChange}
+        />
+
+        <div className="mt-4 grid gap-3 text-sm text-slate-600 sm:grid-cols-3">
+          <p>
+            Minimum:{" "}
+            <strong className="font-semibold text-slate-950">
+              {limits.min}
+            </strong>
+          </p>
+
+          <p>
+            Maximum:{" "}
+            <strong
+              data-testid="hide-count-max"
+              className="font-semibold text-slate-950"
+            >
+              {limits.max}
+            </strong>
+          </p>
+
+          <p>
+            Available:{" "}
+            <strong
+              data-testid="available-hide-count"
+              className="font-semibold text-slate-950"
+            >
+              {limits.available}
+            </strong>
+          </p>
+        </div>
+
+        {isDisabled && (
+          <p
+            data-testid="hide-count-disabled-message"
+            className="mt-4 rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-700"
+          >
+            Add valid Arabic text before choosing how much content to hide.
+          </p>
+        )}
+      </div>
+    </section>
+  );
+}
+
+
+============================================================
+FILE: apps\web\components\quiz\index.ts
+============================================================
+export * from "./QuranTextInput";
+export * from "./QuizMethodSelector";
+export * from "./HideCountSelector";
+export * from "./GeneratedQuizPreview";
+export * from "./AnswerRevealControls";
+export * from "./QuizActionBar";
+export * from "./ArabicReadingPanel";
+export * from "./SavedQuizHistory";
+export * from "./ShareableQuizPanel";
+export * from "./ReviewAnswerControls";
+export * from "./ReviewProgressSummary";
+export * from "./StudySessionResumePanel";
+
+export * from "./ArabicTtsControls";
+export * from "./QuizTtsPanel";
+
+
+============================================================
+FILE: apps\web\components\quiz\QuizMethodSelector.tsx
+============================================================
+"use client";
+
+import type { ReactNode } from "react";
+import { FileText, Type } from "lucide-react";
+import { RadioCard } from "@/components/ui/RadioCard";
+import { QUIZ_METHOD_OPTIONS, QUIZ_METHODS } from "@/lib/constants/quiz";
+import { cn } from "@/lib/utils/cn";
+import type { QuizMethod } from "@/types/quiz";
+
+interface QuizMethodSelectorProps {
+  value: QuizMethod;
+  onChange: (value: QuizMethod) => void;
+  disabled?: boolean;
+  className?: string;
+  title?: string;
+  description?: string;
+}
+
+const methodIcons: Record<QuizMethod, ReactNode> = {
+  [QUIZ_METHODS.HIDE_WORD]: <Type className="h-5 w-5" />,
+  [QUIZ_METHODS.HIDE_LINE]: <FileText className="h-5 w-5" />,
+};
+
+export function QuizMethodSelector({
+  value,
+  onChange,
+  disabled = false,
+  className,
+  title = "Quiz Method",
+  description = "Choose how the quiz should hide content from the text.",
+}: QuizMethodSelectorProps) {
+  return (
+    <section className={cn("space-y-4", className)}>
+      <div>
+        <h2 className="text-xl font-semibold text-slate-950">
+          {title}
+        </h2>
+
+        <p className="mt-1 text-sm leading-6 text-slate-600">
+          {description}
+        </p>
+      </div>
+
+      <div
+        role="radiogroup"
+        aria-label="Quiz method"
+        className="grid gap-4 sm:grid-cols-2"
+      >
+        {QUIZ_METHOD_OPTIONS.map((option) => (
+          <RadioCard
+            key={option.value}
+            title={option.label}
+            description={option.description}
+            value={option.value}
+            selected={value === option.value}
+            disabled={disabled}
+            icon={methodIcons[option.value]}
+            onSelect={(selectedValue) => {
+              onChange(selectedValue as QuizMethod);
+            }}
+          />
+        ))}
+      </div>
+    </section>
+  );
+}
+
+
+============================================================
+FILE: apps\web\components\quiz\QuranTextInput.tsx
+============================================================
+"use client";
+
+import { Trash2 } from "lucide-react";
+import { Button } from "@/components/ui/Button";
+import { Textarea } from "@/components/ui/Textarea";
+import { cn } from "@/lib/utils/cn";
+import { QURAN_TEXT_MAX_LENGTH } from "@/lib/constants/quiz";
+
+interface QuranTextInputProps {
+  value: string;
+  onChange: (value: string) => void;
+  label?: string;
+  placeholder?: string;
+  helperText?: string;
+  error?: string;
+  disabled?: boolean;
+  maxLength?: number;
+  rows?: number;
+  showClearButton?: boolean;
+  className?: string;
+}
+
+export function QuranTextInput({
+  value,
+  onChange,
+  label = "Paste Quran or Matn Text",
+  placeholder = "اكتب أو الصق النص العربي هنا...",
+  helperText = "Paste Arabic Quran or Islamic matn text. The text will be preserved exactly as entered.",
+  error,
+  disabled = false,
+  maxLength = QURAN_TEXT_MAX_LENGTH,
+  rows = 10,
+  showClearButton = true,
+  className,
+}: QuranTextInputProps) {
+  const hasValue = value.trim().length > 0;
+
+  const handleClear = () => {
+    if (disabled) return;
+
+    onChange("");
+  };
+
+  return (
+    <div className={cn("space-y-3", className)}>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h2 className="text-xl font-semibold text-slate-950">
+            {label}
+          </h2>
+
+          <p className="mt-1 text-sm leading-6 text-slate-600">
+            {helperText}
+          </p>
+        </div>
+
+        {showClearButton && hasValue && (
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            disabled={disabled}
+            leftIcon={<Trash2 className="h-4 w-4" />}
+            onClick={handleClear}
+          >
+            Clear
+          </Button>
+        )}
+      </div>
+
+      <Textarea
+        id="quran-text-input"
+        name="quranText"
+        rtl
+        rows={rows}
+        value={value}
+        maxLength={maxLength}
+        disabled={disabled}
+        error={error}
+        placeholder={placeholder}
+        onChange={(event) => onChange(event.target.value)}
+        className="min-h-72 text-2xl leading-loose"
+      />
+
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-600">
+        <span>
+          Characters:{" "}
+          <strong className="font-semibold text-slate-950">
+            {value.length}
+          </strong>
+        </span>
+
+        <span>
+          Limit:{" "}
+          <strong className="font-semibold text-slate-950">
+            {maxLength}
+          </strong>
+        </span>
+
+        <span>
+          Direction:{" "}
+          <strong className="font-semibold text-slate-950">
+            RTL
+          </strong>
+        </span>
+      </div>
+    </div>
+  );
+}
+
+
+============================================================
+FILE: apps\web\components\quiz\SavedQuizHistory.tsx
+============================================================
+"use client";
+
+import Link from "next/link";
+import { Clock3, FolderOpen, Trash2 } from "lucide-react";
+import { EmptyStatePanel } from "@/components/ui/FeedbackStatePanel";
+import { getGeneratedQuizMethodLabel } from "@/lib/quiz/unified-quiz";
+import type { SavedQuizRecord } from "@/lib/quiz/quiz-history";
+import {
+  focusRingClasses,
+  interactiveTransitionClasses,
+  pressableClasses,
+} from "@/lib/ui/accessibility";
+import { getMethodAccentClasses } from "@/lib/ui/design-system";
+import { cn } from "@/lib/utils/cn";
+
+interface SavedQuizHistoryProps {
+  items: SavedQuizRecord[];
+  onOpen: (record: SavedQuizRecord) => void;
+  onDelete: (id: string) => void;
+  onClear: () => void;
+  openHref?: string;
+  disabled?: boolean;
+  className?: string;
+}
+
+interface SavedQuizHistoryItemProps {
+  record: SavedQuizRecord;
+  onOpen: (record: SavedQuizRecord) => void;
+  onDelete: (id: string) => void;
+  openHref?: string;
+  disabled?: boolean;
+}
+
+export function formatSavedQuizDate(value: string): string {
+  if (!value || Number.isNaN(Date.parse(value))) {
+    return "Unknown date";
+  }
+
+  return value.slice(0, 16).replace("T", " ");
+}
+
+export function getSavedQuizPreview(record: SavedQuizRecord): string {
+  const preview = record.quiz.quizText.replace(/\s+/g, " ").trim();
+
+  if (preview.length === 0) {
+    return "No preview available.";
+  }
+
+  return preview.length > 90 ? `${preview.slice(0, 90)}...` : preview;
+}
+
+export function SavedQuizHistoryItem({
+  record,
+  onOpen,
+  onDelete,
+  openHref,
+  disabled = false,
+}: SavedQuizHistoryItemProps) {
+  const methodLabel = getGeneratedQuizMethodLabel(record.quiz.method);
+
+  const buttonClasses = cn(
+    "inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-3 py-2 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-50",
+    focusRingClasses,
+    interactiveTransitionClasses,
+    pressableClasses,
+  );
+
+  const openClasses = cn(
+    buttonClasses,
+    "bg-emerald-700 text-white hover:bg-emerald-800",
+  );
+
+  return (
+    <li
+      data-testid="saved-quiz-item"
+      className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm shadow-slate-100"
+    >
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0">
+          <span
+            data-testid="saved-quiz-method"
+            className={cn(
+              "inline-flex rounded-full border px-3 py-1 text-xs font-semibold",
+              getMethodAccentClasses(record.quiz.method),
+            )}
+          >
+            {methodLabel}
+          </span>
+
+          <h3
+            data-testid="saved-quiz-title"
+            className="mt-3 text-base font-semibold text-slate-950"
+          >
+            {record.title}
+          </h3>
+
+          <p
+            data-testid="saved-quiz-preview"
+            dir="rtl"
+            lang="ar"
+            className="mt-2 text-right text-sm leading-7 text-slate-600"
+          >
+            {getSavedQuizPreview(record)}
+          </p>
+
+          <p className="mt-3 inline-flex items-center gap-2 text-xs text-slate-500">
+            <Clock3 className="h-3.5 w-3.5" />
+            {formatSavedQuizDate(record.updatedAt)}
+          </p>
+        </div>
+
+        <div className="flex shrink-0 flex-wrap gap-2">
+          {disabled || !openHref ? (
+            <button
+              type="button"
+              disabled={disabled}
+              onClick={() => onOpen(record)}
+              className={openClasses}
+            >
+              <FolderOpen className="h-4 w-4" />
+              Open Quiz
+            </button>
+          ) : (
+            <Link
+              href={openHref}
+              role="button"
+              onClick={() => onOpen(record)}
+              className={openClasses}
+            >
+              <FolderOpen className="h-4 w-4" />
+              Open Quiz
+            </Link>
+          )}
+
+          <button
+            type="button"
+            disabled={disabled}
+            aria-label={`Delete saved quiz ${record.title}`}
+            onClick={() => onDelete(record.id)}
+            className={cn(
+              buttonClasses,
+              "border border-red-200 bg-white text-red-700 hover:border-red-300 hover:bg-red-50",
+            )}
+          >
+            <Trash2 className="h-4 w-4" />
+            Delete
+          </button>
+        </div>
+      </div>
+    </li>
+  );
+}
+
+export function SavedQuizHistory({
+  items,
+  onOpen,
+  onDelete,
+  onClear,
+  openHref,
+  disabled = false,
+  className,
+}: SavedQuizHistoryProps) {
+  const hasItems = items.length > 0;
+
+  return (
+    <section
+      data-testid="saved-quiz-history"
+      aria-label="Saved quiz history"
+      className={cn("space-y-4", className)}
+    >
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <h2 className="text-2xl font-semibold tracking-tight text-slate-950">
+            Saved Quiz History
+          </h2>
+
+          <p className="mt-1 text-sm leading-6 text-slate-600">
+            Reopen, review, or delete quizzes saved in this browser.
+          </p>
+        </div>
+
+        <button
+          type="button"
+          disabled={!hasItems || disabled}
+          onClick={onClear}
+          className={cn(
+            "inline-flex min-h-11 w-fit items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:border-red-300 hover:text-red-700 disabled:cursor-not-allowed disabled:opacity-50",
+            focusRingClasses,
+            interactiveTransitionClasses,
+            pressableClasses,
+          )}
+        >
+          <Trash2 className="h-4 w-4" />
+          Clear History
+        </button>
+      </div>
+
+      {hasItems ? (
+        <ol data-testid="saved-quiz-list" className="space-y-3">
+          {items.map((record) => (
+            <SavedQuizHistoryItem
+              key={record.id}
+              record={record}
+              onOpen={onOpen}
+              onDelete={onDelete}
+              openHref={openHref}
+              disabled={disabled}
+            />
+          ))}
+        </ol>
+      ) : (
+        <div data-testid="saved-quiz-empty">
+          <EmptyStatePanel
+            compact
+            title="No saved quizzes yet."
+            description="Generate a quiz and use Save Quiz to keep it here for later."
+          />
+        </div>
+      )}
+    </section>
+  );
+}
+

@@ -21,9 +21,9 @@ describe("Home landing page", () => {
       "href",
       "/study",
     );
-    expect(screen.getByTestId("home-import-export-workflow-link")).toHaveAttribute(
+    expect(screen.getByTestId("home-books-workflow-link")).toHaveAttribute(
       "href",
-      "/import-export",
+      "/books",
     );
     expect(screen.getByTestId("home-history-workflow-link")).toHaveAttribute(
       "href",
@@ -37,7 +37,7 @@ describe("Home landing page", () => {
       screen.queryByRole("heading", { name: "Quiz Method" }),
     ).not.toBeInTheDocument();
     expect(
-      screen.queryByRole("heading", { name: "Import / Export Quiz JSON" }),
+      screen.queryByRole("heading", { name: "Books Quiz JSON" }),
     ).not.toBeInTheDocument();
     expect(
       screen.queryByRole("heading", { name: "Saved Quiz History" }),

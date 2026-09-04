@@ -25,15 +25,11 @@ describe("multi-page quiz workflow architecture", () => {
     expect(screen.getByTestId("top-nav-create")).toHaveAttribute("href", "/create");
     expect(screen.getByTestId("top-nav-study")).toHaveAttribute("href", "/study");
     expect(screen.getByTestId("top-nav-poem")).toHaveAttribute("href", "/poem");
-    expect(screen.getByTestId("top-nav-import-export")).toHaveAttribute(
+    expect(screen.getByTestId("top-nav-books")).toHaveAttribute(
       "href",
-      "/import-export",
+      "/books",
     );
     expect(screen.getByTestId("top-nav-history")).toHaveAttribute("href", "/history");
-    expect(screen.getByTestId("top-nav-import-export")).toHaveAttribute(
-      "aria-current",
-      "page",
-    );
   });
 
   it("renders mobile bottom navigation for the full workflow", () => {
@@ -45,9 +41,9 @@ describe("multi-page quiz workflow architecture", () => {
     expect(screen.getByTestId("bottom-nav-create")).toHaveAttribute("href", "/create");
     expect(screen.getByTestId("bottom-nav-study")).toHaveAttribute("href", "/study");
     expect(screen.getByTestId("bottom-nav-poem")).toHaveAttribute("href", "/poem");
-    expect(screen.getByTestId("bottom-nav-share")).toHaveAttribute(
+    expect(screen.getByTestId("bottom-nav-books")).toHaveAttribute(
       "href",
-      "/import-export",
+      "/books",
     );
     expect(screen.getByTestId("bottom-nav-history")).toHaveAttribute("href", "/history");
     expect(screen.getByTestId("bottom-nav-history")).toHaveAttribute(

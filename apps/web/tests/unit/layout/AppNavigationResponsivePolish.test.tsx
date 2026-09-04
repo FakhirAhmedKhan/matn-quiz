@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import { AppBottomNav, AppPageShell, AppStepHeader, AppTopNav } from "@/components/layout";
 
-const pathnameMock = vi.fn(() => "/import-export");
+const pathnameMock = vi.fn(() => "/books");
 
 vi.mock("next/navigation", () => ({
   usePathname: () => pathnameMock(),
@@ -11,14 +11,14 @@ vi.mock("next/navigation", () => ({
 
 describe("responsive navigation polish", () => {
   it("shows a compact mobile current route indicator", () => {
-    pathnameMock.mockReturnValue("/import-export");
+    pathnameMock.mockReturnValue("/books");
 
     render(<AppTopNav />);
 
     expect(screen.getByTestId("mobile-current-route-pill")).toHaveTextContent(
-      "Import / Export",
+      "Books",
     );
-    expect(screen.getByTestId("top-nav-import-export")).toHaveAttribute(
+    expect(screen.getByTestId("top-nav-books")).toHaveAttribute(
       "aria-current",
       "page",
     );
@@ -33,7 +33,7 @@ describe("responsive navigation polish", () => {
     expect(screen.getByTestId("bottom-nav-create")).toHaveAttribute("href", "/create");
     expect(screen.getByTestId("bottom-nav-study")).toHaveAttribute("href", "/study");
     expect(screen.getByTestId("bottom-nav-poem")).toHaveAttribute("href", "/poem");
-    expect(screen.getByTestId("bottom-nav-share")).toHaveAttribute("href", "/import-export");
+    expect(screen.getByTestId("bottom-nav-books")).toHaveAttribute("href", "/books");
     expect(screen.getByTestId("bottom-nav-history")).toHaveAttribute("aria-current", "page");
   });
 
