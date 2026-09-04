@@ -7,9 +7,15 @@ import type {
 import type {
   ReviewResult,
 } from "../types/review";
+import type {
+  QuizHistorySession,
+} from "../types/history";
 import {
   generateDemoQuiz as buildDemoQuiz,
 } from "../utils/demoQuizEngine";
+import {
+  buildTextPreview,
+} from "../utils/history";
 
 type QuizStore = {
   text: string;
@@ -17,6 +23,7 @@ type QuizStore = {
   hideCount: number;
   generatedQuiz: GeneratedQuiz | null;
   reviewResult: ReviewResult | null;
+  historySessions: QuizHistorySession[];
 
   setText: (
     text: string,
@@ -38,16 +45,26 @@ type QuizStore = {
     result: ReviewResult,
   ) => void;
 
+  addHistorySession: (
+    result: ReviewResult,
+  ) => QuizHistorySession | null;
+
   clearReviewResult: () => void;
 
   clearGeneratedQuiz: () => void;
+
+  clearHistory: () => void;
+
+  removeHistorySession: (
+    sessionId: string,
+  ) => void;
 
   clearText: () => void;
 
   resetDraft: () => void;
 };
 
-const initialState = {
+const draftInitialState = {
   text: "",
   method: "HIDE_WORD" as QuizMethod,
   hideCount: 1,
@@ -60,7 +77,9 @@ const initialState = {
 export const useQuizStore =
   create<QuizStore>(
     (set, get) => ({
-      ...initialState,
+      ...draftInitialState,
+
+      historySessions: [],
 
       setText: (text) =>
         set({
@@ -87,7 +106,8 @@ export const useQuizStore =
       generateDemoQuiz: (
         countOverride,
       ) => {
-        const state = get();
+        const state =
+          get();
 
         const count =
           countOverride ??
@@ -100,7 +120,9 @@ export const useQuizStore =
             count,
           );
 
-        if (!generatedQuiz) {
+        if (
+          !generatedQuiz
+        ) {
           return null;
         }
 
@@ -120,6 +142,57 @@ export const useQuizStore =
           reviewResult,
         }),
 
+      addHistorySession: (
+        result,
+      ) => {
+        const state =
+          get();
+
+        const quiz =
+          state.generatedQuiz;
+
+        if (!quiz) {
+          return null;
+        }
+
+        const historySession: QuizHistorySession = {
+          id: `history-${quiz.id}-${Date.now()}`,
+          quizId:
+            quiz.id,
+          method:
+            quiz.method,
+          textPreview:
+            buildTextPreview(
+              quiz.originalText,
+            ),
+          hiddenCount:
+            quiz.hiddenCount,
+          total:
+            result.total,
+          correct:
+            result.correct,
+          incorrect:
+            result.incorrect,
+          percentage:
+            result.percentage,
+          completedAt:
+            result.completedAt,
+        };
+
+        set((current) => ({
+          historySessions: [
+            historySession,
+            ...current.historySessions.filter(
+              (session) =>
+                session.quizId !==
+                quiz.id,
+            ),
+          ].slice(0, 50),
+        }));
+
+        return historySession;
+      },
+
       clearReviewResult: () =>
         set({
           reviewResult: null,
@@ -131,6 +204,23 @@ export const useQuizStore =
           reviewResult: null,
         }),
 
+      clearHistory: () =>
+        set({
+          historySessions: [],
+        }),
+
+      removeHistorySession: (
+        sessionId,
+      ) =>
+        set((state) => ({
+          historySessions:
+            state.historySessions.filter(
+              (session) =>
+                session.id !==
+                sessionId,
+            ),
+        })),
+
       clearText: () =>
         set({
           text: "",
@@ -141,7 +231,7 @@ export const useQuizStore =
 
       resetDraft: () =>
         set({
-          ...initialState,
+          ...draftInitialState,
         }),
     }),
   );

@@ -64,6 +64,12 @@ export default function ReviewScreen() {
         state.clearReviewResult,
     );
 
+  const addHistorySession =
+    useQuizStore(
+      (state) =>
+        state.addHistorySession,
+    );
+
   const [
     grades,
     setGrades,
@@ -196,7 +202,13 @@ export default function ReviewScreen() {
       result,
     );
 
-    router.replace("/");
+    addHistorySession(
+      result,
+    );
+
+    router.replace(
+      "/history",
+    );
   }
 
   if (!generatedQuiz) {
