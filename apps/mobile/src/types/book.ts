@@ -10,6 +10,17 @@ export type BookCategoryFilter =
   | "ALL"
   | BookCategory;
 
+export type BookSourceType =
+  | "DEMO"
+  | "IMPORTED";
+
+export type BookFileMetadata = {
+  fileName: string;
+  fileUri: string;
+  mimeType: string | null;
+  sizeBytes: number | null;
+};
+
 export type Book = {
   id: string;
   title: string;
@@ -23,6 +34,18 @@ export type Book = {
   addedAt: string;
   lastOpenedAt: string | null;
   sourceLabel: string;
+  sourceType?: BookSourceType;
+  file?: BookFileMetadata | null;
+};
+
+export type ImportedBookInput = {
+  title: string;
+  arabicTitle?: string;
+  author: string;
+  description: string;
+  category: BookCategory;
+  totalPages: number;
+  file: BookFileMetadata;
 };
 
 export type BookLibraryStats = {
