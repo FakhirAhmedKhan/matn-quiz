@@ -3,12 +3,16 @@ import {
   useMemo,
   useState,
 } from "react";
-import { router } from "expo-router";
+import {
+  router,
+} from "expo-router";
 import {
   StyleSheet,
   View,
 } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
+import {
+  Ionicons,
+} from "@expo/vector-icons";
 
 import {
   StudyControls,
@@ -24,7 +28,9 @@ import {
   AppCard,
   AppText,
 } from "../src/components/ui";
-import { useQuizStore } from "../src/store/quizStore";
+import {
+  useQuizStore,
+} from "../src/store/quizStore";
 import {
   getMethodLabel,
 } from "../src/utils/quizSetup";
@@ -42,26 +48,84 @@ export default function StudyScreen() {
         state.generatedQuiz,
     );
 
+  const activeStudySession =
+    useQuizStore(
+      (state) =>
+        state.activeStudySession,
+    );
+
+  const startStudySession =
+    useQuizStore(
+      (state) =>
+        state.startStudySession,
+    );
+
+  const updateStudyProgress =
+    useQuizStore(
+      (state) =>
+        state.updateStudyProgress,
+    );
+
   const [
     revealedIds,
     setRevealedIds,
   ] = useState<Set<string>>(
-    () => new Set(),
+    () =>
+      new Set(
+        activeStudySession
+          ?.revealedItemIds ??
+          [],
+      ),
   );
 
   useEffect(() => {
+    if (!generatedQuiz) {
+      setRevealedIds(
+        new Set(),
+      );
+
+      return;
+    }
+
+    if (
+      activeStudySession
+        ?.quizId ===
+      generatedQuiz.id
+    ) {
+      setRevealedIds(
+        new Set(
+          activeStudySession
+            .revealedItemIds,
+        ),
+      );
+
+      return;
+    }
+
+    const session =
+      startStudySession();
+
     setRevealedIds(
-      new Set(),
+      new Set(
+        session
+          ?.revealedItemIds ??
+          [],
+      ),
     );
-  }, [generatedQuiz?.id]);
+  }, [
+    generatedQuiz?.id,
+    activeStudySession?.quizId,
+    startStudySession,
+  ]);
 
   const hiddenItems =
     useMemo(
       () =>
-        generatedQuiz?.items.filter(
-          (item) =>
-            item.hidden,
-        ) ?? [],
+        generatedQuiz
+          ?.items.filter(
+            (item) =>
+              item.hidden,
+          ) ?? [],
       [generatedQuiz],
     );
 
@@ -78,22 +142,42 @@ export default function StudyScreen() {
     revealedCount ===
       hiddenItems.length;
 
+  function saveReveals(
+    next: Set<string>,
+  ) {
+    setRevealedIds(
+      next,
+    );
+
+    updateStudyProgress(
+      Array.from(next),
+    );
+  }
+
   function toggleReveal(
     itemId: string,
   ) {
-    setRevealedIds(
-      (current) => {
-        const next =
-          new Set(current);
+    const next =
+      new Set(
+        revealedIds,
+      );
 
-        if (next.has(itemId)) {
-          next.delete(itemId);
-        } else {
-          next.add(itemId);
-        }
+    if (
+      next.has(
+        itemId,
+      )
+    ) {
+      next.delete(
+        itemId,
+      );
+    } else {
+      next.add(
+        itemId,
+      );
+    }
 
-        return next;
-      },
+    saveReveals(
+      next,
     );
   }
 
@@ -110,22 +194,22 @@ export default function StudyScreen() {
       return;
     }
 
-    setRevealedIds(
-      (current) => {
-        const next =
-          new Set(current);
+    const next =
+      new Set(
+        revealedIds,
+      );
 
-        next.add(
-          nextItem.id,
-        );
+    next.add(
+      nextItem.id,
+    );
 
-        return next;
-      },
+    saveReveals(
+      next,
     );
   }
 
   function revealAll() {
-    setRevealedIds(
+    saveReveals(
       new Set(
         hiddenItems.map(
           (item) =>
@@ -136,7 +220,7 @@ export default function StudyScreen() {
   }
 
   function hideAll() {
-    setRevealedIds(
+    saveReveals(
       new Set(),
     );
   }
@@ -229,6 +313,21 @@ export default function StudyScreen() {
           </View>
         </View>
 
+        <View style={styles.savedNotice}>
+          <Ionicons
+            name="bookmark-outline"
+            size={iconSize.sm}
+            color={colors.primary}
+          />
+
+          <AppText
+            variant="caption"
+            style={styles.savedNoticeText}
+          >
+            Progress saved for this app session
+          </AppText>
+        </View>
+
         <View style={styles.metaRow}>
           <View style={styles.badge}>
             <AppText
@@ -264,7 +363,9 @@ export default function StudyScreen() {
           </AppText>
 
           <StudyQuizContent
-            quiz={generatedQuiz}
+            quiz={
+              generatedQuiz
+            }
             revealedIds={
               revealedIds
             }
@@ -330,6 +431,16 @@ export default function StudyScreen() {
         ) : null}
 
         <View style={styles.footer}>
+          <AppButton
+            label="Leave and Resume Later"
+            variant="ghost"
+            onPress={() =>
+              router.replace(
+                "/resume",
+              )
+            }
+          />
+
           <AppText
             variant="caption"
             muted
@@ -375,6 +486,22 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
   },
 
+  savedNotice: {
+    alignSelf: "flex-start",
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.xs,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: radius.pill,
+    backgroundColor: colors.primarySoft,
+  },
+
+  savedNoticeText: {
+    color: colors.primaryDark,
+    fontWeight: "700",
+  },
+
   metaRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -416,6 +543,7 @@ const styles = StyleSheet.create({
   },
 
   footer: {
+    gap: spacing.md,
     paddingTop: spacing.sm,
   },
 
