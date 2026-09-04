@@ -64,6 +64,11 @@ export default function CreateCountScreen() {
       (state) => state.setHideCount,
     );
 
+  const generateDemoQuiz =
+    useQuizStore(
+      (state) => state.generateDemoQuiz,
+    );
+
   const stats =
     getArabicInputStats(text);
 
@@ -135,6 +140,15 @@ export default function CreateCountScreen() {
       setHideCount(
         safeCount,
       );
+    }
+
+    const quiz =
+      generateDemoQuiz(
+        safeCount,
+      );
+
+    if (!quiz) {
+      return;
     }
 
     router.push(
