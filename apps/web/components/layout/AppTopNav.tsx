@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -52,9 +53,7 @@ export function AppTopNav() {
           aria-label="Matn Quiz home"
           className="group inline-flex min-w-0 items-center gap-3 rounded-2xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
         >
-          <span className="flex size-10 shrink-0 items-center justify-center rounded-2xl bg-emerald-700 text-lg font-bold text-white shadow-sm shadow-emerald-900/20 transition group-hover:bg-emerald-800">
-            م
-          </span>
+          <Image src="/matn-quiz-header-icon.png" alt="Matn Quiz" width={40} height={40} className="size-10 shrink-0 rounded-2xl object-cover shadow-sm shadow-emerald-900/20" />
 
           <span className="min-w-0 leading-tight">
             <span className="block truncate text-sm font-bold text-slate-950 sm:text-base">
