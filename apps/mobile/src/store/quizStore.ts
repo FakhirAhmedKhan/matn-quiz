@@ -4,8 +4,11 @@ import type {
   GeneratedQuiz,
   QuizMethod,
 } from "../types/quiz";
+import type {
+  ReviewResult,
+} from "../types/review";
 import {
-  generateDemoQuiz,
+  generateDemoQuiz as buildDemoQuiz,
 } from "../utils/demoQuizEngine";
 
 type QuizStore = {
@@ -13,6 +16,7 @@ type QuizStore = {
   method: QuizMethod;
   hideCount: number;
   generatedQuiz: GeneratedQuiz | null;
+  reviewResult: ReviewResult | null;
 
   setText: (
     text: string,
@@ -30,6 +34,12 @@ type QuizStore = {
     countOverride?: number,
   ) => GeneratedQuiz | null;
 
+  saveReviewResult: (
+    result: ReviewResult,
+  ) => void;
+
+  clearReviewResult: () => void;
+
   clearGeneratedQuiz: () => void;
 
   clearText: () => void;
@@ -43,6 +53,8 @@ const initialState = {
   hideCount: 1,
   generatedQuiz:
     null as GeneratedQuiz | null,
+  reviewResult:
+    null as ReviewResult | null,
 };
 
 export const useQuizStore =
@@ -54,6 +66,7 @@ export const useQuizStore =
         set({
           text,
           generatedQuiz: null,
+          reviewResult: null,
         }),
 
       setMethod: (method) =>
@@ -61,12 +74,14 @@ export const useQuizStore =
           method,
           hideCount: 1,
           generatedQuiz: null,
+          reviewResult: null,
         }),
 
       setHideCount: (hideCount) =>
         set({
           hideCount,
           generatedQuiz: null,
+          reviewResult: null,
         }),
 
       generateDemoQuiz: (
@@ -79,7 +94,7 @@ export const useQuizStore =
           state.hideCount;
 
         const generatedQuiz =
-          generateDemoQuiz(
+          buildDemoQuiz(
             state.text,
             state.method,
             count,
@@ -92,14 +107,28 @@ export const useQuizStore =
         set({
           hideCount: count,
           generatedQuiz,
+          reviewResult: null,
         });
 
         return generatedQuiz;
       },
 
+      saveReviewResult: (
+        reviewResult,
+      ) =>
+        set({
+          reviewResult,
+        }),
+
+      clearReviewResult: () =>
+        set({
+          reviewResult: null,
+        }),
+
       clearGeneratedQuiz: () =>
         set({
           generatedQuiz: null,
+          reviewResult: null,
         }),
 
       clearText: () =>
@@ -107,6 +136,7 @@ export const useQuizStore =
           text: "",
           hideCount: 1,
           generatedQuiz: null,
+          reviewResult: null,
         }),
 
       resetDraft: () =>
