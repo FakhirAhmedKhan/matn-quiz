@@ -1,3 +1,4 @@
+import { useSettingsStore } from "../../../src/store/settingsStore";
 import {
   useEffect,
   useMemo,
@@ -97,16 +98,12 @@ export default function BookReaderScreen() {
   const [
     readerMode,
     setReaderMode,
-  ] = useState<BookReaderMode>(
-    "READING",
-  );
+  ] = useState<BookReaderMode>(() => useSettingsStore.getState().defaultBookReaderMode);
 
   const [
     fontSize,
     setFontSize,
-  ] = useState<BookReaderFontSize>(
-    "MEDIUM",
-  );
+  ] = useState<BookReaderFontSize>(() => useSettingsStore.getState().readerFontSize);
 
   useEffect(() => {
     if (!book) {
@@ -256,13 +253,9 @@ export default function BookReaderScreen() {
   }
 
   function resetControls() {
-    setReaderMode(
-      "READING",
-    );
+    setReaderMode(useSettingsStore.getState().defaultBookReaderMode);
 
-    setFontSize(
-      "MEDIUM",
-    );
+    setFontSize(useSettingsStore.getState().readerFontSize);
   }
 
   function backToDetails() {

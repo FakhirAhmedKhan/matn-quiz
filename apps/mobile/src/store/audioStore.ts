@@ -9,6 +9,10 @@ import type {
   AudioSpeed,
 } from "../types/audio";
 
+import {
+  useSettingsStore,
+} from "./settingsStore";
+
 type AudioStore = {
   sourceKind:
     AudioSourceKind;
@@ -49,27 +53,32 @@ type AudioStore = {
     () => void;
 };
 
-const initialState = {
-  sourceKind:
-    "DEMO" as AudioSourceKind,
+function getAudioDefaults() {
+  const settings =
+    useSettingsStore.getState();
 
-  segmentMode:
-    "SENTENCE" as AudioSegmentMode,
+  return {
+    sourceKind:
+      "DEMO" as AudioSourceKind,
 
-  selectedSegmentIndex:
-    0,
+    segmentMode:
+      "SENTENCE" as AudioSegmentMode,
 
-  speed:
-    1 as AudioSpeed,
+    selectedSegmentIndex:
+      0,
 
-  repeatMode:
-    "ONE" as AudioRepeatMode,
-};
+    speed:
+      settings.defaultAudioSpeed,
+
+    repeatMode:
+      settings.defaultAudioRepeat,
+  };
+}
 
 export const useAudioStore =
   create<AudioStore>(
     (set) => ({
-      ...initialState,
+      ...getAudioDefaults(),
 
       setSourceKind: (
         sourceKind,
@@ -113,7 +122,7 @@ export const useAudioStore =
       resetAudioSettings:
         () =>
           set({
-            ...initialState,
+            ...getAudioDefaults(),
           }),
     }),
   );

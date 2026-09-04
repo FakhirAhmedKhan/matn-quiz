@@ -1,3 +1,4 @@
+import { useSettingsStore } from "../../src/store/settingsStore";
 import {
   useEffect,
   useMemo,
@@ -90,16 +91,12 @@ export default function PoemReaderScreen() {
   const [
     mode,
     setMode,
-  ] = useState<PoemReaderMode>(
-    "FOCUS",
-  );
+  ] = useState<PoemReaderMode>(() => useSettingsStore.getState().defaultPoemReaderMode);
 
   const [
     fontSize,
     setFontSize,
-  ] = useState<PoemFontSize>(
-    "MEDIUM",
-  );
+  ] = useState<PoemFontSize>(() => useSettingsStore.getState().readerFontSize);
 
   useEffect(() => {
     setCurrentIndex(

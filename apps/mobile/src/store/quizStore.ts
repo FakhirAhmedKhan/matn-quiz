@@ -1,3 +1,4 @@
+import { useSettingsStore } from "./settingsStore";
 import { create } from "zustand";
 
 import type {
@@ -485,10 +486,19 @@ export const useQuizStore =
               null,
           }),
 
-      resetDraft:
-        () =>
-          set({
-            ...draftInitialState,
-          }),
+      resetDraft: () => {
+        const settings =
+          useSettingsStore.getState();
+
+        set({
+          ...draftInitialState,
+
+          method:
+            settings.defaultQuizMethod,
+
+          hideCount:
+            settings.defaultHideCount,
+        });
+      },
     }),
   );
