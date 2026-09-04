@@ -1,123 +1,171 @@
 import { router } from "expo-router";
-import { StyleSheet, View } from "react-native";
+import {
+  StyleSheet,
+  View,
+} from "react-native";
 
+import {
+  HomeHeader,
+  HomeHero,
+  HomeQuickActions,
+  HomeStats,
+  RecentQuizCard,
+  ResumeStudyCard,
+} from "../../src/components/home";
 import { AppScreen } from "../../src/components/layout";
 import {
   AppCard,
   AppText,
-  ArabicText,
   ProgressBar,
   SectionHeader,
 } from "../../src/components/ui";
-import { NavigationCard } from "../../src/components/navigation";
+import { demoHome } from "../../src/mocks/demoHome";
+import type {
+  HomeQuickAction,
+} from "../../src/types/home";
 import {
   colors,
-  radius,
   spacing,
 } from "../../src/theme";
 
 export default function HomeScreen() {
+  function handleQuickAction(
+    id: HomeQuickAction["id"],
+  ) {
+    if (id === "books") {
+      router.push("/books");
+      return;
+    }
+
+    if (id === "poem") {
+      router.push("/poem");
+      return;
+    }
+
+    if (id === "audio") {
+      router.push("/audio");
+      return;
+    }
+
+    router.push("/import-export");
+  }
+
   return (
     <AppScreen>
       <View style={styles.page}>
-        <View style={styles.hero}>
-          <View style={styles.logo}>
-            <ArabicText
-              center
-              style={styles.logoText}
-            >
-              م
-            </ArabicText>
-          </View>
+        <HomeHeader
+          title={demoHome.title}
+          subtitle={demoHome.subtitle}
+          eyebrow={demoHome.eyebrow}
+          onHelpPress={() =>
+            router.push("/settings")
+          }
+        />
 
-          <AppText
-            variant="title"
-            align="center"
-          >
-            Matn Quiz
-          </AppText>
+        <HomeHero
+          tagline={demoHome.tagline}
+          onCreatePress={() =>
+            router.push("/create")
+          }
+          onResumePress={() =>
+            router.push("/resume")
+          }
+        />
 
+        <HomeStats
+          stats={demoHome.stats}
+        />
+
+        <View style={styles.section}>
+          <SectionHeader
+            title="Resume Study"
+            description="Continue where you left off."
+          />
+
+          <ResumeStudyCard
+            session={demoHome.resumeSession}
+            onPress={() =>
+              router.push("/study")
+            }
+          />
+        </View>
+
+        <View style={styles.section}>
+          <SectionHeader
+            title="Recent Activity"
+            description="Jump back into your latest quiz."
+          />
+
+          <RecentQuizCard
+            quiz={demoHome.recentQuiz}
+            onContinue={() =>
+              router.push("/study")
+            }
+          />
+        </View>
+
+        <View style={styles.section}>
+          <SectionHeader
+            title="Weekly Progress"
+            description="Your demo activity for this week."
+          />
+
+          <AppCard>
+            <View style={styles.progressContent}>
+              <View style={styles.progressRow}>
+                <View style={styles.progressText}>
+                  <AppText variant="subheading">
+                    This Week
+                  </AppText>
+
+                  <AppText
+                    variant="bodySmall"
+                    muted
+                  >
+                    Keep building your memorization habit.
+                  </AppText>
+                </View>
+
+                <AppText
+                  variant="heading"
+                  style={styles.progressValue}
+                >
+                  {Math.round(
+                    demoHome.weeklyProgress * 100,
+                  )}
+                  %
+                </AppText>
+              </View>
+
+              <ProgressBar
+                value={demoHome.weeklyProgress}
+              />
+            </View>
+          </AppCard>
+        </View>
+
+        <HomeQuickActions
+          actions={demoHome.quickActions}
+          onActionPress={handleQuickAction}
+        />
+
+        <View style={styles.footer}>
           <AppText
+            variant="caption"
             muted
             align="center"
           >
-            Quran & Matn Memorization
+            Matn Quiz · Mobile Demo
           </AppText>
 
           <AppText
-            variant="subheading"
+            variant="caption"
+            style={styles.footerAccent}
             align="center"
-            style={styles.tagline}
           >
-            Memorize. Practice. Master.
+            Memorize with intention.
           </AppText>
         </View>
-
-        <SectionHeader
-          title="Start Learning"
-          description="M3 navigation is now connected."
-        />
-
-        <View style={styles.stack}>
-          <NavigationCard
-            title="Create New Quiz"
-            description="Start the three-step quiz workflow."
-            icon="create-outline"
-            onPress={() => router.push("/create")}
-          />
-
-          <NavigationCard
-            title="Resume Study"
-            description="Continue an unfinished study session."
-            icon="play-circle-outline"
-            onPress={() => router.push("/resume")}
-          />
-
-          <NavigationCard
-            title="Poem Reader"
-            description="Read and memorize Arabic poetry."
-            icon="reader-outline"
-            onPress={() => router.push("/poem")}
-          />
-
-          <NavigationCard
-            title="Audio Learning"
-            description="Open the visible-text audio experience."
-            icon="headset-outline"
-            onPress={() => router.push("/audio")}
-          />
-
-          <NavigationCard
-            title="Import / Export"
-            description="Open the shareable quiz workflow."
-            icon="swap-horizontal-outline"
-            onPress={() => router.push("/import-export")}
-          />
-        </View>
-
-        <SectionHeader
-          title="Demo Progress"
-          description="Real progress logic comes later."
-        />
-
-        <AppCard>
-          <View style={styles.progressContent}>
-            <View style={styles.progressRow}>
-              <AppText variant="subheading">
-                Weekly Progress
-              </AppText>
-
-              <AppText
-                variant="caption"
-                style={styles.progressValue}
-              >
-                68%
-              </AppText>
-            </View>
-
-            <ProgressBar value={0.68} />
-          </View>
-        </AppCard>
       </View>
     </AppScreen>
   );
@@ -125,50 +173,44 @@ export default function HomeScreen() {
 
 const styles = StyleSheet.create({
   page: {
-    gap: spacing.xl,
+    width: "100%",
+    maxWidth: 720,
+    alignSelf: "center",
+    gap: spacing.xxxl,
     paddingBottom: spacing.section,
   },
 
-  hero: {
-    alignItems: "center",
-    paddingTop: spacing.xxl,
-    paddingBottom: spacing.md,
-  },
-
-  logo: {
-    width: 68,
-    height: 68,
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: spacing.md,
-    borderRadius: radius.xl,
-    backgroundColor: colors.primary,
-  },
-
-  logoText: {
-    color: colors.textInverse,
-  },
-
-  tagline: {
-    marginTop: spacing.lg,
-    color: colors.primaryDark,
-  },
-
-  stack: {
-    gap: spacing.md,
+  section: {
+    gap: spacing.lg,
   },
 
   progressContent: {
-    gap: spacing.md,
+    gap: spacing.lg,
   },
 
   progressRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
+    gap: spacing.md,
+  },
+
+  progressText: {
+    flex: 1,
+    gap: spacing.xs,
   },
 
   progressValue: {
+    color: colors.primary,
+  },
+
+  footer: {
+    gap: spacing.xs,
+    paddingTop: spacing.xl,
+    paddingBottom: spacing.xxl,
+  },
+
+  footerAccent: {
     color: colors.primary,
   },
 });
