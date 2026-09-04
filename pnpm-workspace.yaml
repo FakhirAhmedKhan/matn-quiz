@@ -5,5 +5,9 @@ packages:
 allowBuilds:
   unrs-resolver: false
 
+minimumReleaseAgeExclude:
+  - '@expo/ui@57.0.16'
+  - expo-router@57.0.19
+
 onlyBuiltDependencies:
   - unrs-resolver
