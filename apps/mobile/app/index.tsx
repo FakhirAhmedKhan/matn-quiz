@@ -1,50 +1,122 @@
-import { StyleSheet, Text, View } from "react-native";
+import { StyleSheet, View } from "react-native";
 
-import { AppScreen } from "../src/components/layout/AppScreen";
+import { AppScreen } from "../src/components/layout";
 import {
-  colors,
-  radius,
-  spacing,
-  typography,
-} from "../src/theme";
+  AppButton,
+  AppCard,
+  AppInput,
+  AppText,
+  ArabicText,
+  ProgressBar,
+  SectionHeader,
+  StepIndicator,
+} from "../src/components/ui";
+import { colors, radius, spacing } from "../src/theme";
 
-export default function HomeScreen() {
+export default function DesignSystemScreen() {
   return (
     <AppScreen>
-      <View style={styles.container}>
-        <View style={styles.logo}>
-          <Text style={styles.logoText}>م</Text>
+      <View style={styles.page}>
+        <View style={styles.hero}>
+          <View style={styles.logo}>
+            <ArabicText size="medium" center style={styles.logoText}>
+              م
+            </ArabicText>
+          </View>
+
+          <AppText variant="title" align="center">
+            Matn Quiz
+          </AppText>
+
+          <AppText muted align="center">
+            Quran & Matn Memorization
+          </AppText>
+
+          <View style={styles.badge}>
+            <AppText variant="caption" style={styles.badgeText}>
+              M2 DESIGN SYSTEM
+            </AppText>
+          </View>
         </View>
 
-        <Text style={styles.title}>Matn Quiz</Text>
+        <SectionHeader
+          title="Quiz Progress"
+          description="Reusable visual components are ready."
+        />
 
-        <Text style={styles.subtitle}>
-          Quran & Matn Memorization
-        </Text>
+        <AppCard>
+          <View style={styles.stack}>
+            <StepIndicator current={2} total={3} />
 
-        <View style={styles.card}>
-          <Text style={styles.badge}>M1 FOUNDATION</Text>
+            <ProgressBar value={0.68} />
 
-          <Text style={styles.cardTitle}>
-            Mobile foundation ready
-          </Text>
+            <AppText variant="caption" muted>
+              68% complete
+            </AppText>
+          </View>
+        </AppCard>
 
-          <Text style={styles.description}>
-            Expo Router, safe areas, design tokens and the shared screen
-            foundation are ready for the Matn Quiz mobile experience.
-          </Text>
+        <SectionHeader
+          title="Arabic Reading"
+          description="RTL-first typography for Quran and matn content."
+        />
+
+        <AppCard>
+          <ArabicText>
+            إنما الأعمال بالنيات وإنما لكل امرئ ما نوى
+          </ArabicText>
+        </AppCard>
+
+        <SectionHeader
+          title="Arabic Input"
+          description="Reusable Arabic-aware form field."
+        />
+
+        <AppInput
+          arabic
+          multiline
+          label="Arabic Text"
+          placeholder="أدخل النص"
+        />
+
+        <View style={styles.stack}>
+          <AppButton
+            label="Primary Action"
+            onPress={() => undefined}
+          />
+
+          <AppButton
+            label="Secondary Action"
+            variant="secondary"
+            onPress={() => undefined}
+          />
         </View>
+
+        <AppCard style={styles.successCard}>
+          <AppText variant="subheading">
+            M2 foundation ready
+          </AppText>
+
+          <AppText variant="bodySmall" muted>
+            Typography, Arabic text, buttons, cards, forms, progress and
+            step indicators are ready for the real Matn Quiz screens.
+          </AppText>
+        </AppCard>
       </View>
     </AppScreen>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
+  page: {
+    gap: spacing.xl,
+    paddingBottom: spacing.section,
+  },
+
+  hero: {
     alignItems: "center",
-    justifyContent: "center",
-    gap: spacing.sm,
+    paddingTop: spacing.xxl,
+    paddingBottom: spacing.lg,
   },
 
   logo: {
@@ -52,56 +124,34 @@ const styles = StyleSheet.create({
     height: 64,
     alignItems: "center",
     justifyContent: "center",
+    marginBottom: spacing.md,
     borderRadius: radius.xl,
     backgroundColor: colors.primary,
-    marginBottom: spacing.sm,
   },
 
   logoText: {
-    color: colors.surface,
-    fontSize: 32,
-    fontWeight: "700",
-  },
-
-  title: {
-    color: colors.text,
-    fontSize: typography.title,
-    fontWeight: "800",
-  },
-
-  subtitle: {
-    color: colors.textMuted,
-    fontSize: typography.body,
-  },
-
-  card: {
-    width: "100%",
-    marginTop: spacing.xxxl,
-    padding: spacing.xxl,
-    borderRadius: radius.xl,
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
+    color: colors.textInverse,
   },
 
   badge: {
-    alignSelf: "flex-start",
-    color: colors.primary,
-    fontSize: typography.caption,
-    fontWeight: "800",
-    marginBottom: spacing.md,
+    marginTop: spacing.lg,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: radius.pill,
+    backgroundColor: colors.primarySoft,
   },
 
-  cardTitle: {
-    color: colors.text,
-    fontSize: typography.heading,
-    fontWeight: "800",
-    marginBottom: spacing.sm,
+  badgeText: {
+    color: colors.primaryDark,
   },
 
-  description: {
-    color: colors.textMuted,
-    fontSize: typography.body,
-    lineHeight: 24,
+  stack: {
+    gap: spacing.md,
+  },
+
+  successCard: {
+    gap: spacing.sm,
+    backgroundColor: colors.primarySoft,
+    borderColor: colors.primarySoft,
   },
 });
