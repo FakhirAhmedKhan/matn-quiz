@@ -2,6 +2,10 @@ import {
   create,
 } from "zustand";
 
+import {
+  persist,
+} from "zustand/middleware";
+
 import type {
   AudioRepeatMode,
   AudioSpeed,
@@ -17,6 +21,12 @@ import type {
   PoemReaderModePreference,
   ReaderFontSizePreference,
 } from "../types/settings";
+
+import {
+  STORAGE_KEYS,
+  STORAGE_VERSION,
+  zustandAsyncStorage,
+} from "../storage/appStorage";
 
 export const DEFAULT_APP_SETTINGS: AppSettings = {
   defaultQuizMethod:
@@ -76,69 +86,108 @@ type SettingsStore =
   };
 
 export const useSettingsStore =
-  create<SettingsStore>(
-    (set) => ({
-      ...DEFAULT_APP_SETTINGS,
+  create<SettingsStore>()(
+    persist(
+      (set) => ({
+        ...DEFAULT_APP_SETTINGS,
 
-      setDefaultQuizMethod: (
-        defaultQuizMethod,
-      ) =>
-        set({
+        setDefaultQuizMethod: (
           defaultQuizMethod,
-        }),
+        ) =>
+          set({
+            defaultQuizMethod,
+          }),
 
-      setDefaultHideCount: (
-        value,
-      ) =>
-        set({
-          defaultHideCount:
-            Math.min(
-              10,
-              Math.max(
-                1,
-                Math.floor(value),
+        setDefaultHideCount: (
+          value,
+        ) =>
+          set({
+            defaultHideCount:
+              Math.min(
+                10,
+                Math.max(
+                  1,
+                  Math.floor(
+                    value,
+                  ),
+                ),
               ),
-            ),
-        }),
+          }),
 
-      setReaderFontSize: (
-        readerFontSize,
-      ) =>
-        set({
+        setReaderFontSize: (
           readerFontSize,
-        }),
+        ) =>
+          set({
+            readerFontSize,
+          }),
 
-      setDefaultPoemReaderMode: (
-        defaultPoemReaderMode,
-      ) =>
-        set({
+        setDefaultPoemReaderMode: (
           defaultPoemReaderMode,
-        }),
+        ) =>
+          set({
+            defaultPoemReaderMode,
+          }),
 
-      setDefaultBookReaderMode: (
-        defaultBookReaderMode,
-      ) =>
-        set({
+        setDefaultBookReaderMode: (
           defaultBookReaderMode,
-        }),
+        ) =>
+          set({
+            defaultBookReaderMode,
+          }),
 
-      setDefaultAudioSpeed: (
-        defaultAudioSpeed,
-      ) =>
-        set({
+        setDefaultAudioSpeed: (
           defaultAudioSpeed,
-        }),
+        ) =>
+          set({
+            defaultAudioSpeed,
+          }),
 
-      setDefaultAudioRepeat: (
-        defaultAudioRepeat,
-      ) =>
-        set({
+        setDefaultAudioRepeat: (
           defaultAudioRepeat,
-        }),
+        ) =>
+          set({
+            defaultAudioRepeat,
+          }),
 
-      resetSettings: () =>
-        set({
-          ...DEFAULT_APP_SETTINGS,
+        resetSettings: () =>
+          set({
+            ...DEFAULT_APP_SETTINGS,
+          }),
+      }),
+      {
+        name:
+          STORAGE_KEYS.settings,
+
+        version:
+          STORAGE_VERSION,
+
+        storage:
+          zustandAsyncStorage,
+
+        partialize: (
+          state,
+        ) => ({
+          defaultQuizMethod:
+            state.defaultQuizMethod,
+
+          defaultHideCount:
+            state.defaultHideCount,
+
+          readerFontSize:
+            state.readerFontSize,
+
+          defaultPoemReaderMode:
+            state.defaultPoemReaderMode,
+
+          defaultBookReaderMode:
+            state.defaultBookReaderMode,
+
+          defaultAudioSpeed:
+            state.defaultAudioSpeed,
+
+          defaultAudioRepeat:
+            state.defaultAudioRepeat,
         }),
-    }),
+      },
+    ),
   );

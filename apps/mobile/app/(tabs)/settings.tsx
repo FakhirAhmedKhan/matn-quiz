@@ -1,3 +1,5 @@
+import { PersistenceStatusCard } from "../../src/components/persistence";
+import { useAppHydration } from "../../src/hooks/useAppHydration";
 import {
   Alert,
   StyleSheet,
@@ -208,6 +210,8 @@ const AUDIO_REPEAT_OPTIONS = [
 }[];
 
 export default function SettingsScreen() {
+  const appHydrated =
+    useAppHydration();
   const defaultQuizMethod =
     useSettingsStore(
       (state) =>
@@ -466,9 +470,13 @@ export default function SettingsScreen() {
           </View>
         </View>
 
+        <PersistenceStatusCard
+          hydrated={appHydrated}
+        />
+
         <View style={styles.memoryNotice}>
           <Ionicons
-            name="information-circle-outline"
+            name="save-outline"
             size={iconSize.md}
             color={colors.primary}
           />
@@ -477,10 +485,10 @@ export default function SettingsScreen() {
             variant="bodySmall"
             style={styles.memoryNoticeText}
           >
-            M20 settings work app-wide but are
-            currently stored in memory. Device
-            persistence will be connected in the
-            local persistence phase.
+            Settings, quiz progress, history,
+            poem drafts and library state are
+            stored locally on this device using
+            AsyncStorage.
           </AppText>
         </View>
 
@@ -876,7 +884,7 @@ export default function SettingsScreen() {
                 variant="bodySmall"
                 style={styles.aboutValue}
               >
-                M20 Settings
+                M21 Persistence
               </AppText>
             </View>
 
@@ -892,7 +900,7 @@ export default function SettingsScreen() {
                 variant="bodySmall"
                 style={styles.aboutValue}
               >
-                In-memory demo
+                AsyncStorage local
               </AppText>
             </View>
 

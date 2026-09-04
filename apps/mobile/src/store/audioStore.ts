@@ -2,12 +2,22 @@ import {
   create,
 } from "zustand";
 
+import {
+  persist,
+} from "zustand/middleware";
+
 import type {
   AudioRepeatMode,
   AudioSegmentMode,
   AudioSourceKind,
   AudioSpeed,
 } from "../types/audio";
+
+import {
+  STORAGE_KEYS,
+  STORAGE_VERSION,
+  zustandAsyncStorage,
+} from "../storage/appStorage";
 
 import {
   useSettingsStore,
@@ -76,53 +86,84 @@ function getAudioDefaults() {
 }
 
 export const useAudioStore =
-  create<AudioStore>(
-    (set) => ({
-      ...getAudioDefaults(),
+  create<AudioStore>()(
+    persist(
+      (set) => ({
+        ...getAudioDefaults(),
 
-      setSourceKind: (
-        sourceKind,
-      ) =>
-        set({
+        setSourceKind: (
           sourceKind,
-          selectedSegmentIndex:
-            0,
-        }),
-
-      setSegmentMode: (
-        segmentMode,
-      ) =>
-        set({
-          segmentMode,
-          selectedSegmentIndex:
-            0,
-        }),
-
-      setSelectedSegmentIndex: (
-        selectedSegmentIndex,
-      ) =>
-        set({
-          selectedSegmentIndex,
-        }),
-
-      setSpeed: (
-        speed,
-      ) =>
-        set({
-          speed,
-        }),
-
-      setRepeatMode: (
-        repeatMode,
-      ) =>
-        set({
-          repeatMode,
-        }),
-
-      resetAudioSettings:
-        () =>
+        ) =>
           set({
-            ...getAudioDefaults(),
+            sourceKind,
+            selectedSegmentIndex:
+              0,
           }),
-    }),
+
+        setSegmentMode: (
+          segmentMode,
+        ) =>
+          set({
+            segmentMode,
+            selectedSegmentIndex:
+              0,
+          }),
+
+        setSelectedSegmentIndex: (
+          selectedSegmentIndex,
+        ) =>
+          set({
+            selectedSegmentIndex,
+          }),
+
+        setSpeed: (
+          speed,
+        ) =>
+          set({
+            speed,
+          }),
+
+        setRepeatMode: (
+          repeatMode,
+        ) =>
+          set({
+            repeatMode,
+          }),
+
+        resetAudioSettings:
+          () =>
+            set({
+              ...getAudioDefaults(),
+            }),
+      }),
+      {
+        name:
+          STORAGE_KEYS.audio,
+
+        version:
+          STORAGE_VERSION,
+
+        storage:
+          zustandAsyncStorage,
+
+        partialize: (
+          state,
+        ) => ({
+          sourceKind:
+            state.sourceKind,
+
+          segmentMode:
+            state.segmentMode,
+
+          selectedSegmentIndex:
+            state.selectedSegmentIndex,
+
+          speed:
+            state.speed,
+
+          repeatMode:
+            state.repeatMode,
+        }),
+      },
+    ),
   );

@@ -1,29 +1,51 @@
-import { useSettingsStore } from "./settingsStore";
-import { create } from "zustand";
+import {
+  create,
+} from "zustand";
+
+import {
+  persist,
+} from "zustand/middleware";
 
 import type {
   GeneratedQuiz,
   QuizMethod,
 } from "../types/quiz";
+
 import type {
   ReviewResult,
 } from "../types/review";
+
 import type {
   QuizHistorySession,
 } from "../types/history";
+
 import type {
   ActiveStudySession,
 } from "../types/resume";
+
 import {
   generateDemoQuiz as buildDemoQuiz,
 } from "../utils/demoQuizEngine";
+
 import {
   buildTextPreview,
 } from "../utils/history";
 
+import {
+  STORAGE_KEYS,
+  STORAGE_VERSION,
+  zustandAsyncStorage,
+} from "../storage/appStorage";
+
+import {
+  useSettingsStore,
+} from "./settingsStore";
+
 type QuizStore = {
   text: string;
+
   method: QuizMethod;
+
   hideCount: number;
 
   generatedQuiz:
@@ -95,23 +117,30 @@ type QuizStore = {
     () => void;
 };
 
-const draftInitialState = {
-  text: "",
+function getDefaultDraftState() {
+  const settings =
+    useSettingsStore.getState();
 
-  method:
-    "HIDE_WORD" as QuizMethod,
+  return {
+    text:
+      "",
 
-  hideCount: 1,
+    method:
+      settings.defaultQuizMethod,
 
-  generatedQuiz:
-    null as GeneratedQuiz | null,
+    hideCount:
+      settings.defaultHideCount,
 
-  reviewResult:
-    null as ReviewResult | null,
+    generatedQuiz:
+      null as GeneratedQuiz | null,
 
-  activeStudySession:
-    null as ActiveStudySession | null,
-};
+    reviewResult:
+      null as ReviewResult | null,
+
+    activeStudySession:
+      null as ActiveStudySession | null,
+  };
+}
 
 function buildActiveSession(
   quiz: GeneratedQuiz,
@@ -135,7 +164,8 @@ function buildActiveSession(
     hiddenCount:
       quiz.hiddenCount,
 
-    revealedItemIds: [],
+    revealedItemIds:
+      [],
 
     startedAt:
       now,
@@ -146,182 +176,256 @@ function buildActiveSession(
 }
 
 export const useQuizStore =
-  create<QuizStore>(
-    (set, get) => ({
-      ...draftInitialState,
+  create<QuizStore>()(
+    persist(
+      (set, get) => ({
+        ...getDefaultDraftState(),
 
-      historySessions: [],
+        historySessions:
+          [],
 
-      setText: (text) =>
-        set({
+        setText: (
           text,
-          generatedQuiz: null,
-          reviewResult: null,
-          activeStudySession: null,
-        }),
+        ) =>
+          set({
+            text,
 
-      setMethod: (method) =>
-        set({
+            generatedQuiz:
+              null,
+
+            reviewResult:
+              null,
+
+            activeStudySession:
+              null,
+          }),
+
+        setMethod: (
           method,
-          hideCount: 1,
-          generatedQuiz: null,
-          reviewResult: null,
-          activeStudySession: null,
-        }),
+        ) =>
+          set({
+            method,
 
-      setHideCount: (hideCount) =>
-        set({
+            hideCount:
+              1,
+
+            generatedQuiz:
+              null,
+
+            reviewResult:
+              null,
+
+            activeStudySession:
+              null,
+          }),
+
+        setHideCount: (
           hideCount,
-          generatedQuiz: null,
-          reviewResult: null,
-          activeStudySession: null,
-        }),
+        ) =>
+          set({
+            hideCount,
 
-      generateDemoQuiz: (
-        countOverride,
-      ) => {
-        const state =
-          get();
+            generatedQuiz:
+              null,
 
-        const count =
-          countOverride ??
-          state.hideCount;
+            reviewResult:
+              null,
 
-        const generatedQuiz =
-          buildDemoQuiz(
-            state.text,
-            state.method,
-            count,
-          );
+            activeStudySession:
+              null,
+          }),
 
-        if (
-          !generatedQuiz
-        ) {
-          return null;
-        }
+        generateDemoQuiz: (
+          countOverride,
+        ) => {
+          const state =
+            get();
 
-        const activeStudySession =
-          buildActiveSession(
+          const count =
+            countOverride ??
+            state.hideCount;
+
+          const generatedQuiz =
+            buildDemoQuiz(
+              state.text,
+              state.method,
+              count,
+            );
+
+          if (
+            !generatedQuiz
+          ) {
+            return null;
+          }
+
+          const activeStudySession =
+            buildActiveSession(
+              generatedQuiz,
+            );
+
+          set({
+            hideCount:
+              count,
+
             generatedQuiz,
-          );
 
-        set({
-          hideCount:
-            count,
+            reviewResult:
+              null,
 
-          generatedQuiz,
+            activeStudySession,
+          });
 
-          reviewResult:
-            null,
+          return generatedQuiz;
+        },
 
-          activeStudySession,
-        });
+        startStudySession:
+          () => {
+            const state =
+              get();
 
-        return generatedQuiz;
-      },
+            const quiz =
+              state.generatedQuiz;
 
-      startStudySession: () => {
-        const state =
-          get();
+            if (!quiz) {
+              return null;
+            }
 
-        const quiz =
-          state.generatedQuiz;
+            if (
+              state.activeStudySession
+                ?.quizId ===
+              quiz.id
+            ) {
+              return state.activeStudySession;
+            }
 
-        if (!quiz) {
-          return null;
-        }
+            const activeStudySession =
+              buildActiveSession(
+                quiz,
+              );
 
-        if (
-          state.activeStudySession
-            ?.quizId ===
-          quiz.id
-        ) {
-          return state.activeStudySession;
-        }
+            set({
+              activeStudySession,
+            });
 
-        const activeStudySession =
-          buildActiveSession(
-            quiz,
-          );
+            return activeStudySession;
+          },
 
-        set({
-          activeStudySession,
-        });
+        updateStudyProgress: (
+          revealedItemIds,
+        ) => {
+          const state =
+            get();
 
-        return activeStudySession;
-      },
+          const quiz =
+            state.generatedQuiz;
 
-      updateStudyProgress: (
-        revealedItemIds,
-      ) => {
-        const state =
-          get();
+          if (!quiz) {
+            return;
+          }
 
-        const quiz =
-          state.generatedQuiz;
-
-        if (!quiz) {
-          return;
-        }
-
-        const hiddenIds =
-          new Set(
-            quiz.items
-              .filter(
-                (item) =>
-                  item.hidden,
-              )
-              .map(
-                (item) =>
-                  item.id,
-              ),
-          );
-
-        const validIds =
-          Array.from(
+          const hiddenIds =
             new Set(
-              revealedItemIds,
-            ),
-          ).filter(
-            (id) =>
-              hiddenIds.has(id),
-          );
-
-        const current =
-          state.activeStudySession;
-
-        const nextSession =
-          current &&
-          current.quizId === quiz.id
-            ? {
-                ...current,
-
-                revealedItemIds:
-                  validIds,
-
-                updatedAt:
-                  new Date().toISOString(),
-              }
-            : {
-                ...buildActiveSession(
-                  quiz,
+              quiz.items
+                .filter(
+                  (item) =>
+                    item.hidden,
+                )
+                .map(
+                  (item) =>
+                    item.id,
                 ),
+            );
 
-                revealedItemIds:
-                  validIds,
+          const validIds =
+            Array.from(
+              new Set(
+                revealedItemIds,
+              ),
+            ).filter(
+              (id) =>
+                hiddenIds.has(
+                  id,
+                ),
+            );
 
-                updatedAt:
-                  new Date().toISOString(),
-              };
+          const current =
+            state.activeStudySession;
 
-        set({
-          activeStudySession:
-            nextSession,
-        });
-      },
+          const nextSession =
+            current &&
+            current.quizId ===
+              quiz.id
+              ? {
+                  ...current,
 
-      restartStudySession:
-        () => {
+                  revealedItemIds:
+                    validIds,
+
+                  updatedAt:
+                    new Date().toISOString(),
+                }
+              : {
+                  ...buildActiveSession(
+                    quiz,
+                  ),
+
+                  revealedItemIds:
+                    validIds,
+
+                  updatedAt:
+                    new Date().toISOString(),
+                };
+
+          set({
+            activeStudySession:
+              nextSession,
+          });
+        },
+
+        restartStudySession:
+          () => {
+            const state =
+              get();
+
+            const quiz =
+              state.generatedQuiz;
+
+            if (!quiz) {
+              return null;
+            }
+
+            const activeStudySession =
+              buildActiveSession(
+                quiz,
+              );
+
+            set({
+              activeStudySession,
+
+              reviewResult:
+                null,
+            });
+
+            return activeStudySession;
+          },
+
+        clearActiveStudySession:
+          () =>
+            set({
+              activeStudySession:
+                null,
+            }),
+
+        saveReviewResult: (
+          reviewResult,
+        ) =>
+          set({
+            reviewResult,
+          }),
+
+        addHistorySession: (
+          result,
+        ) => {
           const state =
             get();
 
@@ -332,173 +436,170 @@ export const useQuizStore =
             return null;
           }
 
-          const activeStudySession =
-            buildActiveSession(
-              quiz,
-            );
+          const historySession: QuizHistorySession = {
+            id:
+              `history-${quiz.id}-${Date.now()}`,
 
-          set({
-            activeStudySession,
-            reviewResult: null,
-          });
+            quizId:
+              quiz.id,
 
-          return activeStudySession;
+            method:
+              quiz.method,
+
+            textPreview:
+              buildTextPreview(
+                quiz.originalText,
+              ),
+
+            hiddenCount:
+              quiz.hiddenCount,
+
+            total:
+              result.total,
+
+            correct:
+              result.correct,
+
+            incorrect:
+              result.incorrect,
+
+            percentage:
+              result.percentage,
+
+            completedAt:
+              result.completedAt,
+          };
+
+          set(
+            (current) => ({
+              historySessions: [
+                historySession,
+
+                ...current.historySessions.filter(
+                  (session) =>
+                    session.quizId !==
+                    quiz.id,
+                ),
+              ].slice(
+                0,
+                50,
+              ),
+
+              activeStudySession:
+                null,
+            }),
+          );
+
+          return historySession;
         },
 
-      clearActiveStudySession:
-        () =>
-          set({
-            activeStudySession:
-              null,
-          }),
+        clearReviewResult:
+          () =>
+            set({
+              reviewResult:
+                null,
+            }),
 
-      saveReviewResult: (
-        reviewResult,
-      ) =>
-        set({
-          reviewResult,
-        }),
+        clearGeneratedQuiz:
+          () =>
+            set({
+              generatedQuiz:
+                null,
 
-      addHistorySession: (
-        result,
-      ) => {
-        const state =
-          get();
+              reviewResult:
+                null,
 
-        const quiz =
-          state.generatedQuiz;
+              activeStudySession:
+                null,
+            }),
 
-        if (!quiz) {
-          return null;
-        }
+        clearHistory:
+          () =>
+            set({
+              historySessions:
+                [],
+            }),
 
-        const historySession: QuizHistorySession = {
-          id:
-            `history-${quiz.id}-${Date.now()}`,
+        removeHistorySession: (
+          sessionId,
+        ) =>
+          set(
+            (state) => ({
+              historySessions:
+                state.historySessions.filter(
+                  (session) =>
+                    session.id !==
+                    sessionId,
+                ),
+            }),
+          ),
 
-          quizId:
-            quiz.id,
+        clearText:
+          () =>
+            set({
+              text:
+                "",
 
-          method:
-            quiz.method,
+              hideCount:
+                useSettingsStore
+                  .getState()
+                  .defaultHideCount,
 
-          textPreview:
-            buildTextPreview(
-              quiz.originalText,
-            ),
+              method:
+                useSettingsStore
+                  .getState()
+                  .defaultQuizMethod,
 
-          hiddenCount:
-            quiz.hiddenCount,
+              generatedQuiz:
+                null,
 
-          total:
-            result.total,
+              reviewResult:
+                null,
 
-          correct:
-            result.correct,
+              activeStudySession:
+                null,
+            }),
 
-          incorrect:
-            result.incorrect,
+        resetDraft:
+          () =>
+            set({
+              ...getDefaultDraftState(),
+            }),
+      }),
+      {
+        name:
+          STORAGE_KEYS.quiz,
 
-          percentage:
-            result.percentage,
+        version:
+          STORAGE_VERSION,
 
-          completedAt:
-            result.completedAt,
-        };
+        storage:
+          zustandAsyncStorage,
 
-        set(
-          (current) => ({
-            historySessions: [
-              historySession,
-
-              ...current.historySessions.filter(
-                (session) =>
-                  session.quizId !==
-                  quiz.id,
-              ),
-            ].slice(
-              0,
-              50,
-            ),
-
-            activeStudySession:
-              null,
-          }),
-        );
-
-        return historySession;
-      },
-
-      clearReviewResult:
-        () =>
-          set({
-            reviewResult:
-              null,
-          }),
-
-      clearGeneratedQuiz:
-        () =>
-          set({
-            generatedQuiz:
-              null,
-
-            reviewResult:
-              null,
-
-            activeStudySession:
-              null,
-          }),
-
-      clearHistory:
-        () =>
-          set({
-            historySessions: [],
-          }),
-
-      removeHistorySession: (
-        sessionId,
-      ) =>
-        set(
-          (state) => ({
-            historySessions:
-              state.historySessions.filter(
-                (session) =>
-                  session.id !==
-                  sessionId,
-              ),
-          }),
-        ),
-
-      clearText:
-        () =>
-          set({
-            text: "",
-
-            hideCount: 1,
-
-            generatedQuiz:
-              null,
-
-            reviewResult:
-              null,
-
-            activeStudySession:
-              null,
-          }),
-
-      resetDraft: () => {
-        const settings =
-          useSettingsStore.getState();
-
-        set({
-          ...draftInitialState,
+        partialize: (
+          state,
+        ) => ({
+          text:
+            state.text,
 
           method:
-            settings.defaultQuizMethod,
+            state.method,
 
           hideCount:
-            settings.defaultHideCount,
-        });
+            state.hideCount,
+
+          generatedQuiz:
+            state.generatedQuiz,
+
+          reviewResult:
+            state.reviewResult,
+
+          historySessions:
+            state.historySessions,
+
+          activeStudySession:
+            state.activeStudySession,
+        }),
       },
-    }),
+    ),
   );
