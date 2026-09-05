@@ -137,7 +137,6 @@ jobs:
         shell: bash
         run: |
           pnpm install \
-            --filter "./apps/mobile..." \
             --frozen-lockfile \
             --prefer-offline
 
