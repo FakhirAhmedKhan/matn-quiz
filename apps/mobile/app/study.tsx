@@ -1,241 +1,109 @@
-import {
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
-import {
-  router,
-} from "expo-router";
-import {
-  StyleSheet,
-  View,
-} from "react-native";
-import {
-  Ionicons,
-} from "@expo/vector-icons";
+import { useEffect, useMemo, useState } from "react";
+import { router } from "expo-router";
+import { StyleSheet, View } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 
 import {
   StudyControls,
   StudyProgressCard,
   StudyQuizContent,
 } from "../src/components/study";
-import {
-  AppHeader,
-  AppScreen,
-} from "../src/components/layout";
-import {
-  AppButton,
-  AppCard,
-  AppText,
-} from "../src/components/ui";
-import {
-  useQuizStore,
-} from "../src/store/quizStore";
-import {
-  getMethodLabel,
-} from "../src/utils/quizSetup";
-import {
-  colors,
-  iconSize,
-  radius,
-  spacing,
-} from "../src/theme";
+import { AppHeader, AppScreen } from "../src/components/layout";
+import { AppButton, AppCard, AppText } from "../src/components/ui";
+import { useQuizStore } from "../src/store/quizStore";
+import { getMethodLabel } from "../src/utils/quizSetup";
+import { colors, iconSize, radius, spacing } from "../src/theme";
 
 export default function StudyScreen() {
-  const generatedQuiz =
-    useQuizStore(
-      (state) =>
-        state.generatedQuiz,
-    );
+  const generatedQuiz = useQuizStore((state) => state.generatedQuiz);
 
-  const activeStudySession =
-    useQuizStore(
-      (state) =>
-        state.activeStudySession,
-    );
+  const activeStudySession = useQuizStore((state) => state.activeStudySession);
 
-  const startStudySession =
-    useQuizStore(
-      (state) =>
-        state.startStudySession,
-    );
+  const startStudySession = useQuizStore((state) => state.startStudySession);
 
-  const updateStudyProgress =
-    useQuizStore(
-      (state) =>
-        state.updateStudyProgress,
-    );
+  const updateStudyProgress = useQuizStore(
+    (state) => state.updateStudyProgress,
+  );
 
-  const [
-    revealedIds,
-    setRevealedIds,
-  ] = useState<Set<string>>(
-    () =>
-      new Set(
-        activeStudySession
-          ?.revealedItemIds ??
-          [],
-      ),
+  const [revealedIds, setRevealedIds] = useState<Set<string>>(
+    () => new Set(activeStudySession?.revealedItemIds ?? []),
   );
 
   useEffect(() => {
     if (!generatedQuiz) {
-      setRevealedIds(
-        new Set(),
-      );
+      setRevealedIds(new Set());
 
       return;
     }
 
-    if (
-      activeStudySession
-        ?.quizId ===
-      generatedQuiz.id
-    ) {
-      setRevealedIds(
-        new Set(
-          activeStudySession
-            .revealedItemIds,
-        ),
-      );
+    if (activeStudySession?.quizId === generatedQuiz.id) {
+      setRevealedIds(new Set(activeStudySession.revealedItemIds));
 
       return;
     }
 
-    const session =
-      startStudySession();
+    const session = startStudySession();
 
-    setRevealedIds(
-      new Set(
-        session
-          ?.revealedItemIds ??
-          [],
-      ),
-    );
-  }, [
-    generatedQuiz?.id,
-    activeStudySession?.quizId,
-    startStudySession,
-  ]);
+    setRevealedIds(new Set(session?.revealedItemIds ?? []));
+  }, [generatedQuiz?.id, activeStudySession?.quizId, startStudySession]);
 
-  const hiddenItems =
-    useMemo(
-      () =>
-        generatedQuiz
-          ?.items.filter(
-            (item) =>
-              item.hidden,
-          ) ?? [],
-      [generatedQuiz],
-    );
+  const hiddenItems = useMemo(
+    () => generatedQuiz?.items.filter((item) => item.hidden) ?? [],
+    [generatedQuiz],
+  );
 
-  const revealedCount =
-    hiddenItems.filter(
-      (item) =>
-        revealedIds.has(
-          item.id,
-        ),
-    ).length;
+  const revealedCount = hiddenItems.filter((item) =>
+    revealedIds.has(item.id),
+  ).length;
 
   const allRevealed =
-    hiddenItems.length > 0 &&
-    revealedCount ===
-      hiddenItems.length;
+    hiddenItems.length > 0 && revealedCount === hiddenItems.length;
 
-  function saveReveals(
-    next: Set<string>,
-  ) {
-    setRevealedIds(
-      next,
-    );
+  function saveReveals(next: Set<string>) {
+    setRevealedIds(next);
 
-    updateStudyProgress(
-      Array.from(next),
-    );
+    updateStudyProgress(Array.from(next));
   }
 
-  function toggleReveal(
-    itemId: string,
-  ) {
-    const next =
-      new Set(
-        revealedIds,
-      );
+  function toggleReveal(itemId: string) {
+    const next = new Set(revealedIds);
 
-    if (
-      next.has(
-        itemId,
-      )
-    ) {
-      next.delete(
-        itemId,
-      );
+    if (next.has(itemId)) {
+      next.delete(itemId);
     } else {
-      next.add(
-        itemId,
-      );
+      next.add(itemId);
     }
 
-    saveReveals(
-      next,
-    );
+    saveReveals(next);
   }
 
   function revealNext() {
-    const nextItem =
-      hiddenItems.find(
-        (item) =>
-          !revealedIds.has(
-            item.id,
-          ),
-      );
+    const nextItem = hiddenItems.find((item) => !revealedIds.has(item.id));
 
     if (!nextItem) {
       return;
     }
 
-    const next =
-      new Set(
-        revealedIds,
-      );
+    const next = new Set(revealedIds);
 
-    next.add(
-      nextItem.id,
-    );
+    next.add(nextItem.id);
 
-    saveReveals(
-      next,
-    );
+    saveReveals(next);
   }
 
   function revealAll() {
-    saveReveals(
-      new Set(
-        hiddenItems.map(
-          (item) =>
-            item.id,
-        ),
-      ),
-    );
+    saveReveals(new Set(hiddenItems.map((item) => item.id)));
   }
 
   function hideAll() {
-    saveReveals(
-      new Set(),
-    );
+    saveReveals(new Set());
   }
 
   if (!generatedQuiz) {
     return (
       <AppScreen>
         <View style={styles.page}>
-          <AppHeader
-            title="Study Mode"
-            showBack
-            onBack={() =>
-              router.back()
-            }
-          />
+          <AppHeader title="Study Mode" showBack onBack={() => router.back()} />
 
           <View style={styles.emptyState}>
             <View style={styles.emptyIcon}>
@@ -246,29 +114,18 @@ export default function StudyScreen() {
               />
             </View>
 
-            <AppText
-              variant="title"
-              align="center"
-            >
+            <AppText variant="title" align="center">
               No Quiz Generated
             </AppText>
 
-            <AppText
-              muted
-              align="center"
-            >
-              Create a quiz first, choose your
-              method and hide count, then return
-              here to study.
+            <AppText muted align="center">
+              Create a quiz first, choose your method and hide count, then
+              return here to study.
             </AppText>
 
             <AppButton
               label="Create New Quiz"
-              onPress={() =>
-                router.replace(
-                  "/create",
-                )
-              }
+              onPress={() => router.replace("/create")}
             />
           </View>
         </View>
@@ -281,15 +138,9 @@ export default function StudyScreen() {
       <View style={styles.page}>
         <AppHeader
           title="Study Mode"
-          subtitle={
-            getMethodLabel(
-              generatedQuiz.method,
-            )
-          }
+          subtitle={getMethodLabel(generatedQuiz.method)}
           showBack
-          onBack={() =>
-            router.back()
-          }
+          onBack={() => router.back()}
         />
 
         <View style={styles.intro}>
@@ -302,13 +153,10 @@ export default function StudyScreen() {
           </View>
 
           <View style={styles.introText}>
-            <AppText variant="title">
-              Practice Your Recall
-            </AppText>
+            <AppText variant="title">Practice Your Recall</AppText>
 
             <AppText muted>
-              Tap a hidden item when you are
-              ready to reveal the answer.
+              Tap a hidden item when you are ready to reveal the answer.
             </AppText>
           </View>
         </View>
@@ -320,83 +168,48 @@ export default function StudyScreen() {
             color={colors.primary}
           />
 
-          <AppText
-            variant="caption"
-            style={styles.savedNoticeText}
-          >
+          <AppText variant="caption" style={styles.savedNoticeText}>
             Progress saved for this app session
           </AppText>
         </View>
 
         <View style={styles.metaRow}>
           <View style={styles.badge}>
-            <AppText
-              variant="caption"
-              style={styles.badgeText}
-            >
-              {getMethodLabel(
-                generatedQuiz.method,
-              )}
+            <AppText variant="caption" style={styles.badgeText}>
+              {getMethodLabel(generatedQuiz.method)}
             </AppText>
           </View>
 
-          <AppText
-            variant="caption"
-            muted
-          >
+          <AppText variant="caption" muted>
             {generatedQuiz.hiddenCount} hidden
           </AppText>
         </View>
 
         <StudyProgressCard
-          revealed={
-            revealedCount
-          }
-          total={
-            generatedQuiz.hiddenCount
-          }
+          revealed={revealedCount}
+          total={generatedQuiz.hiddenCount}
         />
 
         <View style={styles.section}>
-          <AppText variant="subheading">
-            Quiz
-          </AppText>
+          <AppText variant="subheading">Quiz</AppText>
 
           <StudyQuizContent
-            quiz={
-              generatedQuiz
-            }
-            revealedIds={
-              revealedIds
-            }
-            onReveal={
-              toggleReveal
-            }
+            quiz={generatedQuiz}
+            revealedIds={revealedIds}
+            onReveal={toggleReveal}
           />
         </View>
 
         <StudyControls
-          hasHidden={
-            hiddenItems.length > 0
-          }
-          allRevealed={
-            allRevealed
-          }
-          onRevealNext={
-            revealNext
-          }
-          onRevealAll={
-            revealAll
-          }
-          onHideAll={
-            hideAll
-          }
+          hasHidden={hiddenItems.length > 0}
+          allRevealed={allRevealed}
+          onRevealNext={revealNext}
+          onRevealAll={revealAll}
+          onHideAll={hideAll}
         />
 
         {allRevealed ? (
-          <AppCard
-            style={styles.completeCard}
-          >
+          <AppCard style={styles.completeCard}>
             <View style={styles.completeHeader}>
               <Ionicons
                 name="checkmark-circle"
@@ -405,27 +218,17 @@ export default function StudyScreen() {
               />
 
               <View style={styles.completeText}>
-                <AppText variant="subheading">
-                  All Answers Revealed
-                </AppText>
+                <AppText variant="subheading">All Answers Revealed</AppText>
 
-                <AppText
-                  variant="bodySmall"
-                  muted
-                >
-                  You can hide them again or
-                  continue to review.
+                <AppText variant="bodySmall" muted>
+                  You can hide them again or continue to review.
                 </AppText>
               </View>
             </View>
 
             <AppButton
               label="Continue to Review"
-              onPress={() =>
-                router.push(
-                  "/review",
-                )
-              }
+              onPress={() => router.push("/review")}
             />
           </AppCard>
         ) : null}
@@ -434,20 +237,11 @@ export default function StudyScreen() {
           <AppButton
             label="Leave and Resume Later"
             variant="ghost"
-            onPress={() =>
-              router.replace(
-                "/resume",
-              )
-            }
+            onPress={() => router.replace("/resume")}
           />
 
-          <AppText
-            variant="caption"
-            muted
-            align="center"
-          >
-            Hidden answers remain concealed until
-            you explicitly reveal them.
+          <AppText variant="caption" muted align="center">
+            Hidden answers remain concealed until you explicitly reveal them.
           </AppText>
         </View>
       </View>

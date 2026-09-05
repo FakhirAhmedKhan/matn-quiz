@@ -3,26 +3,12 @@ import { Tabs } from "expo-router";
 import type { ColorValue } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
-import {
-  colors,
-  iconSize,
-  spacing,
-  typography,
-} from "../../src/theme";
+import { colors, iconSize, spacing, typography } from "../../src/theme";
 
 type IconName = ComponentProps<typeof Ionicons>["name"];
 
-function renderIcon(
-  name: IconName,
-  color: ColorValue,
-) {
-  return (
-    <Ionicons
-      name={name}
-      size={iconSize.lg}
-      color={color}
-    />
-  );
+function renderIcon(name: IconName, color: ColorValue) {
+  return <Ionicons name={name} size={iconSize.lg} color={color} />;
 }
 
 export default function TabsLayout() {
@@ -55,8 +41,7 @@ export default function TabsLayout() {
         name="index"
         options={{
           title: "Home",
-          tabBarIcon: ({ color }) =>
-            renderIcon("home-outline", color),
+          tabBarIcon: ({ color }) => renderIcon("home-outline", color),
         }}
       />
 
@@ -64,8 +49,7 @@ export default function TabsLayout() {
         name="create"
         options={{
           title: "Create",
-          tabBarIcon: ({ color }) =>
-            renderIcon("create-outline", color),
+          tabBarIcon: ({ color }) => renderIcon("create-outline", color),
         }}
       />
 
@@ -73,8 +57,7 @@ export default function TabsLayout() {
         name="history"
         options={{
           title: "History",
-          tabBarIcon: ({ color }) =>
-            renderIcon("time-outline", color),
+          tabBarIcon: ({ color }) => renderIcon("time-outline", color),
         }}
       />
 
@@ -82,8 +65,7 @@ export default function TabsLayout() {
         name="books"
         options={{
           title: "Books",
-          tabBarIcon: ({ color }) =>
-            renderIcon("book-outline", color),
+          tabBarIcon: ({ color }) => renderIcon("book-outline", color),
         }}
       />
 
@@ -91,8 +73,7 @@ export default function TabsLayout() {
         name="settings"
         options={{
           title: "Settings",
-          tabBarIcon: ({ color }) =>
-            renderIcon("settings-outline", color),
+          tabBarIcon: ({ color }) => renderIcon("settings-outline", color),
         }}
       />
     </Tabs>

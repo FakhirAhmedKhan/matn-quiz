@@ -71,3 +71,8 @@ apps/web/public/uploads/books/files/*
 apps/web/public/uploads/books/covers/*
 !apps/web/public/uploads/books/files/.gitkeep
 !apps/web/public/uploads/books/covers/.gitkeep
+.env.local
+.env.*.local
+# Android build artifacts
+*.apk
+*.aab

@@ -1,4 +1,4 @@
-name: Matn Quiz Android APK
+name: Matn Quiz Android Release APK
 
 on:
   workflow_dispatch:
@@ -25,26 +25,29 @@ permissions:
 
 jobs:
   android-apk:
-    name: Build Android APK
-    runs-on: ubuntu-latest
-
-    timeout-minutes: 45
+    name: Build Standalone Android APK
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
 
     env:
       CI: "1"
       EXPO_NO_TELEMETRY: "1"
 
+      GRADLE_OPTS: >-
+        -Dorg.gradle.caching=true
+        -Dorg.gradle.parallel=true
+
     steps:
-      # ------------------------------------------------------
-      # Repository
-      # ------------------------------------------------------
+      # ==========================================================
+      # 1. CHECKOUT
+      # ==========================================================
 
       - name: Checkout repository
         uses: actions/checkout@v5
 
-      # ------------------------------------------------------
-      # pnpm
-      # ------------------------------------------------------
+      # ==========================================================
+      # 2. PNPM
+      # ==========================================================
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
@@ -52,7 +55,10 @@ jobs:
           version: 11.22.0
           run_install: false
 
-      # Expo SDK 57 requires Node >= 22.13.x.
+      # ==========================================================
+      # 3. NODE
+      # ==========================================================
+
       - name: Setup Node.js
         uses: actions/setup-node@v6
         with:
@@ -60,9 +66,9 @@ jobs:
           cache: pnpm
           cache-dependency-path: pnpm-lock.yaml
 
-      # ------------------------------------------------------
-      # Java / Android SDK
-      # ------------------------------------------------------
+      # ==========================================================
+      # 4. JAVA
+      # ==========================================================
 
       - name: Setup Java 17
         uses: actions/setup-java@v5
@@ -70,146 +76,265 @@ jobs:
           distribution: temurin
           java-version: "17"
 
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
+      # ==========================================================
+      # 5. CREATE MOBILE ENV
+      #
+      # IMPORTANT:
+      # Add these values in:
+      #
+      # GitHub Repo
+      # -> Settings
+      # -> Secrets and variables
+      # -> Actions
+      #
+      # Do NOT commit secrets to Git.
+      # ==========================================================
 
-      - name: Install Android SDK 36 and NDK
+      - name: Create Expo production environment
         shell: bash
         run: |
-          yes | sdkmanager --licenses >/dev/null || true
+          cat > apps/mobile/.env.local <<'EOF'
+          EXPO_PUBLIC_APP_ENV=${{ secrets.EXPO_PUBLIC_APP_ENV }}
+          EXPO_PUBLIC_API_BASE_URL=${{ secrets.EXPO_PUBLIC_API_BASE_URL }}
+          EXPO_PUBLIC_API_HEALTH_PATH=${{ secrets.EXPO_PUBLIC_API_HEALTH_PATH }}
+          EXPO_PUBLIC_API_TIMEOUT_MS=${{ secrets.EXPO_PUBLIC_API_TIMEOUT_MS }}
+          EXPO_PUBLIC_API_RETRY_COUNT=${{ secrets.EXPO_PUBLIC_API_RETRY_COUNT }}
 
-          sdkmanager \
-            "platform-tools" \
-            "platforms;android-36" \
-            "build-tools;36.0.0" \
-            "ndk;27.1.12297006"
+          EXPO_PUBLIC_ACCOUNT_PREFERENCES_PATH=${{ secrets.EXPO_PUBLIC_ACCOUNT_PREFERENCES_PATH }}
 
-      # ------------------------------------------------------
-      # Dependencies
-      # ------------------------------------------------------
+          EXPO_PUBLIC_PROFILE_READ_PATH=${{ secrets.EXPO_PUBLIC_PROFILE_READ_PATH }}
+          EXPO_PUBLIC_PROFILE_UPDATE_PATH=${{ secrets.EXPO_PUBLIC_PROFILE_UPDATE_PATH }}
 
-      - name: Install monorepo dependencies
-        run: pnpm install --frozen-lockfile
+          EXPO_PUBLIC_POEM_CREATE_PATH=${{ secrets.EXPO_PUBLIC_POEM_CREATE_PATH }}
+          EXPO_PUBLIC_POEM_DELETE_PATH=${{ secrets.EXPO_PUBLIC_POEM_DELETE_PATH }}
+          EXPO_PUBLIC_POEM_DETAIL_PATH=${{ secrets.EXPO_PUBLIC_POEM_DETAIL_PATH }}
+          EXPO_PUBLIC_POEM_LIST_PATH=${{ secrets.EXPO_PUBLIC_POEM_LIST_PATH }}
+          EXPO_PUBLIC_POEM_PROGRESS_PATH=${{ secrets.EXPO_PUBLIC_POEM_PROGRESS_PATH }}
+          EXPO_PUBLIC_POEM_UPDATE_PATH=${{ secrets.EXPO_PUBLIC_POEM_UPDATE_PATH }}
 
-      # ------------------------------------------------------
-      # Static verification
-      # ------------------------------------------------------
+          EXPO_PUBLIC_BOOK_CREATE_PATH=${{ secrets.EXPO_PUBLIC_BOOK_CREATE_PATH }}
+          EXPO_PUBLIC_BOOK_DELETE_PATH=${{ secrets.EXPO_PUBLIC_BOOK_DELETE_PATH }}
+          EXPO_PUBLIC_BOOK_DETAIL_PATH=${{ secrets.EXPO_PUBLIC_BOOK_DETAIL_PATH }}
+          EXPO_PUBLIC_BOOK_FAVORITE_PATH=${{ secrets.EXPO_PUBLIC_BOOK_FAVORITE_PATH }}
+          EXPO_PUBLIC_BOOK_LIST_PATH=${{ secrets.EXPO_PUBLIC_BOOK_LIST_PATH }}
+          EXPO_PUBLIC_BOOK_PROGRESS_PATH=${{ secrets.EXPO_PUBLIC_BOOK_PROGRESS_PATH }}
+          EXPO_PUBLIC_BOOK_UPDATE_PATH=${{ secrets.EXPO_PUBLIC_BOOK_UPDATE_PATH }}
 
-      - name: Verify Expo dependency compatibility
-        working-directory: apps/mobile
-        run: pnpm exec expo install --check
+          EXPO_PUBLIC_TTS_DEFAULT_FORMAT=${{ secrets.EXPO_PUBLIC_TTS_DEFAULT_FORMAT }}
+          EXPO_PUBLIC_TTS_DEFAULT_LANGUAGE=${{ secrets.EXPO_PUBLIC_TTS_DEFAULT_LANGUAGE }}
+          EXPO_PUBLIC_TTS_GENERATE_PATH=${{ secrets.EXPO_PUBLIC_TTS_GENERATE_PATH }}
+          EXPO_PUBLIC_TTS_MAX_CHARACTERS=${{ secrets.EXPO_PUBLIC_TTS_MAX_CHARACTERS }}
+          EXPO_PUBLIC_TTS_VOICES_PATH=${{ secrets.EXPO_PUBLIC_TTS_VOICES_PATH }}
+          EOF
 
-      - name: TypeScript
+          echo "Expo environment created."
+
+      # ==========================================================
+      # 6. INSTALL
+      # ==========================================================
+
+      - name: Install Mobile workspace dependencies
+        shell: bash
+        run: |
+          pnpm install \
+            --filter "./apps/mobile..." \
+            --frozen-lockfile \
+            --prefer-offline
+
+      # ==========================================================
+      # 7. TYPESCRIPT
+      # ==========================================================
+
+      - name: Mobile TypeScript
         working-directory: apps/mobile
         run: pnpm typecheck
+
+      # ==========================================================
+      # 8. EXPO CONFIG
+      # ==========================================================
 
       - name: Verify Expo configuration
         working-directory: apps/mobile
         run: pnpm exec expo config --type public
 
-      # ------------------------------------------------------
-      # Generate native Android project
+      # ==========================================================
+      # 9. PRODUCTION JS BUNDLE TEST
       #
-      # android/ does NOT need to exist in Git.
-      # Expo generates it inside the GitHub runner.
-      # ------------------------------------------------------
+      # This is the same important check that passed locally.
+      # ==========================================================
+
+      - name: Verify Android production bundle
+        working-directory: apps/mobile
+        shell: bash
+        run: |
+          rm -rf "$RUNNER_TEMP/matn-quiz-export"
+
+          pnpm exec expo export \
+            --platform android \
+            --output-dir "$RUNNER_TEMP/matn-quiz-export" \
+            --clear
+
+          test -f "$RUNNER_TEMP/matn-quiz-export/metadata.json"
+
+          echo "Production JS/assets bundle passed."
+
+      # ==========================================================
+      # 10. NDK CACHE
+      # ==========================================================
+
+      - name: Cache Android NDK
+        id: ndk-cache
+        uses: actions/cache@v4
+        with:
+          path: /usr/local/lib/android/sdk/ndk/27.1.12297006
+          key: android-ndk-27.1.12297006-v1
+
+      - name: Install required Android NDK
+        shell: bash
+        run: |
+          if [ ! -d "$ANDROID_SDK_ROOT/ndk/27.1.12297006" ]; then
+            sdkmanager "ndk;27.1.12297006"
+          else
+            echo "NDK already available."
+          fi
+
+      # ==========================================================
+      # 11. PREBUILD
+      # ==========================================================
 
       - name: Generate Android native project
         working-directory: apps/mobile
+        shell: bash
         run: |
+          rm -rf android
+
           pnpm exec expo prebuild \
             --platform android \
-            --clean \
             --no-install
 
       - name: Make Gradle executable
         run: chmod +x apps/mobile/android/gradlew
 
-      # ------------------------------------------------------
-      # Gradle cache
-      # ------------------------------------------------------
+      # ==========================================================
+      # 12. GRADLE CACHE
+      # ==========================================================
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
+        with:
+          cache-read-only: false
 
-      # ------------------------------------------------------
-      # Build APK
-      # ------------------------------------------------------
+      # ==========================================================
+      # 13. BUILD STANDALONE RELEASE APK
+      #
+      # IMPORTANT:
+      #
+      # assembleRelease
+      # NOT
+      # assembleDebug
+      #
+      # ARM64-only makes CI faster for physical modern phones.
+      # ==========================================================
 
-      - name: Build debug APK
+      - name: Build standalone release APK
         working-directory: apps/mobile/android
-        run: |
-          ./gradlew \
-            :app:assembleDebug \
-            --no-daemon \
-            --stacktrace
-
-      # ------------------------------------------------------
-      # Verify APK
-      # ------------------------------------------------------
-
-      - name: Verify APK exists
         shell: bash
         run: |
-          APK="apps/mobile/android/app/build/outputs/apk/debug/app-debug.apk"
+          ./gradlew \
+            :app:assembleRelease \
+            --no-daemon \
+            --parallel \
+            --build-cache \
+            -PreactNativeArchitectures=arm64-v8a
 
-          if [ ! -f "$APK" ]; then
-            echo "APK was not generated."
+      # ==========================================================
+      # 14. LOCATE RELEASE APK
+      # ==========================================================
+
+      - name: Find generated APK
+        id: apk
+        shell: bash
+        run: |
+          echo "Searching for release APK..."
+
+          find apps/mobile/android/app/build/outputs/apk \
+            -type f \
+            -name "*.apk" \
+            -print
+
+          APK="$(find apps/mobile/android/app/build/outputs/apk \
+            -type f \
+            -name "*release*.apk" \
+            | head -n 1)"
+
+          if [ -z "$APK" ]; then
+            echo "Release APK was not generated."
             exit 1
           fi
 
-          echo "APK generated successfully:"
+          if [ ! -f "$APK" ]; then
+            echo "APK file does not exist."
+            exit 1
+          fi
+
+          echo "APK=$APK" >> "$GITHUB_ENV"
+
+          echo ""
+          echo "APK generated:"
           ls -lh "$APK"
 
-      # ------------------------------------------------------
-      # Rename APK
-      # ------------------------------------------------------
+      # ==========================================================
+      # 15. PREPARE DOWNLOAD
+      # ==========================================================
 
-      - name: Prepare downloadable APK
+      - name: Prepare APK
         shell: bash
         run: |
           mkdir -p artifacts
 
           cp \
-            apps/mobile/android/app/build/outputs/apk/debug/app-debug.apk \
-            artifacts/matn-quiz-debug.apk
+            "$APK" \
+            artifacts/matn-quiz-release-arm64.apk
 
-          echo "Prepared:"
-          ls -lh artifacts/matn-quiz-debug.apk
+          ls -lh artifacts/matn-quiz-release-arm64.apk
 
-      # ------------------------------------------------------
-      # Upload to GitHub Actions
-      # ------------------------------------------------------
+      # ==========================================================
+      # 16. UPLOAD APK
+      # ==========================================================
 
       - name: Upload Matn Quiz APK
         uses: actions/upload-artifact@v4
         with:
-          name: matn-quiz-android-debug-${{ github.run_number }}
-          path: artifacts/matn-quiz-debug.apk
+          name: matn-quiz-release-apk-${{ github.run_number }}
+          path: artifacts/matn-quiz-release-arm64.apk
           if-no-files-found: error
           retention-days: 7
           compression-level: 0
 
-      # ------------------------------------------------------
-      # Summary
-      # ------------------------------------------------------
+      # ==========================================================
+      # 17. SUMMARY
+      # ==========================================================
 
       - name: Build summary
         if: success()
         shell: bash
         run: |
           {
-            echo "## ✅ Matn Quiz Android Build Passed"
+            echo "## ✅ Matn Quiz Standalone Android APK"
             echo ""
             echo "**Branch:** \`${GITHUB_REF_NAME}\`"
             echo ""
             echo "**Commit:** \`${GITHUB_SHA}\`"
             echo ""
+            echo "**Build:** Release"
+            echo ""
+            echo "**Architecture:** arm64-v8a"
+            echo ""
             echo "**Artifact:**"
             echo ""
-            echo "\`matn-quiz-android-debug-${GITHUB_RUN_NUMBER}\`"
+            echo "\`matn-quiz-release-apk-${GITHUB_RUN_NUMBER}\`"
             echo ""
-            echo "Download the artifact from this GitHub Actions run and extract:"
+            echo "APK:"
             echo ""
-            echo "\`matn-quiz-debug.apk\`"
+            echo "\`matn-quiz-release-arm64.apk\`"
           } >> "$GITHUB_STEP_SUMMARY"

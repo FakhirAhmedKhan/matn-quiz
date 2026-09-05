@@ -1,8 +1,5 @@
 import { router } from "expo-router";
-import {
-  StyleSheet,
-  View,
-} from "react-native";
+import { StyleSheet, View } from "react-native";
 
 import {
   HomeHeader,
@@ -20,18 +17,11 @@ import {
   SectionHeader,
 } from "../../src/components/ui";
 import { demoHome } from "../../src/mocks/demoHome";
-import type {
-  HomeQuickAction,
-} from "../../src/types/home";
-import {
-  colors,
-  spacing,
-} from "../../src/theme";
+import type { HomeQuickAction } from "../../src/types/home";
+import { colors, spacing } from "../../src/theme";
 
 export default function HomeScreen() {
-  function handleQuickAction(
-    id: HomeQuickAction["id"],
-  ) {
+  function handleQuickAction(id: HomeQuickAction["id"]) {
     if (id === "books") {
       router.push("/books");
       return;
@@ -57,24 +47,16 @@ export default function HomeScreen() {
           title={demoHome.title}
           subtitle={demoHome.subtitle}
           eyebrow={demoHome.eyebrow}
-          onHelpPress={() =>
-            router.push("/settings")
-          }
+          onHelpPress={() => router.push("/settings")}
         />
 
         <HomeHero
           tagline={demoHome.tagline}
-          onCreatePress={() =>
-            router.push("/create")
-          }
-          onResumePress={() =>
-            router.push("/resume")
-          }
+          onCreatePress={() => router.push("/create")}
+          onResumePress={() => router.push("/resume")}
         />
 
-        <HomeStats
-          stats={demoHome.stats}
-        />
+        <HomeStats stats={demoHome.stats} />
 
         <View style={styles.section}>
           <SectionHeader
@@ -84,9 +66,7 @@ export default function HomeScreen() {
 
           <ResumeStudyCard
             session={demoHome.resumeSession}
-            onPress={() =>
-              router.push("/study")
-            }
+            onPress={() => router.push("/study")}
           />
         </View>
 
@@ -98,9 +78,7 @@ export default function HomeScreen() {
 
           <RecentQuizCard
             quiz={demoHome.recentQuiz}
-            onContinue={() =>
-              router.push("/study")
-            }
+            onContinue={() => router.push("/study")}
           />
         </View>
 
@@ -114,32 +92,19 @@ export default function HomeScreen() {
             <View style={styles.progressContent}>
               <View style={styles.progressRow}>
                 <View style={styles.progressText}>
-                  <AppText variant="subheading">
-                    This Week
-                  </AppText>
+                  <AppText variant="subheading">This Week</AppText>
 
-                  <AppText
-                    variant="bodySmall"
-                    muted
-                  >
+                  <AppText variant="bodySmall" muted>
                     Keep building your memorization habit.
                   </AppText>
                 </View>
 
-                <AppText
-                  variant="heading"
-                  style={styles.progressValue}
-                >
-                  {Math.round(
-                    demoHome.weeklyProgress * 100,
-                  )}
-                  %
+                <AppText variant="heading" style={styles.progressValue}>
+                  {Math.round(demoHome.weeklyProgress * 100)}%
                 </AppText>
               </View>
 
-              <ProgressBar
-                value={demoHome.weeklyProgress}
-              />
+              <ProgressBar value={demoHome.weeklyProgress} />
             </View>
           </AppCard>
         </View>
@@ -150,19 +115,11 @@ export default function HomeScreen() {
         />
 
         <View style={styles.footer}>
-          <AppText
-            variant="caption"
-            muted
-            align="center"
-          >
+          <AppText variant="caption" muted align="center">
             Matn Quiz · Mobile Demo
           </AppText>
 
-          <AppText
-            variant="caption"
-            style={styles.footerAccent}
-            align="center"
-          >
+          <AppText variant="caption" style={styles.footerAccent} align="center">
             Memorize with intention.
           </AppText>
         </View>

@@ -1,15 +1,6 @@
-import {
-  Alert,
-  StyleSheet,
-  View,
-} from "react-native";
-import {
-  router,
-  useLocalSearchParams,
-} from "expo-router";
-import {
-  Ionicons,
-} from "@expo/vector-icons";
+import { Alert, StyleSheet, View } from "react-native";
+import { router, useLocalSearchParams } from "expo-router";
+import { Ionicons } from "@expo/vector-icons";
 
 import {
   BookDescriptionCard,
@@ -17,71 +8,35 @@ import {
   BookMetadataCard,
   BookReadingProgressCard,
 } from "../../../src/components/book-details";
-import {
-  AppHeader,
-  AppScreen,
-} from "../../../src/components/layout";
-import {
-  AppButton,
-  AppText,
-} from "../../../src/components/ui";
-import {
-  useBookStore,
-} from "../../../src/store/bookStore";
-import {
-  getBookProgress,
-} from "../../../src/utils/books";
-import {
-  colors,
-  iconSize,
-  radius,
-  spacing,
-} from "../../../src/theme";
+import { AppHeader, AppScreen } from "../../../src/components/layout";
+import { AppButton, AppText } from "../../../src/components/ui";
+import { useBookStore } from "../../../src/store/bookStore";
+import { getBookProgress } from "../../../src/utils/books";
+import { colors, iconSize, radius, spacing } from "../../../src/theme";
 
 export default function BookDetailsScreen() {
-  const params =
-    useLocalSearchParams();
+  const params = useLocalSearchParams();
 
-  const rawBookId =
-    params.bookId;
+  const rawBookId = params.bookId;
 
   const bookId =
-    typeof rawBookId ===
-    "string"
+    typeof rawBookId === "string"
       ? rawBookId
       : Array.isArray(rawBookId)
-        ? rawBookId[0] ?? ""
+        ? (rawBookId[0] ?? "")
         : "";
 
-  const books =
-    useBookStore(
-      (state) =>
-        state.books,
-    );
+  const books = useBookStore((state) => state.books);
 
-  const toggleFavorite =
-    useBookStore(
-      (state) =>
-        state.toggleFavorite,
-    );
+  const toggleFavorite = useBookStore((state) => state.toggleFavorite);
 
-  const updateReadingProgress =
-    useBookStore(
-      (state) =>
-        state.updateReadingProgress,
-    );
+  const updateReadingProgress = useBookStore(
+    (state) => state.updateReadingProgress,
+  );
 
-  const markBookOpened =
-    useBookStore(
-      (state) =>
-        state.markBookOpened,
-    );
+  const markBookOpened = useBookStore((state) => state.markBookOpened);
 
-  const book =
-    books.find(
-      (item) =>
-        item.id === bookId,
-    );
+  const book = books.find((item) => item.id === bookId);
 
   if (!book) {
     return (
@@ -90,9 +45,7 @@ export default function BookDetailsScreen() {
           <AppHeader
             title="Book Details"
             showBack
-            onBack={() =>
-              router.back()
-            }
+            onBack={() => router.back()}
           />
 
           <View style={styles.emptyState}>
@@ -104,28 +57,17 @@ export default function BookDetailsScreen() {
               />
             </View>
 
-            <AppText
-              variant="title"
-              align="center"
-            >
+            <AppText variant="title" align="center">
               Book Not Found
             </AppText>
 
-            <AppText
-              muted
-              align="center"
-            >
-              This book is not available in the
-              current demo library.
+            <AppText muted align="center">
+              This book is not available in the current demo library.
             </AppText>
 
             <AppButton
               label="Back to Books"
-              onPress={() =>
-                router.replace(
-                  "/books",
-                )
-              }
+              onPress={() => router.replace("/books")}
             />
           </View>
         </View>
@@ -133,58 +75,39 @@ export default function BookDetailsScreen() {
     );
   }
 
-  const progress =
-    getBookProgress(
-      book,
-    );
+  const progress = getBookProgress(book);
 
   function openReader() {
-    markBookOpened(
-      book!.id,
-    );
+    markBookOpened(book!.id);
 
     router.push({
-      pathname:
-        "/books/[bookId]/read",
+      pathname: "/books/[bookId]/read",
       params: {
-        bookId:
-          book!.id,
+        bookId: book!.id,
       },
     });
   }
 
   function restartBook() {
-    if (
-      progress.currentPage === 0
-    ) {
+    if (progress.currentPage === 0) {
       return;
     }
 
-    Alert.alert(
-      "Restart Book",
-      "Reset reading progress back to page 0?",
-      [
-        {
-          text: "Cancel",
-          style: "cancel",
-        },
-        {
-          text: "Restart",
-          style: "destructive",
-          onPress: () =>
-            updateReadingProgress(
-              book!.id,
-              0,
-            ),
-        },
-      ],
-    );
+    Alert.alert("Restart Book", "Reset reading progress back to page 0?", [
+      {
+        text: "Cancel",
+        style: "cancel",
+      },
+      {
+        text: "Restart",
+        style: "destructive",
+        onPress: () => updateReadingProgress(book!.id, 0),
+      },
+    ]);
   }
 
   function handleFavorite() {
-    toggleFavorite(
-      book!.id,
-    );
+    toggleFavorite(book!.id);
   }
 
   return (
@@ -200,18 +123,12 @@ export default function BookDetailsScreen() {
                 : "Ready to read"
           }
           showBack
-          onBack={() =>
-            router.back()
-          }
+          onBack={() => router.back()}
         />
 
-        <BookDetailsHero
-          book={book}
-        />
+        <BookDetailsHero book={book} />
 
-        <BookReadingProgressCard
-          book={book}
-        />
+        <BookReadingProgressCard book={book} />
 
         <View style={styles.primaryActions}>
           <AppButton
@@ -219,38 +136,25 @@ export default function BookDetailsScreen() {
               progress.completed
                 ? "Read Again"
                 : progress.started
-                  ? `Continue from Page ${Math.max(
-                      1,
-                      progress.currentPage,
-                    )}`
+                  ? `Continue from Page ${Math.max(1, progress.currentPage)}`
                   : "Start Reading"
             }
             size="lg"
-            onPress={
-              openReader
-            }
+            onPress={openReader}
           />
 
           <AppButton
             label={
-              book.isFavorite
-                ? "Remove from Favorites"
-                : "Add to Favorites"
+              book.isFavorite ? "Remove from Favorites" : "Add to Favorites"
             }
             variant="secondary"
-            onPress={
-              handleFavorite
-            }
+            onPress={handleFavorite}
           />
         </View>
 
-        <BookDescriptionCard
-          book={book}
-        />
+        <BookDescriptionCard book={book} />
 
-        <BookMetadataCard
-          book={book}
-        />
+        <BookMetadataCard book={book} />
 
         <View style={styles.readerInfo}>
           <Ionicons
@@ -260,17 +164,11 @@ export default function BookDetailsScreen() {
           />
 
           <View style={styles.readerInfoText}>
-            <AppText variant="subheading">
-              Mobile Reader
-            </AppText>
+            <AppText variant="subheading">Mobile Reader</AppText>
 
-            <AppText
-              variant="bodySmall"
-              muted
-            >
-              Open this book in the dedicated
-              reader. M17 will add page navigation,
-              reader controls and progress updates.
+            <AppText variant="bodySmall" muted>
+              Open this book in the dedicated reader. M17 will add page
+              navigation, reader controls and progress updates.
             </AppText>
           </View>
         </View>
@@ -279,43 +177,25 @@ export default function BookDetailsScreen() {
           <AppButton
             label="Open Reader"
             variant="secondary"
-            onPress={
-              openReader
-            }
+            onPress={openReader}
           />
 
           <AppButton
             label="Restart Reading Progress"
             variant="ghost"
-            disabled={
-              progress.currentPage ===
-              0
-            }
-            onPress={
-              restartBook
-            }
+            disabled={progress.currentPage === 0}
+            onPress={restartBook}
           />
         </View>
 
         <View style={styles.favoriteNotice}>
           <Ionicons
-            name={
-              book.isFavorite
-                ? "heart"
-                : "heart-outline"
-            }
+            name={book.isFavorite ? "heart" : "heart-outline"}
             size={iconSize.md}
-            color={
-              book.isFavorite
-                ? colors.warning
-                : colors.primary
-            }
+            color={book.isFavorite ? colors.warning : colors.primary}
           />
 
-          <AppText
-            variant="bodySmall"
-            style={styles.favoriteNoticeText}
-          >
+          <AppText variant="bodySmall" style={styles.favoriteNoticeText}>
             {book.isFavorite
               ? "This book is saved in your favorites."
               : "Save this book to favorites for quicker access later."}

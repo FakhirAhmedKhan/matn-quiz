@@ -1,3 +1,9 @@
+import {
+  getPoemDisplayTitle as getSharedPoemDisplayTitle,
+  hasPoemText as hasSharedPoemText,
+  splitPoemIntoColumns as splitSharedPoemIntoColumns,
+  splitPoemLines as splitSharedPoemLines,
+} from "@matn-quiz/content-core/poem";
 export type PoemLayout = "SINGLE_COLUMN" | "TWO_COLUMN";
 export type PoemDirection = "rtl" | "ltr";
 
@@ -132,27 +138,34 @@ export function clearPoemDraft(): PoemDraft {
   return createPoemDraft(DEFAULT_POEM_DRAFT);
 }
 
-export function hasPoemText(draft: PoemDraft): boolean {
-  return draft.text.trim().length > 0;
+export function hasPoemText(
+  draft: PoemDraft,
+): boolean {
+  return hasSharedPoemText(
+    draft,
+  );
 }
 
-export function getPoemDisplayTitle(draft: PoemDraft): string {
-  return draft.title.trim() || "Untitled Poem";
+export function getPoemDisplayTitle(
+  draft: PoemDraft,
+): string {
+  return getSharedPoemDisplayTitle(
+    draft,
+  );
 }
 
-export function splitPoemLines(text: string): string[] {
-  return text
-    .split(/\r?\n/)
-    .map((line) => line.trim())
-    .filter(Boolean);
+export function splitPoemLines(
+  text: string,
+): string[] {
+  return splitSharedPoemLines(
+    text,
+  );
 }
 
-export function splitPoemIntoColumns(text: string): PoemColumns {
-  const lines = splitPoemLines(text);
-  const middle = Math.ceil(lines.length / 2);
-
-  return {
-    rightColumn: lines.slice(0, middle),
-    leftColumn: lines.slice(middle),
-  };
+export function splitPoemIntoColumns(
+  text: string,
+): PoemColumns {
+  return splitSharedPoemIntoColumns(
+    text,
+  );
 }

@@ -1,8 +1,5 @@
 import { router } from "expo-router";
-import {
-  StyleSheet,
-  View,
-} from "react-native";
+import { StyleSheet, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
 import {
@@ -10,10 +7,7 @@ import {
   InputTipsCard,
   InputValidationCard,
 } from "../../src/components/create";
-import {
-  AppHeader,
-  AppScreen,
-} from "../../src/components/layout";
+import { AppHeader, AppScreen } from "../../src/components/layout";
 import {
   AppButton,
   AppCard,
@@ -26,47 +20,29 @@ import {
   getArabicInputStats,
   validateArabicInput,
 } from "../../src/utils/arabicInput";
-import {
-  colors,
-  iconSize,
-  radius,
-  spacing,
-} from "../../src/theme";
+import { colors, iconSize, radius, spacing } from "../../src/theme";
 
 const DEMO_TEXT = `إنما الأعمال بالنيات، وإنما لكل امرئ ما نوى
 فمن كانت هجرته إلى الله ورسوله
 فهجرته إلى الله ورسوله`;
 
 export default function CreateScreen() {
-  const text =
-    useQuizStore(
-      (state) => state.text,
-    );
+  const text = useQuizStore((state) => state.text);
 
-  const setText =
-    useQuizStore(
-      (state) => state.setText,
-    );
+  const setText = useQuizStore((state) => state.setText);
 
-  const clearText =
-    useQuizStore(
-      (state) => state.clearText,
-    );
+  const clearText = useQuizStore((state) => state.clearText);
 
-  const stats =
-    getArabicInputStats(text);
+  const stats = getArabicInputStats(text);
 
-  const validation =
-    validateArabicInput(text);
+  const validation = validateArabicInput(text);
 
   function handleContinue() {
     if (!validation.valid) {
       return;
     }
 
-    router.push(
-      "/create/method",
-    );
+    router.push("/create/method");
   }
 
   return (
@@ -89,21 +65,15 @@ export default function CreateScreen() {
           </View>
 
           <View style={styles.introText}>
-            <AppText variant="title">
-              Add Arabic Text
-            </AppText>
+            <AppText variant="title">Add Arabic Text</AppText>
 
             <AppText muted>
-              Paste Quran or matn text that you want
-              to memorize.
+              Paste Quran or matn text that you want to memorize.
             </AppText>
           </View>
         </View>
 
-        <StepIndicator
-          current={1}
-          total={3}
-        />
+        <StepIndicator current={1} total={3} />
 
         <View style={styles.section}>
           <AppInput
@@ -123,22 +93,14 @@ export default function CreateScreen() {
             <AppButton
               label="Load Demo Text"
               variant="secondary"
-              onPress={() =>
-                setText(DEMO_TEXT)
-              }
+              onPress={() => setText(DEMO_TEXT)}
             />
           ) : (
-            <AppButton
-              label="Clear Text"
-              variant="ghost"
-              onPress={clearText}
-            />
+            <AppButton label="Clear Text" variant="ghost" onPress={clearText} />
           )}
         </View>
 
-        <ArabicInputStats
-          stats={stats}
-        />
+        <ArabicInputStats stats={stats} />
 
         <InputValidationCard
           valid={validation.valid}
@@ -153,56 +115,36 @@ export default function CreateScreen() {
               color={colors.primary}
             />
 
-            <AppText variant="subheading">
-              Quiz Preview Status
-            </AppText>
+            <AppText variant="subheading">Quiz Preview Status</AppText>
           </View>
 
           <View style={styles.previewRows}>
             <View style={styles.previewRow}>
-              <AppText
-                variant="bodySmall"
-                muted
-              >
+              <AppText variant="bodySmall" muted>
                 Arabic characters
               </AppText>
 
-              <AppText
-                variant="bodySmall"
-                style={styles.previewValue}
-              >
+              <AppText variant="bodySmall" style={styles.previewValue}>
                 {stats.arabicCharacters}
               </AppText>
             </View>
 
             <View style={styles.previewRow}>
-              <AppText
-                variant="bodySmall"
-                muted
-              >
+              <AppText variant="bodySmall" muted>
                 Available words
               </AppText>
 
-              <AppText
-                variant="bodySmall"
-                style={styles.previewValue}
-              >
+              <AppText variant="bodySmall" style={styles.previewValue}>
                 {stats.words}
               </AppText>
             </View>
 
             <View style={styles.previewRow}>
-              <AppText
-                variant="bodySmall"
-                muted
-              >
+              <AppText variant="bodySmall" muted>
                 Available lines
               </AppText>
 
-              <AppText
-                variant="bodySmall"
-                style={styles.previewValue}
-              >
+              <AppText variant="bodySmall" style={styles.previewValue}>
                 {stats.lines}
               </AppText>
             </View>
@@ -219,13 +161,8 @@ export default function CreateScreen() {
             onPress={handleContinue}
           />
 
-          <AppText
-            variant="caption"
-            muted
-            align="center"
-          >
-            Your text stays available while moving
-            through quiz setup.
+          <AppText variant="caption" muted align="center">
+            Your text stays available while moving through quiz setup.
           </AppText>
         </View>
       </View>

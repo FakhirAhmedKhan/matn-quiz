@@ -1,17 +1,7 @@
-import {
-  useState,
-} from "react";
-import {
-  StyleSheet,
-  TextInput,
-  View,
-} from "react-native";
-import {
-  router,
-} from "expo-router";
-import {
-  Ionicons,
-} from "@expo/vector-icons";
+import { useState } from "react";
+import { StyleSheet, TextInput, View } from "react-native";
+import { router } from "expo-router";
+import { Ionicons } from "@expo/vector-icons";
 import * as DocumentPicker from "expo-document-picker";
 
 import {
@@ -21,118 +11,49 @@ import {
   SelectedBookFileCard,
   type BookImportStatus,
 } from "../../src/components/book-import";
-import {
-  AppHeader,
-  AppScreen,
-} from "../../src/components/layout";
-import {
-  AppButton,
-  AppCard,
-  AppInput,
-  AppText,
-} from "../../src/components/ui";
-import {
-  useBookStore,
-} from "../../src/store/bookStore";
-import type {
-  BookCategory,
-  BookFileMetadata,
-} from "../../src/types/book";
+import { AppHeader, AppScreen } from "../../src/components/layout";
+import { AppButton, AppCard, AppInput, AppText } from "../../src/components/ui";
+import { useBookStore } from "../../src/store/bookStore";
+import type { BookCategory, BookFileMetadata } from "../../src/types/book";
 import {
   buildImportedBookInput,
   validateImportedBookInput,
 } from "../../src/utils/bookImport";
-import {
-  colors,
-  iconSize,
-  radius,
-  spacing,
-  typography,
-} from "../../src/theme";
+import { colors, iconSize, radius, spacing, typography } from "../../src/theme";
 
 export default function BookUploadScreen() {
-  const addImportedBook =
-    useBookStore(
-      (state) =>
-        state.addImportedBook,
-    );
+  const addImportedBook = useBookStore((state) => state.addImportedBook);
 
-  const [
+  const [title, setTitle] = useState("");
+
+  const [arabicTitle, setArabicTitle] = useState("");
+
+  const [author, setAuthor] = useState("");
+
+  const [description, setDescription] = useState("");
+
+  const [category, setCategory] = useState<BookCategory>("ARABIC");
+
+  const [pagesText, setPagesText] = useState("100");
+
+  const [file, setFile] = useState<BookFileMetadata | null>(null);
+
+  const [importStatus, setImportStatus] = useState<BookImportStatus>("IDLE");
+
+  const [statusMessage, setStatusMessage] = useState("");
+
+  const totalPages = Number.parseInt(pagesText, 10);
+
+  const validation = validateImportedBookInput({
     title,
-    setTitle,
-  ] = useState("");
-
-  const [
-    arabicTitle,
-    setArabicTitle,
-  ] = useState("");
-
-  const [
     author,
-    setAuthor,
-  ] = useState("");
-
-  const [
     description,
-    setDescription,
-  ] = useState("");
-
-  const [
     category,
-    setCategory,
-  ] = useState<BookCategory>(
-    "ARABIC",
-  );
-
-  const [
-    pagesText,
-    setPagesText,
-  ] = useState("100");
-
-  const [
+    totalPages: Number.isFinite(totalPages) ? totalPages : 0,
     file,
-    setFile,
-  ] =
-    useState<BookFileMetadata | null>(
-      null,
-    );
+  });
 
-  const [
-    importStatus,
-    setImportStatus,
-  ] = useState<BookImportStatus>(
-    "IDLE",
-  );
-
-  const [
-    statusMessage,
-    setStatusMessage,
-  ] = useState("");
-
-  const totalPages =
-    Number.parseInt(
-      pagesText,
-      10,
-    );
-
-  const validation =
-    validateImportedBookInput({
-      title,
-      author,
-      description,
-      category,
-      totalPages:
-        Number.isFinite(
-          totalPages,
-        )
-          ? totalPages
-          : 0,
-      file,
-    });
-
-  const processing =
-    importStatus ===
-    "PROCESSING";
+  const processing = importStatus === "PROCESSING";
 
   async function choosePdf() {
     if (processing) {
@@ -140,63 +61,39 @@ export default function BookUploadScreen() {
     }
 
     try {
-      setImportStatus(
-        "IDLE",
-      );
+      setImportStatus("IDLE");
 
       setStatusMessage("");
 
-      const result =
-        await DocumentPicker.getDocumentAsync({
-          type:
-            "application/pdf",
+      const result = await DocumentPicker.getDocumentAsync({
+        type: "application/pdf",
 
-          copyToCacheDirectory:
-            true,
+        copyToCacheDirectory: true,
 
-          multiple:
-            false,
-        });
+        multiple: false,
+      });
 
-      if (
-        result.canceled ||
-        !result.assets?.length
-      ) {
+      if (result.canceled || !result.assets?.length) {
         return;
       }
 
-      const asset =
-        result.assets[0];
+      const asset = result.assets[0];
 
       const selectedFile: BookFileMetadata = {
-        fileName:
-          asset.name,
+        fileName: asset.name,
 
-        fileUri:
-          asset.uri,
+        fileUri: asset.uri,
 
-        mimeType:
-          asset.mimeType ??
-          null,
+        mimeType: asset.mimeType ?? null,
 
-        sizeBytes:
-          typeof asset.size ===
-          "number"
-            ? asset.size
-            : null,
+        sizeBytes: typeof asset.size === "number" ? asset.size : null,
       };
 
-      setFile(
-        selectedFile,
-      );
+      setFile(selectedFile);
     } catch {
-      setImportStatus(
-        "ERROR",
-      );
+      setImportStatus("ERROR");
 
-      setStatusMessage(
-        "The document picker could not open. Please try again.",
-      );
+      setStatusMessage("The document picker could not open. Please try again.");
     }
   }
 
@@ -207,9 +104,7 @@ export default function BookUploadScreen() {
 
     setFile(null);
 
-    setImportStatus(
-      "IDLE",
-    );
+    setImportStatus("IDLE");
 
     setStatusMessage("");
   }
@@ -219,85 +114,57 @@ export default function BookUploadScreen() {
       return;
     }
 
-    setTitle(
-      "My Arabic Study Book",
-    );
+    setTitle("My Arabic Study Book");
 
-    setArabicTitle(
-      "كتاب الدراسة العربية",
-    );
+    setArabicTitle("كتاب الدراسة العربية");
 
-    setAuthor(
-      "Local PDF Import",
-    );
+    setAuthor("Local PDF Import");
 
     setDescription(
       "A locally selected Arabic study document imported into the Matn Quiz demo library.",
     );
 
-    setCategory(
-      "ARABIC",
-    );
+    setCategory("ARABIC");
 
-    setPagesText(
-      "120",
-    );
+    setPagesText("120");
   }
 
   async function importBook() {
-    if (
-      processing ||
-      !validation.valid ||
-      !file
-    ) {
+    if (processing || !validation.valid || !file) {
       return;
     }
 
-    setImportStatus(
-      "PROCESSING",
-    );
+    setImportStatus("PROCESSING");
 
     setStatusMessage(
       "Processing PDF metadata and preparing the local library entry...",
     );
 
-    await new Promise<void>(
-      (resolve) => {
-        setTimeout(
-          resolve,
-          900,
-        );
-      },
+    await new Promise<void>((resolve) => {
+      setTimeout(resolve, 900);
+    });
+
+    const importedBook = addImportedBook(
+      buildImportedBookInput({
+        title,
+        arabicTitle,
+        author,
+        description,
+        category,
+        totalPages,
+        file,
+      }),
     );
 
-    const importedBook =
-      addImportedBook(
-        buildImportedBookInput({
-          title,
-          arabicTitle,
-          author,
-          description,
-          category,
-          totalPages,
-          file,
-        }),
-      );
+    setImportStatus("SUCCESS");
 
-    setImportStatus(
-      "SUCCESS",
-    );
-
-    setStatusMessage(
-      "Book imported successfully.",
-    );
+    setStatusMessage("Book imported successfully.");
 
     router.replace({
-      pathname:
-        "/books/[bookId]",
+      pathname: "/books/[bookId]",
 
       params: {
-        bookId:
-          importedBook.id,
+        bookId: importedBook.id,
       },
     });
   }
@@ -309,9 +176,7 @@ export default function BookUploadScreen() {
           title="Import Book"
           subtitle="Add a local PDF"
           showBack
-          onBack={() =>
-            router.back()
-          }
+          onBack={() => router.back()}
         />
 
         <View style={styles.intro}>
@@ -324,13 +189,11 @@ export default function BookUploadScreen() {
           </View>
 
           <View style={styles.introText}>
-            <AppText variant="title">
-              Add PDF to Library
-            </AppText>
+            <AppText variant="title">Add PDF to Library</AppText>
 
             <AppText muted>
-              Select a PDF, add its metadata and
-              create a local demo-library entry.
+              Select a PDF, add its metadata and create a local demo-library
+              entry.
             </AppText>
           </View>
         </View>
@@ -344,14 +207,9 @@ export default function BookUploadScreen() {
             />
 
             <View style={styles.sectionHeadingText}>
-              <AppText variant="subheading">
-                1. Select PDF
-              </AppText>
+              <AppText variant="subheading">1. Select PDF</AppText>
 
-              <AppText
-                variant="caption"
-                muted
-              >
+              <AppText variant="caption" muted>
                 PDF only · Maximum 25 MB
               </AppText>
             </View>
@@ -367,39 +225,23 @@ export default function BookUploadScreen() {
                 />
               </View>
 
-              <AppText
-                variant="subheading"
-                align="center"
-              >
+              <AppText variant="subheading" align="center">
                 Choose a PDF Document
               </AppText>
 
-              <AppText
-                variant="bodySmall"
-                muted
-                align="center"
-              >
-                The file picker uses Expo's local
-                document picker. M18 stores only
-                demo metadata and the local file
-                reference.
+              <AppText variant="bodySmall" muted align="center">
+                The file picker uses Expo's local document picker. M18 stores
+                only demo metadata and the local file reference.
               </AppText>
 
               <AppButton
                 label="Choose PDF"
                 disabled={processing}
-                onPress={
-                  choosePdf
-                }
+                onPress={choosePdf}
               />
             </View>
           ) : (
-            <SelectedBookFileCard
-              file={file}
-              onRemove={
-                removeFile
-              }
-            />
+            <SelectedBookFileCard file={file} onRemove={removeFile} />
           )}
         </AppCard>
 
@@ -412,14 +254,9 @@ export default function BookUploadScreen() {
             />
 
             <View style={styles.sectionHeadingText}>
-              <AppText variant="subheading">
-                2. Book Metadata
-              </AppText>
+              <AppText variant="subheading">2. Book Metadata</AppText>
 
-              <AppText
-                variant="caption"
-                muted
-              >
+              <AppText variant="caption" muted>
                 Used in your Books library
               </AppText>
             </View>
@@ -427,9 +264,7 @@ export default function BookUploadScreen() {
 
           <AppInput
             value={title}
-            onChangeText={
-              setTitle
-            }
+            onChangeText={setTitle}
             label="Book Title"
             placeholder="e.g. Arabic Grammar Notes"
             maxLength={160}
@@ -439,9 +274,7 @@ export default function BookUploadScreen() {
 
           <AppInput
             value={arabicTitle}
-            onChangeText={
-              setArabicTitle
-            }
+            onChangeText={setArabicTitle}
             arabic
             label="Arabic Title (Optional)"
             placeholder="عنوان الكتاب"
@@ -453,9 +286,7 @@ export default function BookUploadScreen() {
 
           <AppInput
             value={author}
-            onChangeText={
-              setAuthor
-            }
+            onChangeText={setAuthor}
             label="Author / Source"
             placeholder="Author or source name"
             maxLength={160}
@@ -465,9 +296,7 @@ export default function BookUploadScreen() {
 
           <AppInput
             value={description}
-            onChangeText={
-              setDescription
-            }
+            onChangeText={setDescription}
             label="Description (Optional)"
             placeholder="Short description of this book"
             multiline
@@ -476,93 +305,58 @@ export default function BookUploadScreen() {
           />
 
           <View style={styles.pageField}>
-            <AppText
-              variant="bodySmall"
-              style={styles.fieldLabel}
-            >
+            <AppText variant="bodySmall" style={styles.fieldLabel}>
               Estimated Total Pages
             </AppText>
 
             <TextInput
               value={pagesText}
               onChangeText={(value) =>
-                setPagesText(
-                  value.replace(
-                    /[^0-9]/g,
-                    "",
-                  ),
-                )
+                setPagesText(value.replace(/[^0-9]/g, ""))
               }
               keyboardType="number-pad"
               maxLength={4}
               placeholder="100"
-              placeholderTextColor={
-                colors.textMuted
-              }
+              placeholderTextColor={colors.textMuted}
               accessibilityLabel="Estimated total pages"
               style={styles.pageInput}
             />
 
-            <AppText
-              variant="caption"
-              muted
-            >
+            <AppText variant="caption" muted>
               Demo range: 1 to 5000 pages.
             </AppText>
           </View>
 
           <View style={styles.categorySection}>
-            <AppText
-              variant="bodySmall"
-              style={styles.fieldLabel}
-            >
+            <AppText variant="bodySmall" style={styles.fieldLabel}>
               Category
             </AppText>
 
-            <BookImportCategoryPicker
-              value={category}
-              onChange={
-                setCategory
-              }
-            />
+            <BookImportCategoryPicker value={category} onChange={setCategory} />
           </View>
 
           <AppButton
             label="Load Demo Metadata"
             variant="ghost"
             disabled={processing}
-            onPress={
-              loadDemoMetadata
-            }
+            onPress={loadDemoMetadata}
           />
         </AppCard>
 
         <BookImportPreviewCard
           title={title}
-          arabicTitle={
-            arabicTitle
-          }
+          arabicTitle={arabicTitle}
           author={author}
-          description={
-            description
-          }
+          description={description}
           category={category}
-          totalPages={
-            Number.isFinite(
-              totalPages,
-            )
-              ? totalPages
-              : 0
-          }
+          totalPages={Number.isFinite(totalPages) ? totalPages : 0}
           file={file}
         />
 
         <View
           style={[
             styles.validation,
-            validation.valid
-              ? styles.valid
-              : styles.invalid,
+            validation.valid ? styles.valid : styles.invalid,
           ]}
         >
           <Ionicons
@@ -572,59 +366,35 @@ export default function BookUploadScreen() {
                 : "information-circle-outline"
             }
             size={iconSize.md}
-            color={
-              validation.valid
-                ? colors.success
-                : colors.warning
-            }
+            color={validation.valid ? colors.success : colors.warning}
           />
 
           <AppText
             variant="bodySmall"
             style={[
               styles.validationText,
-              validation.valid
-                ? styles.validText
-                : styles.invalidText,
+              validation.valid ? styles.validText : styles.invalidText,
             ]}
           >
             {validation.message}
           </AppText>
         </View>
 
-        <BookImportStatusCard
-          status={
-            importStatus
-          }
-          message={
-            statusMessage
-          }
-        />
+        <BookImportStatusCard status={importStatus} message={statusMessage} />
 
         <View style={styles.actions}>
           <AppButton
-            label={
-              processing
-                ? "Processing PDF..."
-                : "Import Book to Library"
-            }
+            label={processing ? "Processing PDF..." : "Import Book to Library"}
             size="lg"
-            disabled={
-              !validation.valid ||
-              processing
-            }
-            onPress={
-              importBook
-            }
+            disabled={!validation.valid || processing}
+            onPress={importBook}
           />
 
           <AppButton
             label="Cancel Import"
             variant="ghost"
             disabled={processing}
-            onPress={() =>
-              router.back()
-            }
+            onPress={() => router.back()}
           />
         </View>
 
@@ -635,16 +405,11 @@ export default function BookUploadScreen() {
             color={colors.primary}
           />
 
-          <AppText
-            variant="bodySmall"
-            style={styles.mockNoticeText}
-          >
-            M18 is the local PDF import foundation.
-            It validates and stores the selected
-            file reference plus metadata, but does
-            not yet extract or render the real PDF
-            pages. Existing M17 reader content
-            remains demo content.
+          <AppText variant="bodySmall" style={styles.mockNoticeText}>
+            M18 is the local PDF import foundation. It validates and stores the
+            selected file reference plus metadata, but does not yet extract or
+            render the real PDF pages. Existing M17 reader content remains demo
+            content.
           </AppText>
         </View>
       </View>

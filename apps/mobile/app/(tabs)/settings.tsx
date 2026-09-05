@@ -1,15 +1,10 @@
+import { AccountProfileCard } from "../../src/components/profile";
 import { AccessibilityStatusCard } from "../../src/components/accessibility";
 import { PersistenceStatusCard } from "../../src/components/persistence";
 import { useAppHydration } from "../../src/hooks/useAppHydration";
-import {
-  Alert,
-  StyleSheet,
-  View,
-} from "react-native";
+import { Alert, StyleSheet, View } from "react-native";
 
-import {
-  Ionicons,
-} from "@expo/vector-icons";
+import { Ionicons } from "@expo/vector-icons";
 
 import {
   SettingsChoiceChips,
@@ -18,46 +13,26 @@ import {
   SettingsStepper,
 } from "../../src/components/settings";
 
-import {
-  AppHeader,
-  AppScreen,
-} from "../../src/components/layout";
+import { AppHeader, AppScreen } from "../../src/components/layout";
 
-import {
-  AppButton,
-  AppCard,
-  AppText,
-} from "../../src/components/ui";
+import { AppButton, AppCard, AppText } from "../../src/components/ui";
 
-import {
-  useAudioStore,
-} from "../../src/store/audioStore";
+import { useAudioStore } from "../../src/store/audioStore";
 
-import {
-  useBookStore,
-} from "../../src/store/bookStore";
+import { useBookStore } from "../../src/store/bookStore";
 
-import {
-  usePoemStore,
-} from "../../src/store/poemStore";
+import { usePoemStore } from "../../src/store/poemStore";
 
-import {
-  useQuizStore,
-} from "../../src/store/quizStore";
+import { useQuizStore } from "../../src/store/quizStore";
 
 import {
   DEFAULT_APP_SETTINGS,
   useSettingsStore,
 } from "../../src/store/settingsStore";
 
-import type {
-  AudioRepeatMode,
-  AudioSpeed,
-} from "../../src/types/audio";
+import type { AudioRepeatMode, AudioSpeed } from "../../src/types/audio";
 
-import type {
-  QuizMethod,
-} from "../../src/types/quiz";
+import type { QuizMethod } from "../../src/types/quiz";
 
 import type {
   BookReaderModePreference,
@@ -65,25 +40,16 @@ import type {
   ReaderFontSizePreference,
 } from "../../src/types/settings";
 
-import {
-  colors,
-  iconSize,
-  radius,
-  spacing,
-} from "../../src/theme";
+import { colors, iconSize, radius, spacing } from "../../src/theme";
 
 const QUIZ_METHOD_OPTIONS = [
   {
-    value:
-      "HIDE_WORD",
-    label:
-      "Hide Words",
+    value: "HIDE_WORD",
+    label: "Hide Words",
   },
   {
-    value:
-      "HIDE_LINE",
-    label:
-      "Hide Lines",
+    value: "HIDE_LINE",
+    label: "Hide Lines",
   },
 ] as const satisfies readonly {
   value: QuizMethod;
@@ -92,22 +58,16 @@ const QUIZ_METHOD_OPTIONS = [
 
 const FONT_OPTIONS = [
   {
-    value:
-      "SMALL",
-    label:
-      "Small",
+    value: "SMALL",
+    label: "Small",
   },
   {
-    value:
-      "MEDIUM",
-    label:
-      "Medium",
+    value: "MEDIUM",
+    label: "Medium",
   },
   {
-    value:
-      "LARGE",
-    label:
-      "Large",
+    value: "LARGE",
+    label: "Large",
   },
 ] as const satisfies readonly {
   value: ReaderFontSizePreference;
@@ -116,16 +76,12 @@ const FONT_OPTIONS = [
 
 const POEM_MODE_OPTIONS = [
   {
-    value:
-      "FOCUS",
-    label:
-      "Focus",
+    value: "FOCUS",
+    label: "Focus",
   },
   {
-    value:
-      "ALL",
-    label:
-      "Show All",
+    value: "ALL",
+    label: "Show All",
   },
 ] as const satisfies readonly {
   value: PoemReaderModePreference;
@@ -134,16 +90,12 @@ const POEM_MODE_OPTIONS = [
 
 const BOOK_MODE_OPTIONS = [
   {
-    value:
-      "READING",
-    label:
-      "Reading",
+    value: "READING",
+    label: "Reading",
   },
   {
-    value:
-      "FOCUS",
-    label:
-      "Focus",
+    value: "FOCUS",
+    label: "Focus",
   },
 ] as const satisfies readonly {
   value: BookReaderModePreference;
@@ -152,28 +104,20 @@ const BOOK_MODE_OPTIONS = [
 
 const AUDIO_SPEED_OPTIONS = [
   {
-    value:
-      0.75,
-    label:
-      "0.75×",
+    value: 0.75,
+    label: "0.75×",
   },
   {
-    value:
-      1,
-    label:
-      "1×",
+    value: 1,
+    label: "1×",
   },
   {
-    value:
-      1.25,
-    label:
-      "1.25×",
+    value: 1.25,
+    label: "1.25×",
   },
   {
-    value:
-      1.5,
-    label:
-      "1.5×",
+    value: 1.5,
+    label: "1.5×",
   },
 ] as const satisfies readonly {
   value: AudioSpeed;
@@ -182,28 +126,20 @@ const AUDIO_SPEED_OPTIONS = [
 
 const AUDIO_REPEAT_OPTIONS = [
   {
-    value:
-      "ONE",
-    label:
-      "1×",
+    value: "ONE",
+    label: "1×",
   },
   {
-    value:
-      "TWO",
-    label:
-      "2×",
+    value: "TWO",
+    label: "2×",
   },
   {
-    value:
-      "THREE",
-    label:
-      "3×",
+    value: "THREE",
+    label: "3×",
   },
   {
-    value:
-      "INFINITE",
-    label:
-      "∞",
+    value: "INFINITE",
+    label: "∞",
   },
 ] as const satisfies readonly {
   value: AudioRepeatMode;
@@ -211,193 +147,116 @@ const AUDIO_REPEAT_OPTIONS = [
 }[];
 
 export default function SettingsScreen() {
-  const appHydrated =
-    useAppHydration();
-  const defaultQuizMethod =
-    useSettingsStore(
-      (state) =>
-        state.defaultQuizMethod,
-    );
+  const appHydrated = useAppHydration();
+  const defaultQuizMethod = useSettingsStore(
+    (state) => state.defaultQuizMethod,
+  );
 
-  const defaultHideCount =
-    useSettingsStore(
-      (state) =>
-        state.defaultHideCount,
-    );
+  const defaultHideCount = useSettingsStore((state) => state.defaultHideCount);
 
-  const readerFontSize =
-    useSettingsStore(
-      (state) =>
-        state.readerFontSize,
-    );
+  const readerFontSize = useSettingsStore((state) => state.readerFontSize);
 
-  const defaultPoemReaderMode =
-    useSettingsStore(
-      (state) =>
-        state.defaultPoemReaderMode,
-    );
+  const defaultPoemReaderMode = useSettingsStore(
+    (state) => state.defaultPoemReaderMode,
+  );
 
-  const defaultBookReaderMode =
-    useSettingsStore(
-      (state) =>
-        state.defaultBookReaderMode,
-    );
+  const defaultBookReaderMode = useSettingsStore(
+    (state) => state.defaultBookReaderMode,
+  );
 
-  const defaultAudioSpeed =
-    useSettingsStore(
-      (state) =>
-        state.defaultAudioSpeed,
-    );
+  const defaultAudioSpeed = useSettingsStore(
+    (state) => state.defaultAudioSpeed,
+  );
 
-  const defaultAudioRepeat =
-    useSettingsStore(
-      (state) =>
-        state.defaultAudioRepeat,
-    );
+  const defaultAudioRepeat = useSettingsStore(
+    (state) => state.defaultAudioRepeat,
+  );
 
-  const setDefaultQuizMethod =
-    useSettingsStore(
-      (state) =>
-        state.setDefaultQuizMethod,
-    );
+  const setDefaultQuizMethod = useSettingsStore(
+    (state) => state.setDefaultQuizMethod,
+  );
 
-  const setDefaultHideCount =
-    useSettingsStore(
-      (state) =>
-        state.setDefaultHideCount,
-    );
+  const setDefaultHideCount = useSettingsStore(
+    (state) => state.setDefaultHideCount,
+  );
 
-  const setReaderFontSize =
-    useSettingsStore(
-      (state) =>
-        state.setReaderFontSize,
-    );
+  const setReaderFontSize = useSettingsStore(
+    (state) => state.setReaderFontSize,
+  );
 
-  const setDefaultPoemReaderMode =
-    useSettingsStore(
-      (state) =>
-        state.setDefaultPoemReaderMode,
-    );
+  const setDefaultPoemReaderMode = useSettingsStore(
+    (state) => state.setDefaultPoemReaderMode,
+  );
 
-  const setDefaultBookReaderMode =
-    useSettingsStore(
-      (state) =>
-        state.setDefaultBookReaderMode,
-    );
+  const setDefaultBookReaderMode = useSettingsStore(
+    (state) => state.setDefaultBookReaderMode,
+  );
 
-  const setDefaultAudioSpeed =
-    useSettingsStore(
-      (state) =>
-        state.setDefaultAudioSpeed,
-    );
+  const setDefaultAudioSpeed = useSettingsStore(
+    (state) => state.setDefaultAudioSpeed,
+  );
 
-  const setDefaultAudioRepeat =
-    useSettingsStore(
-      (state) =>
-        state.setDefaultAudioRepeat,
-    );
+  const setDefaultAudioRepeat = useSettingsStore(
+    (state) => state.setDefaultAudioRepeat,
+  );
 
-  const resetSettings =
-    useSettingsStore(
-      (state) =>
-        state.resetSettings,
-    );
+  const resetSettings = useSettingsStore((state) => state.resetSettings);
 
-  const quizHistoryCount =
-    useQuizStore(
-      (state) =>
-        state.historySessions.length,
-    );
+  const quizHistoryCount = useQuizStore(
+    (state) => state.historySessions.length,
+  );
 
-  const bookCount =
-    useBookStore(
-      (state) =>
-        state.books.length,
-    );
+  const bookCount = useBookStore((state) => state.books.length);
 
-  const importedBookCount =
-    useBookStore(
-      (state) =>
-        state.books.filter(
-          (book) =>
-            book.sourceType ===
-            "IMPORTED",
-        ).length,
-    );
+  const importedBookCount = useBookStore(
+    (state) =>
+      state.books.filter((book) => book.sourceType === "IMPORTED").length,
+  );
 
-  function changeAudioSpeed(
-    value: AudioSpeed,
-  ) {
-    setDefaultAudioSpeed(
-      value,
-    );
+  function changeAudioSpeed(value: AudioSpeed) {
+    setDefaultAudioSpeed(value);
 
-    useAudioStore
-      .getState()
-      .setSpeed(value);
+    useAudioStore.getState().setSpeed(value);
   }
 
-  function changeAudioRepeat(
-    value: AudioRepeatMode,
-  ) {
-    setDefaultAudioRepeat(
-      value,
-    );
+  function changeAudioRepeat(value: AudioRepeatMode) {
+    setDefaultAudioRepeat(value);
 
-    useAudioStore
-      .getState()
-      .setRepeatMode(value);
+    useAudioStore.getState().setRepeatMode(value);
   }
 
   function applyQuizDefaultsNow() {
-    const quiz =
-      useQuizStore.getState();
+    const quiz = useQuizStore.getState();
 
-    quiz.setMethod(
-      defaultQuizMethod,
-    );
+    quiz.setMethod(defaultQuizMethod);
 
-    quiz.setHideCount(
-      defaultHideCount,
-    );
+    quiz.setHideCount(defaultHideCount);
   }
 
   function resetPreferenceDefaults() {
     resetSettings();
 
-    useAudioStore
-      .getState()
-      .resetAudioSettings();
+    useAudioStore.getState().resetAudioSettings();
   }
 
   function clearQuizDraft() {
-    useQuizStore
-      .getState()
-      .resetDraft();
+    useQuizStore.getState().resetDraft();
   }
 
   function clearQuizHistory() {
-    useQuizStore
-      .getState()
-      .clearHistory();
+    useQuizStore.getState().clearHistory();
   }
 
   function clearPoemDraft() {
-    usePoemStore
-      .getState()
-      .clearPoem();
+    usePoemStore.getState().clearPoem();
   }
 
   function resetBookLibrary() {
-    useBookStore
-      .getState()
-      .resetLibraryDemo();
+    useBookStore.getState().resetLibraryDemo();
   }
 
   function resetAudioSession() {
-    useAudioStore
-      .getState()
-      .resetAudioSettings();
+    useAudioStore.getState().resetAudioSettings();
   }
 
   function resetAllDemoData() {
@@ -413,29 +272,17 @@ export default function SettingsScreen() {
           text: "Reset All",
           style: "destructive",
           onPress: () => {
-            useSettingsStore
-              .getState()
-              .resetSettings();
+            useSettingsStore.getState().resetSettings();
 
-            useQuizStore
-              .getState()
-              .resetDraft();
+            useQuizStore.getState().resetDraft();
 
-            useQuizStore
-              .getState()
-              .clearHistory();
+            useQuizStore.getState().clearHistory();
 
-            usePoemStore
-              .getState()
-              .clearPoem();
+            usePoemStore.getState().clearPoem();
 
-            useBookStore
-              .getState()
-              .resetLibraryDemo();
+            useBookStore.getState().resetLibraryDemo();
 
-            useAudioStore
-              .getState()
-              .resetAudioSettings();
+            useAudioStore.getState().resetAudioSettings();
           },
         },
       ],
@@ -444,11 +291,9 @@ export default function SettingsScreen() {
 
   return (
     <AppScreen>
+        <AccountProfileCard />
       <View style={styles.page}>
-        <AppHeader
-          title="Settings"
-          subtitle="App defaults & demo controls"
-        />
+        <AppHeader title="Settings" subtitle="App defaults & demo controls" />
 
         <View style={styles.intro}>
           <View style={styles.introIcon}>
@@ -460,20 +305,15 @@ export default function SettingsScreen() {
           </View>
 
           <View style={styles.introText}>
-            <AppText variant="title">
-              Personalize Matn Quiz
-            </AppText>
+            <AppText variant="title">Personalize Matn Quiz</AppText>
 
             <AppText muted>
-              Configure quiz, reader and audio
-              defaults for your study workflow.
+              Configure quiz, reader and audio defaults for your study workflow.
             </AppText>
           </View>
         </View>
 
-        <PersistenceStatusCard
-          hydrated={appHydrated}
-        />
+        <PersistenceStatusCard hydrated={appHydrated} />
 
         <View style={styles.memoryNotice}>
           <Ionicons
@@ -482,14 +322,9 @@ export default function SettingsScreen() {
             color={colors.primary}
           />
 
-          <AppText
-            variant="bodySmall"
-            style={styles.memoryNoticeText}
-          >
-            Settings, quiz progress, history,
-            poem drafts and library state are
-            stored locally on this device using
-            AsyncStorage.
+          <AppText variant="bodySmall" style={styles.memoryNoticeText}>
+            Settings, quiz progress, history, poem drafts and library state are
+            stored locally on this device using AsyncStorage.
           </AppText>
         </View>
 
@@ -504,15 +339,9 @@ export default function SettingsScreen() {
           />
 
           <SettingsChoiceChips
-            value={
-              defaultQuizMethod
-            }
-            options={
-              QUIZ_METHOD_OPTIONS
-            }
-            onChange={
-              setDefaultQuizMethod
-            }
+            value={defaultQuizMethod}
+            options={QUIZ_METHOD_OPTIONS}
+            onChange={setDefaultQuizMethod}
           />
 
           <View style={styles.separator} />
@@ -523,32 +352,21 @@ export default function SettingsScreen() {
           />
 
           <SettingsStepper
-            value={
-              defaultHideCount
-            }
+            value={defaultHideCount}
             minimum={1}
             maximum={10}
-            onChange={
-              setDefaultHideCount
-            }
+            onChange={setDefaultHideCount}
           />
 
           <AppButton
             label="Apply Defaults to Current Quiz"
             variant="secondary"
-            onPress={
-              applyQuizDefaultsNow
-            }
+            onPress={applyQuizDefaultsNow}
           />
 
-          <AppText
-            variant="caption"
-            muted
-            align="center"
-          >
-            Applying now changes the current quiz
-            method/count and clears any generated
-            study session for that draft.
+          <AppText variant="caption" muted align="center">
+            Applying now changes the current quiz method/count and clears any
+            generated study session for that draft.
           </AppText>
         </SettingsSection>
 
@@ -563,15 +381,9 @@ export default function SettingsScreen() {
           />
 
           <SettingsChoiceChips
-            value={
-              readerFontSize
-            }
-            options={
-              FONT_OPTIONS
-            }
-            onChange={
-              setReaderFontSize
-            }
+            value={readerFontSize}
+            options={FONT_OPTIONS}
+            onChange={setReaderFontSize}
           />
 
           <View style={styles.separator} />
@@ -582,15 +394,9 @@ export default function SettingsScreen() {
           />
 
           <SettingsChoiceChips
-            value={
-              defaultPoemReaderMode
-            }
-            options={
-              POEM_MODE_OPTIONS
-            }
-            onChange={
-              setDefaultPoemReaderMode
-            }
+            value={defaultPoemReaderMode}
+            options={POEM_MODE_OPTIONS}
+            onChange={setDefaultPoemReaderMode}
           />
 
           <View style={styles.separator} />
@@ -601,15 +407,9 @@ export default function SettingsScreen() {
           />
 
           <SettingsChoiceChips
-            value={
-              defaultBookReaderMode
-            }
-            options={
-              BOOK_MODE_OPTIONS
-            }
-            onChange={
-              setDefaultBookReaderMode
-            }
+            value={defaultBookReaderMode}
+            options={BOOK_MODE_OPTIONS}
+            onChange={setDefaultBookReaderMode}
           />
         </SettingsSection>
 
@@ -624,30 +424,12 @@ export default function SettingsScreen() {
           />
 
           <SettingsChoiceChips
-            value={
-              String(
-                defaultAudioSpeed,
-              )
-            }
-            options={
-              AUDIO_SPEED_OPTIONS.map(
-                (option) => ({
-                  value:
-                    String(
-                      option.value,
-                    ),
-                  label:
-                    option.label,
-                }),
-              )
-            }
-            onChange={(value) =>
-              changeAudioSpeed(
-                Number(
-                  value,
-                ) as AudioSpeed,
-              )
-            }
+            value={String(defaultAudioSpeed)}
+            options={AUDIO_SPEED_OPTIONS.map((option) => ({
+              value: String(option.value),
+              label: option.label,
+            }))}
+            onChange={(value) => changeAudioSpeed(Number(value) as AudioSpeed)}
           />
 
           <View style={styles.separator} />
@@ -658,23 +440,15 @@ export default function SettingsScreen() {
           />
 
           <SettingsChoiceChips
-            value={
-              defaultAudioRepeat
-            }
-            options={
-              AUDIO_REPEAT_OPTIONS
-            }
-            onChange={
-              changeAudioRepeat
-            }
+            value={defaultAudioRepeat}
+            options={AUDIO_REPEAT_OPTIONS}
+            onChange={changeAudioRepeat}
           />
 
           <AppButton
             label="Reset Current Audio to Defaults"
             variant="secondary"
-            onPress={
-              resetAudioSession
-            }
+            onPress={resetAudioSession}
           />
         </SettingsSection>
 
@@ -685,19 +459,11 @@ export default function SettingsScreen() {
         >
           <View style={styles.dataStats}>
             <View style={styles.dataStat}>
-              <AppText
-                variant="title"
-                align="center"
-                style={styles.dataValue}
-              >
+              <AppText variant="title" align="center" style={styles.dataValue}>
                 {quizHistoryCount}
               </AppText>
 
-              <AppText
-                variant="caption"
-                muted
-                align="center"
-              >
+              <AppText variant="caption" muted align="center">
                 Quiz Results
               </AppText>
             </View>
@@ -705,19 +471,11 @@ export default function SettingsScreen() {
             <View style={styles.dataDivider} />
 
             <View style={styles.dataStat}>
-              <AppText
-                variant="title"
-                align="center"
-                style={styles.dataValue}
-              >
+              <AppText variant="title" align="center" style={styles.dataValue}>
                 {bookCount}
               </AppText>
 
-              <AppText
-                variant="caption"
-                muted
-                align="center"
-              >
+              <AppText variant="caption" muted align="center">
                 Books
               </AppText>
             </View>
@@ -725,19 +483,11 @@ export default function SettingsScreen() {
             <View style={styles.dataDivider} />
 
             <View style={styles.dataStat}>
-              <AppText
-                variant="title"
-                align="center"
-                style={styles.dataValue}
-              >
+              <AppText variant="title" align="center" style={styles.dataValue}>
                 {importedBookCount}
               </AppText>
 
-              <AppText
-                variant="caption"
-                muted
-                align="center"
-              >
+              <AppText variant="caption" muted align="center">
                 Imported
               </AppText>
             </View>
@@ -746,41 +496,31 @@ export default function SettingsScreen() {
           <AppButton
             label="Clear Current Quiz Draft"
             variant="ghost"
-            onPress={
-              clearQuizDraft
-            }
+            onPress={clearQuizDraft}
           />
 
           <AppButton
             label="Clear Quiz History"
             variant="ghost"
-            onPress={
-              clearQuizHistory
-            }
+            onPress={clearQuizHistory}
           />
 
           <AppButton
             label="Clear Poem Draft"
             variant="ghost"
-            onPress={
-              clearPoemDraft
-            }
+            onPress={clearPoemDraft}
           />
 
           <AppButton
             label="Reset Demo Book Library"
             variant="ghost"
-            onPress={
-              resetBookLibrary
-            }
+            onPress={resetBookLibrary}
           />
 
           <AppButton
             label="Reset All Demo Data"
             variant="secondary"
-            onPress={
-              resetAllDemoData
-            }
+            onPress={resetAllDemoData}
           />
         </SettingsSection>
 
@@ -792,41 +532,24 @@ export default function SettingsScreen() {
           <AppButton
             label="Restore Default Preferences"
             variant="secondary"
-            onPress={
-              resetPreferenceDefaults
-            }
+            onPress={resetPreferenceDefaults}
           />
 
           <View style={styles.defaultSummary}>
-            <AppText
-              variant="bodySmall"
-              muted
-            >
+            <AppText variant="bodySmall" muted>
               Factory defaults
             </AppText>
 
-            <AppText
-              variant="caption"
-              muted
-            >
-              Quiz: Hide Words · Count{" "}
-              {DEFAULT_APP_SETTINGS.defaultHideCount}
+            <AppText variant="caption" muted>
+              Quiz: Hide Words · Count {DEFAULT_APP_SETTINGS.defaultHideCount}
             </AppText>
 
-            <AppText
-              variant="caption"
-              muted
-            >
+            <AppText variant="caption" muted>
               Readers: Medium Arabic text
             </AppText>
 
-            <AppText
-              variant="caption"
-              muted
-            >
-              Audio:{" "}
-              {DEFAULT_APP_SETTINGS.defaultAudioSpeed}× ·
-              Repeat 1×
+            <AppText variant="caption" muted>
+              Audio: {DEFAULT_APP_SETTINGS.defaultAudioSpeed}× · Repeat 1×
             </AppText>
           </View>
         </SettingsSection>
@@ -842,83 +565,51 @@ export default function SettingsScreen() {
             />
           </View>
 
-          <AppText
-            variant="title"
-            align="center"
-          >
+          <AppText variant="title" align="center">
             Matn Quiz
           </AppText>
 
-          <AppText
-            variant="bodySmall"
-            muted
-            align="center"
-          >
-            Mobile Arabic memorization, poem,
-            reading and study prototype.
+          <AppText variant="bodySmall" muted align="center">
+            Mobile Arabic memorization, poem, reading and study prototype.
           </AppText>
 
           <View style={styles.aboutRows}>
             <View style={styles.aboutRow}>
-              <AppText
-                variant="bodySmall"
-                muted
-              >
+              <AppText variant="bodySmall" muted>
                 Mobile
               </AppText>
 
-              <AppText
-                variant="bodySmall"
-                style={styles.aboutValue}
-              >
+              <AppText variant="bodySmall" style={styles.aboutValue}>
                 Expo + React Native
               </AppText>
             </View>
 
             <View style={styles.aboutRow}>
-              <AppText
-                variant="bodySmall"
-                muted
-              >
+              <AppText variant="bodySmall" muted>
                 Current milestone
               </AppText>
 
-              <AppText
-                variant="bodySmall"
-                style={styles.aboutValue}
-              >
+              <AppText variant="bodySmall" style={styles.aboutValue}>
                 M21 Persistence
               </AppText>
             </View>
 
             <View style={styles.aboutRow}>
-              <AppText
-                variant="bodySmall"
-                muted
-              >
+              <AppText variant="bodySmall" muted>
                 Storage
               </AppText>
 
-              <AppText
-                variant="bodySmall"
-                style={styles.aboutValue}
-              >
+              <AppText variant="bodySmall" style={styles.aboutValue}>
                 AsyncStorage local
               </AppText>
             </View>
 
             <View style={styles.aboutRow}>
-              <AppText
-                variant="bodySmall"
-                muted
-              >
+              <AppText variant="bodySmall" muted>
                 TTS
               </AppText>
 
-              <AppText
-                variant="bodySmall"
-                style={styles.aboutValue}
-              >
+              <AppText variant="bodySmall" style={styles.aboutValue}>
                 Local mock
               </AppText>
             </View>
@@ -952,8 +643,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     borderRadius: radius.lg,
-    backgroundColor:
-      colors.primarySoft,
+    backgroundColor: colors.primarySoft,
   },
 
   introText: {
@@ -967,75 +657,60 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
     padding: spacing.md,
     borderWidth: 1,
-    borderColor:
-      colors.primary,
-    borderRadius:
-      radius.lg,
-    backgroundColor:
-      colors.primarySoft,
+    borderColor: colors.primary,
+    borderRadius: radius.lg,
+    backgroundColor: colors.primarySoft,
   },
 
   memoryNoticeText: {
     flex: 1,
-    color:
-      colors.primaryDark,
+    color: colors.primaryDark,
     fontWeight: "600",
   },
 
   separator: {
     height: 1,
-    backgroundColor:
-      colors.border,
+    backgroundColor: colors.border,
   },
 
   dataStats: {
     flexDirection: "row",
     alignItems: "stretch",
     borderWidth: 1,
-    borderColor:
-      colors.border,
-    borderRadius:
-      radius.lg,
-    backgroundColor:
-      colors.backgroundSoft,
+    borderColor: colors.border,
+    borderRadius: radius.lg,
+    backgroundColor: colors.backgroundSoft,
   },
 
   dataStat: {
     flex: 1,
     alignItems: "center",
     gap: spacing.xs,
-    paddingVertical:
-      spacing.md,
+    paddingVertical: spacing.md,
   },
 
   dataDivider: {
     width: 1,
-    marginVertical:
-      spacing.sm,
-    backgroundColor:
-      colors.border,
+    marginVertical: spacing.sm,
+    backgroundColor: colors.border,
   },
 
   dataValue: {
-    color:
-      colors.primaryDark,
+    color: colors.primaryDark,
     fontWeight: "900",
   },
 
   defaultSummary: {
     gap: spacing.xs,
     padding: spacing.md,
-    borderRadius:
-      radius.lg,
-    backgroundColor:
-      colors.backgroundSoft,
+    borderRadius: radius.lg,
+    backgroundColor: colors.backgroundSoft,
   },
 
   aboutCard: {
     alignItems: "center",
     gap: spacing.md,
-    paddingVertical:
-      spacing.xxl,
+    paddingVertical: spacing.xxl,
   },
 
   aboutIcon: {
@@ -1043,10 +718,8 @@ const styles = StyleSheet.create({
     height: 60,
     alignItems: "center",
     justifyContent: "center",
-    borderRadius:
-      radius.xxl,
-    backgroundColor:
-      colors.primarySoft,
+    borderRadius: radius.xxl,
+    backgroundColor: colors.primarySoft,
   },
 
   aboutRows: {
@@ -1064,8 +737,7 @@ const styles = StyleSheet.create({
 
   aboutValue: {
     flex: 1,
-    color:
-      colors.primaryDark,
+    color: colors.primaryDark,
     fontWeight: "800",
     textAlign: "right",
   },

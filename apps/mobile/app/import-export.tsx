@@ -1,18 +1,7 @@
-import {
-  useMemo,
-  useState,
-} from "react";
-import {
-  router,
-} from "expo-router";
-import {
-  Share,
-  StyleSheet,
-  View,
-} from "react-native";
-import {
-  Ionicons,
-} from "@expo/vector-icons";
+import { useMemo, useState } from "react";
+import { router } from "expo-router";
+import { Share, StyleSheet, View } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import * as Clipboard from "expo-clipboard";
 
 import {
@@ -20,19 +9,9 @@ import {
   TransferPreviewCard,
   TransferStatusBanner,
 } from "../src/components/import-export";
-import {
-  AppHeader,
-  AppScreen,
-} from "../src/components/layout";
-import {
-  AppButton,
-  AppCard,
-  AppInput,
-  AppText,
-} from "../src/components/ui";
-import {
-  useQuizStore,
-} from "../src/store/quizStore";
+import { AppHeader, AppScreen } from "../src/components/layout";
+import { AppButton, AppCard, AppInput, AppText } from "../src/components/ui";
+import { useQuizStore } from "../src/store/quizStore";
 import {
   buildQuizTransferDocument,
   createDemoImportJson,
@@ -43,84 +22,40 @@ import {
   getArabicInputStats,
   validateArabicInput,
 } from "../src/utils/arabicInput";
-import {
-  getMaximumHideCount,
-} from "../src/utils/quizSetup";
-import {
-  colors,
-  iconSize,
-  radius,
-  spacing,
-} from "../src/theme";
+import { getMaximumHideCount } from "../src/utils/quizSetup";
+import { colors, iconSize, radius, spacing } from "../src/theme";
 
 type ActionStatus = {
-  kind:
-    | "success"
-    | "info";
+  kind: "success" | "info";
   message: string;
 } | null;
 
 export default function ImportExportScreen() {
-  const text =
-    useQuizStore(
-      (state) =>
-        state.text,
-    );
+  const text = useQuizStore((state) => state.text);
 
-  const method =
-    useQuizStore(
-      (state) =>
-        state.method,
-    );
+  const method = useQuizStore((state) => state.method);
 
-  const hideCount =
-    useQuizStore(
-      (state) =>
-        state.hideCount,
-    );
+  const hideCount = useQuizStore((state) => state.hideCount);
 
-  const setText =
-    useQuizStore(
-      (state) =>
-        state.setText,
-    );
+  const setText = useQuizStore((state) => state.setText);
 
-  const setMethod =
-    useQuizStore(
-      (state) =>
-        state.setMethod,
-    );
+  const setMethod = useQuizStore((state) => state.setMethod);
 
-  const setHideCount =
-    useQuizStore(
-      (state) =>
-        state.setHideCount,
-    );
+  const setHideCount = useQuizStore((state) => state.setHideCount);
 
-  const [
-    importText,
-    setImportText,
-  ] = useState("");
+  const [importText, setImportText] = useState("");
 
-  const [
-    actionStatus,
-    setActionStatus,
-  ] = useState<ActionStatus>(
-    null,
+  const [actionStatus, setActionStatus] = useState<ActionStatus>(null);
+
+  const currentValidation = validateArabicInput(text);
+
+  const currentStats = getArabicInputStats(text);
+
+  const currentMaximum = getMaximumHideCount(
+    method,
+    currentStats.words,
+    currentStats.lines,
   );
-
-  const currentValidation =
-    validateArabicInput(text);
-
-  const currentStats =
-    getArabicInputStats(text);
-
-  const currentMaximum =
-    getMaximumHideCount(
-      method,
-      currentStats.words,
-      currentStats.lines,
-    );
 
   const exportReady =
     currentValidation.valid &&
@@ -128,52 +63,31 @@ export default function ImportExportScreen() {
     hideCount >= 1 &&
     hideCount <= currentMaximum;
 
-  const exportDocument =
-    useMemo(
-      () =>
-        buildQuizTransferDocument(
-          text,
-          method,
-          hideCount,
-        ),
-      [
-        text,
-        method,
-        hideCount,
-      ],
-    );
+  const exportDocument = useMemo(
+    () => buildQuizTransferDocument(text, method, hideCount),
+    [text, method, hideCount],
+  );
 
-  const exportJson =
-    useMemo(
-      () =>
-        serializeQuizTransfer(
-          exportDocument,
-        ),
-      [exportDocument],
-    );
+  const exportJson = useMemo(
+    () => serializeQuizTransfer(exportDocument),
+    [exportDocument],
+  );
 
-  const importResult =
-    useMemo(
-      () =>
-        parseQuizTransferJson(
-          importText,
-        ),
-      [importText],
-    );
+  const importResult = useMemo(
+    () => parseQuizTransferJson(importText),
+    [importText],
+  );
 
   async function copyExport() {
     if (!exportReady) {
       return;
     }
 
-    await Clipboard.setStringAsync(
-      exportJson,
-    );
+    await Clipboard.setStringAsync(exportJson);
 
     setActionStatus({
       kind: "success",
-      message:
-        "Quiz draft JSON copied to clipboard.",
+      message: "Quiz draft JSON copied to clipboard.",
     });
   }
 
@@ -183,53 +97,42 @@ export default function ImportExportScreen() {
     }
 
     await Share.share({
-      title:
-        "Matn Quiz Draft",
-      message:
-        exportJson,
+      title: "Matn Quiz Draft",
+      message: exportJson,
     });
 
     setActionStatus({
       kind: "info",
-      message:
-        "Share dialog opened for this quiz draft.",
+      message: "Share dialog opened for this quiz draft.",
     });
   }
 
   async function pasteFromClipboard() {
-    const value =
-      await Clipboard.getStringAsync();
+    const value = await Clipboard.getStringAsync();
 
     if (!value.trim()) {
       setActionStatus({
         kind: "info",
-        message:
-          "Clipboard does not contain text to import.",
+        message: "Clipboard does not contain text to import.",
       });
 
       return;
     }
 
-    setImportText(
-      value,
-    );
+    setImportText(value);
 
     setActionStatus({
       kind: "info",
-      message:
-        "Clipboard text loaded. Check the validation preview below.",
+      message: "Clipboard text loaded. Check the validation preview below.",
     });
   }
 
   function loadDemoImport() {
-    setImportText(
-      createDemoImportJson(),
-    );
+    setImportText(createDemoImportJson());
 
     setActionStatus({
       kind: "info",
-      message:
-        "Demo Matn Quiz export loaded.",
+      message: "Demo Matn Quiz export loaded.",
     });
   }
 
@@ -239,36 +142,24 @@ export default function ImportExportScreen() {
   }
 
   function applyImport() {
-    if (
-      !importResult.valid
-    ) {
+    if (!importResult.valid) {
       return;
     }
 
-    const draft =
-      importResult.document.draft;
+    const draft = importResult.document.draft;
 
-    setText(
-      draft.text,
-    );
+    setText(draft.text);
 
-    setMethod(
-      draft.method,
-    );
+    setMethod(draft.method);
 
-    setHideCount(
-      draft.hideCount,
-    );
+    setHideCount(draft.hideCount);
 
     setActionStatus({
       kind: "success",
-      message:
-        "Imported quiz draft applied successfully.",
+      message: "Imported quiz draft applied successfully.",
     });
 
-    router.replace(
-      "/create/method",
-    );
+    router.replace("/create/method");
   }
 
   return (
@@ -278,9 +169,7 @@ export default function ImportExportScreen() {
           title="Import / Export"
           subtitle="Move quiz drafts safely"
           showBack
-          onBack={() =>
-            router.back()
-          }
+          onBack={() => router.back()}
         />
 
         <View style={styles.intro}>
@@ -293,13 +182,11 @@ export default function ImportExportScreen() {
           </View>
 
           <View style={styles.introText}>
-            <AppText variant="title">
-              Quiz Draft Transfer
-            </AppText>
+            <AppText variant="title">Quiz Draft Transfer</AppText>
 
             <AppText muted>
-              Export a quiz as JSON or restore
-              a previously exported Matn Quiz draft.
+              Export a quiz as JSON or restore a previously exported Matn Quiz
+              draft.
             </AppText>
           </View>
         </View>
@@ -308,32 +195,26 @@ export default function ImportExportScreen() {
           <View
             style={[
               styles.actionStatus,
-              actionStatus.kind ===
-              "success"
+              actionStatus.kind === "success"
                 ? styles.successStatus
                 : styles.infoStatus,
             ]}
           >
             <Ionicons
               name={
-                actionStatus.kind ===
-                "success"
+                actionStatus.kind === "success"
                   ? "checkmark-circle-outline"
                   : "information-circle-outline"
               }
               size={iconSize.md}
               color={
-                actionStatus.kind ===
-                "success"
+                actionStatus.kind === "success"
                   ? colors.success
                   : colors.primary
               }
             />
 
-            <AppText
-              variant="bodySmall"
-              style={styles.actionStatusText}
-            >
+            <AppText variant="bodySmall" style={styles.actionStatusText}>
               {actionStatus.message}
             </AppText>
           </View>
@@ -347,24 +228,17 @@ export default function ImportExportScreen() {
               color={colors.primary}
             />
 
-            <AppText variant="subheading">
-              Export Current Draft
-            </AppText>
+            <AppText variant="subheading">Export Current Draft</AppText>
           </View>
 
-          <AppText
-            variant="caption"
-            muted
-          >
+          <AppText variant="caption" muted>
             JSON version 1
           </AppText>
         </View>
 
         {exportReady ? (
           <TransferPreviewCard
-            document={
-              exportDocument
-            }
+            document={exportDocument}
             title="Current Quiz Draft"
           />
         ) : (
@@ -376,16 +250,10 @@ export default function ImportExportScreen() {
             />
 
             <View style={styles.notReadyText}>
-              <AppText variant="subheading">
-                Draft Not Ready to Export
-              </AppText>
+              <AppText variant="subheading">Draft Not Ready to Export</AppText>
 
-              <AppText
-                variant="bodySmall"
-                muted
-              >
-                Create valid Arabic quiz text,
-                choose a method and select a
+              <AppText variant="bodySmall" muted>
+                Create valid Arabic quiz text, choose a method and select a
                 valid hide count first.
               </AppText>
             </View>
@@ -419,17 +287,13 @@ export default function ImportExportScreen() {
               color={colors.primary}
             />
 
-            <AppText variant="subheading">
-              Import Quiz Draft
-            </AppText>
+            <AppText variant="subheading">Import Quiz Draft</AppText>
           </View>
         </View>
 
         <AppInput
           value={importText}
-          onChangeText={
-            setImportText
-          }
+          onChangeText={setImportText}
           multiline
           maxLength={30000}
           label="Matn Quiz JSON"
@@ -447,45 +311,33 @@ export default function ImportExportScreen() {
           <AppButton
             label="Paste from Clipboard"
             variant="secondary"
-            onPress={
-              pasteFromClipboard
-            }
+            onPress={pasteFromClipboard}
           />
 
           <AppButton
             label="Load Demo Import"
             variant="ghost"
-            onPress={
-              loadDemoImport
-            }
+            onPress={loadDemoImport}
           />
 
           {importText.length > 0 ? (
             <AppButton
               label="Clear Import"
               variant="ghost"
-              onPress={
-                clearImport
-              }
+              onPress={clearImport}
             />
           ) : null}
         </View>
 
         <TransferStatusBanner
-          valid={
-            importResult.valid
-          }
-          message={
-            importResult.message
-          }
+          valid={importResult.valid}
+          message={importResult.message}
         />
 
         {importResult.valid ? (
           <>
             <TransferPreviewCard
-              document={
-                importResult.document
-              }
+              document={importResult.document}
               title="Imported Draft Preview"
             />
 
@@ -496,22 +348,16 @@ export default function ImportExportScreen() {
                 color={colors.warning}
               />
 
-              <AppText
-                variant="bodySmall"
-                style={styles.replaceWarningText}
-              >
-                Applying this import replaces
-                your current quiz draft and
-                clears its generated study session.
+              <AppText variant="bodySmall" style={styles.replaceWarningText}>
+                Applying this import replaces your current quiz draft and clears
+                its generated study session.
               </AppText>
             </View>
 
             <AppButton
               label="Apply Imported Draft"
               size="lg"
-              onPress={
-                applyImport
-              }
+              onPress={applyImport}
             />
           </>
         ) : null}
@@ -524,19 +370,13 @@ export default function ImportExportScreen() {
               color={colors.primary}
             />
 
-            <AppText variant="subheading">
-              Import Validation
-            </AppText>
+            <AppText variant="subheading">Import Validation</AppText>
           </View>
 
-          <AppText
-            variant="bodySmall"
-            muted
-          >
-            Matn Quiz checks the schema version,
-            Arabic text, quiz method, hide count
-            and available words or lines before
-            replacing your current draft.
+          <AppText variant="bodySmall" muted>
+            Matn Quiz checks the schema version, Arabic text, quiz method, hide
+            count and available words or lines before replacing your current
+            draft.
           </AppText>
         </AppCard>
       </View>

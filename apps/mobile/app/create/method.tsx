@@ -1,18 +1,9 @@
 import { router } from "expo-router";
-import {
-  StyleSheet,
-  View,
-} from "react-native";
+import { StyleSheet, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
-import {
-  MethodSummaryCard,
-  QuizMethodCard,
-} from "../../src/components/create";
-import {
-  AppHeader,
-  AppScreen,
-} from "../../src/components/layout";
+import { MethodSummaryCard, QuizMethodCard } from "../../src/components/create";
+import { AppHeader, AppScreen } from "../../src/components/layout";
 import {
   AppButton,
   AppCard,
@@ -26,60 +17,32 @@ import {
   getArabicInputStats,
   validateArabicInput,
 } from "../../src/utils/arabicInput";
-import {
-  colors,
-  iconSize,
-  radius,
-  spacing,
-} from "../../src/theme";
+import { colors, iconSize, radius, spacing } from "../../src/theme";
 
 export default function CreateMethodScreen() {
-  const text =
-    useQuizStore(
-      (state) => state.text,
-    );
+  const text = useQuizStore((state) => state.text);
 
-  const method =
-    useQuizStore(
-      (state) => state.method,
-    );
+  const method = useQuizStore((state) => state.method);
 
-  const setMethod =
-    useQuizStore(
-      (state) => state.setMethod,
-    );
+  const setMethod = useQuizStore((state) => state.setMethod);
 
-  const stats =
-    getArabicInputStats(text);
+  const stats = getArabicInputStats(text);
 
-  const validation =
-    validateArabicInput(text);
+  const validation = validateArabicInput(text);
 
-  const canUseHideWords =
-    stats.words >= 2;
+  const canUseHideWords = stats.words >= 2;
 
-  const canUseHideLines =
-    stats.lines >= 2;
+  const canUseHideLines = stats.lines >= 2;
 
   const selectedAvailable =
-    method === "HIDE_WORD"
-      ? canUseHideWords
-      : canUseHideLines;
+    method === "HIDE_WORD" ? canUseHideWords : canUseHideLines;
 
-  function selectMethod(
-    nextMethod: QuizMethod,
-  ) {
-    if (
-      nextMethod === "HIDE_WORD" &&
-      !canUseHideWords
-    ) {
+  function selectMethod(nextMethod: QuizMethod) {
+    if (nextMethod === "HIDE_WORD" && !canUseHideWords) {
       return;
     }
 
-    if (
-      nextMethod === "HIDE_LINE" &&
-      !canUseHideLines
-    ) {
+    if (nextMethod === "HIDE_LINE" && !canUseHideLines) {
       return;
     }
 
@@ -87,16 +50,11 @@ export default function CreateMethodScreen() {
   }
 
   function continueToCount() {
-    if (
-      !validation.valid ||
-      !selectedAvailable
-    ) {
+    if (!validation.valid || !selectedAvailable) {
       return;
     }
 
-    router.push(
-      "/create/count",
-    );
+    router.push("/create/count");
   }
 
   if (!validation.valid) {
@@ -119,26 +77,17 @@ export default function CreateMethodScreen() {
               />
             </View>
 
-            <AppText
-              variant="title"
-              align="center"
-            >
+            <AppText variant="title" align="center">
               Add Arabic Text First
             </AppText>
 
-            <AppText
-              muted
-              align="center"
-            >
-              Quiz method selection needs valid
-              Arabic Quran or matn text.
+            <AppText muted align="center">
+              Quiz method selection needs valid Arabic Quran or matn text.
             </AppText>
 
             <AppButton
               label="Go to Arabic Input"
-              onPress={() =>
-                router.replace("/create")
-              }
+              onPress={() => router.replace("/create")}
             />
           </View>
         </View>
@@ -166,21 +115,15 @@ export default function CreateMethodScreen() {
           </View>
 
           <View style={styles.introText}>
-            <AppText variant="title">
-              How should we hide the text?
-            </AppText>
+            <AppText variant="title">How should we hide the text?</AppText>
 
             <AppText muted>
-              Choose the practice style that
-              matches your memorization goal.
+              Choose the practice style that matches your memorization goal.
             </AppText>
           </View>
         </View>
 
-        <StepIndicator
-          current={2}
-          total={3}
-        />
+        <StepIndicator current={2} total={3} />
 
         <AppCard style={styles.previewCard}>
           <View style={styles.previewHeading}>
@@ -191,24 +134,16 @@ export default function CreateMethodScreen() {
             />
 
             <View style={styles.previewHeadingText}>
-              <AppText variant="subheading">
-                Source Text
-              </AppText>
+              <AppText variant="subheading">Source Text</AppText>
 
-              <AppText
-                variant="caption"
-                muted
-              >
+              <AppText variant="caption" muted>
                 {stats.words} words · {stats.lines} lines
               </AppText>
             </View>
           </View>
 
           <View style={styles.arabicPreview}>
-            <ArabicText
-              size="small"
-              numberOfLines={4}
-            >
+            <ArabicText size="small" numberOfLines={4}>
               {text}
             </ArabicText>
           </View>
@@ -223,13 +158,9 @@ export default function CreateMethodScreen() {
             availableCount={stats.words}
             availableLabel="words available"
             icon="text-outline"
-            selected={
-              method === "HIDE_WORD"
-            }
+            selected={method === "HIDE_WORD"}
             disabled={!canUseHideWords}
-            onPress={() =>
-              selectMethod("HIDE_WORD")
-            }
+            onPress={() => selectMethod("HIDE_WORD")}
           />
 
           <QuizMethodCard
@@ -244,13 +175,9 @@ export default function CreateMethodScreen() {
             availableCount={stats.lines}
             availableLabel="lines available"
             icon="reorder-three-outline"
-            selected={
-              method === "HIDE_LINE"
-            }
+            selected={method === "HIDE_LINE"}
             disabled={!canUseHideLines}
-            onPress={() =>
-              selectMethod("HIDE_LINE")
-            }
+            onPress={() => selectMethod("HIDE_LINE")}
           />
         </View>
 
@@ -262,13 +189,9 @@ export default function CreateMethodScreen() {
               color={colors.warning}
             />
 
-            <AppText
-              variant="bodySmall"
-              style={styles.warningText}
-            >
-              Hide Lines requires at least two
-              non-empty lines. Hide Words remains
-              available.
+            <AppText variant="bodySmall" style={styles.warningText}>
+              Hide Lines requires at least two non-empty lines. Hide Words
+              remains available.
             </AppText>
           </View>
         ) : null}
@@ -293,13 +216,8 @@ export default function CreateMethodScreen() {
             onPress={() => router.back()}
           />
 
-          <AppText
-            variant="caption"
-            muted
-            align="center"
-          >
-            Your selected method stays in
-            the current quiz draft.
+          <AppText variant="caption" muted align="center">
+            Your selected method stays in the current quiz draft.
           </AppText>
         </View>
       </View>

@@ -1,0 +1,51 @@
+{
+  "name": "@matn-quiz/content-core",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "import": "./src/index.ts",
+      "default": "./src/index.ts"
+    },
+    "./poem": {
+      "types": "./src/poem.ts",
+      "import": "./src/poem.ts",
+      "default": "./src/poem.ts"
+    },
+    "./poem-reader": {
+      "types": "./src/poem-reader.ts",
+      "import": "./src/poem-reader.ts",
+      "default": "./src/poem-reader.ts"
+    },
+    "./book-reader": {
+      "types": "./src/book-reader.ts",
+      "import": "./src/book-reader.ts",
+      "default": "./src/book-reader.ts"
+    },
+    "./book-library": {
+      "types": "./src/book-library.ts",
+      "import": "./src/book-library.ts",
+      "default": "./src/book-library.ts"
+    },
+    "./book-import": {
+      "types": "./src/book-import.ts",
+      "import": "./src/book-import.ts",
+      "default": "./src/book-import.ts"
+    },
+    "./book-file-validation": {
+      "types": "./src/book-file-validation.ts",
+      "import": "./src/book-file-validation.ts",
+      "default": "./src/book-file-validation.ts"
+    }
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@matn-quiz/shared-types": "workspace:*",
+    "@matn-quiz/validation": "workspace:*"
+  }
+}

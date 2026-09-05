@@ -1,3 +1,8 @@
+import "../src/tts-api/ttsBridge";
+import "../src/book-api/bookBridge";
+import "../src/poem-api/poemBridge";
+import "../src/profile/profileBridge";
+import "../src/auth/authBridge";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { SafeAreaProvider } from "react-native-safe-area-context";

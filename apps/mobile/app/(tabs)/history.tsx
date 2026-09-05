@@ -1,10 +1,5 @@
-import {
-  router,
-} from "expo-router";
-import {
-  StyleSheet,
-  View,
-} from "react-native";
+import { router } from "expo-router";
+import { StyleSheet, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
 import {
@@ -12,64 +7,26 @@ import {
   HistorySessionCard,
   HistoryStats,
 } from "../../src/components/history";
-import {
-  AppHeader,
-  AppScreen,
-} from "../../src/components/layout";
-import {
-  AppButton,
-  AppCard,
-  AppText,
-} from "../../src/components/ui";
-import {
-  useQuizStore,
-} from "../../src/store/quizStore";
-import {
-  calculateHistoryStats,
-} from "../../src/utils/history";
-import {
-  colors,
-  iconSize,
-  radius,
-  spacing,
-} from "../../src/theme";
+import { AppHeader, AppScreen } from "../../src/components/layout";
+import { AppButton, AppCard, AppText } from "../../src/components/ui";
+import { useQuizStore } from "../../src/store/quizStore";
+import { calculateHistoryStats } from "../../src/utils/history";
+import { colors, iconSize, radius, spacing } from "../../src/theme";
 
 export default function HistoryScreen() {
-  const historySessions =
-    useQuizStore(
-      (state) =>
-        state.historySessions,
-    );
+  const historySessions = useQuizStore((state) => state.historySessions);
 
-  const clearHistory =
-    useQuizStore(
-      (state) =>
-        state.clearHistory,
-    );
+  const clearHistory = useQuizStore((state) => state.clearHistory);
 
-  const stats =
-    calculateHistoryStats(
-      historySessions,
-    );
+  const stats = calculateHistoryStats(historySessions);
 
-  if (
-    historySessions.length === 0
-  ) {
+  if (historySessions.length === 0) {
     return (
       <AppScreen>
         <View style={styles.page}>
-          <AppHeader
-            title="Quiz History"
-            subtitle="Completed sessions"
-          />
+          <AppHeader title="Quiz History" subtitle="Completed sessions" />
 
-          <HistoryEmptyState
-            onCreateQuiz={() =>
-              router.push(
-                "/create",
-              )
-            }
-          />
+          <HistoryEmptyState onCreateQuiz={() => router.push("/create")} />
         </View>
       </AppScreen>
     );
@@ -81,9 +38,7 @@ export default function HistoryScreen() {
         <AppHeader
           title="Quiz History"
           subtitle={`${historySessions.length} completed ${
-            historySessions.length === 1
-              ? "session"
-              : "sessions"
+            historySessions.length === 1 ? "session" : "sessions"
           }`}
         />
 
@@ -97,21 +52,15 @@ export default function HistoryScreen() {
           </View>
 
           <View style={styles.introText}>
-            <AppText variant="title">
-              Your Progress
-            </AppText>
+            <AppText variant="title">Your Progress</AppText>
 
             <AppText muted>
-              Track completed quizzes,
-              recall scores and improvement
-              over time.
+              Track completed quizzes, recall scores and improvement over time.
             </AppText>
           </View>
         </View>
 
-        <HistoryStats
-          stats={stats}
-        />
+        <HistoryStats stats={stats} />
 
         <AppCard style={styles.overviewCard}>
           <View style={styles.overviewHeader}>
@@ -121,56 +70,36 @@ export default function HistoryScreen() {
               color={colors.primary}
             />
 
-            <AppText variant="subheading">
-              Overall Recall
-            </AppText>
+            <AppText variant="subheading">Overall Recall</AppText>
           </View>
 
           <View style={styles.overviewRows}>
             <View style={styles.overviewRow}>
-              <AppText
-                variant="bodySmall"
-                muted
-              >
+              <AppText variant="bodySmall" muted>
                 Answers reviewed
               </AppText>
 
-              <AppText
-                variant="bodySmall"
-                style={styles.overviewValue}
-              >
+              <AppText variant="bodySmall" style={styles.overviewValue}>
                 {stats.totalAnswers}
               </AppText>
             </View>
 
             <View style={styles.overviewRow}>
-              <AppText
-                variant="bodySmall"
-                muted
-              >
+              <AppText variant="bodySmall" muted>
                 Correct recalls
               </AppText>
 
-              <AppText
-                variant="bodySmall"
-                style={styles.successValue}
-              >
+              <AppText variant="bodySmall" style={styles.successValue}>
                 {stats.correctAnswers}
               </AppText>
             </View>
 
             <View style={styles.overviewRow}>
-              <AppText
-                variant="bodySmall"
-                muted
-              >
+              <AppText variant="bodySmall" muted>
                 Average score
               </AppText>
 
-              <AppText
-                variant="bodySmall"
-                style={styles.overviewValue}
-              >
+              <AppText variant="bodySmall" style={styles.overviewValue}>
                 {stats.averageScore}%
               </AppText>
             </View>
@@ -185,47 +114,31 @@ export default function HistoryScreen() {
               color={colors.primary}
             />
 
-            <AppText variant="subheading">
-              Recent Sessions
-            </AppText>
+            <AppText variant="subheading">Recent Sessions</AppText>
           </View>
 
-          <AppText
-            variant="caption"
-            muted
-          >
+          <AppText variant="caption" muted>
             Newest first
           </AppText>
         </View>
 
         <View style={styles.sessions}>
-          {historySessions.map(
-            (session) => (
-              <HistorySessionCard
-                key={session.id}
-                session={session}
-              />
-            ),
-          )}
+          {historySessions.map((session) => (
+            <HistorySessionCard key={session.id} session={session} />
+          ))}
         </View>
 
         <View style={styles.actions}>
           <AppButton
             label="Start New Quiz"
             size="lg"
-            onPress={() =>
-              router.push(
-                "/create",
-              )
-            }
+            onPress={() => router.push("/create")}
           />
 
           <AppButton
             label="Clear Demo History"
             variant="ghost"
-            onPress={
-              clearHistory
-            }
+            onPress={clearHistory}
           />
         </View>
 
@@ -236,14 +149,9 @@ export default function HistoryScreen() {
             color={colors.primary}
           />
 
-          <AppText
-            variant="bodySmall"
-            style={styles.demoNoticeText}
-          >
-            History is currently stored in
-            memory for the UI demo. Local
-            persistence will be added in the
-            persistence phase.
+          <AppText variant="bodySmall" style={styles.demoNoticeText}>
+            History is currently stored in memory for the UI demo. Local
+            persistence will be added in the persistence phase.
           </AppText>
         </View>
       </View>

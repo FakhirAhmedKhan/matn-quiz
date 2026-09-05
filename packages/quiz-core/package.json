@@ -1,0 +1,115 @@
+{
+    "name": "@matn-quiz/quiz-core",
+    "version": "0.0.0",
+    "private": true,
+    "type": "module",
+    "sideEffects": false,
+    "exports": {
+        ".": {
+            "types": "./src/index.ts",
+            "import": "./src/index.ts",
+            "default": "./src/index.ts"
+        },
+        "./types": {
+            "types": "./src/types.ts",
+            "import": "./src/types.ts",
+            "default": "./src/types.ts"
+        },
+        "./constants": {
+            "types": "./src/constants.ts",
+            "import": "./src/constants.ts",
+            "default": "./src/constants.ts"
+        },
+        "./arabic": {
+            "types": "./src/arabic.ts",
+            "import": "./src/arabic.ts",
+            "default": "./src/arabic.ts"
+        },
+        "./word-tokenizer": {
+            "types": "./src/word-tokenizer.ts",
+            "import": "./src/word-tokenizer.ts",
+            "default": "./src/word-tokenizer.ts"
+        },
+        "./word-selection": {
+            "types": "./src/word-selection.ts",
+            "import": "./src/word-selection.ts",
+            "default": "./src/word-selection.ts"
+        },
+        "./line-tokenizer": {
+            "types": "./src/line-tokenizer.ts",
+            "import": "./src/line-tokenizer.ts",
+            "default": "./src/line-tokenizer.ts"
+        },
+        "./line-selection": {
+            "types": "./src/line-selection.ts",
+            "import": "./src/line-selection.ts",
+            "default": "./src/line-selection.ts"
+        },
+        "./hide-word-engine": {
+            "types": "./src/hide-word-engine.ts",
+            "import": "./src/hide-word-engine.ts",
+            "default": "./src/hide-word-engine.ts"
+        },
+        "./hide-line-engine": {
+            "types": "./src/hide-line-engine.ts",
+            "import": "./src/hide-line-engine.ts",
+            "default": "./src/hide-line-engine.ts"
+        },
+        "./hide-count": {
+            "types": "./src/hide-count.ts",
+            "import": "./src/hide-count.ts",
+            "default": "./src/hide-count.ts"
+        },
+        "./generate-quiz-validation": {
+            "types": "./src/generate-quiz-validation.ts",
+            "import": "./src/generate-quiz-validation.ts",
+            "default": "./src/generate-quiz-validation.ts"
+        },
+        "./generate-quiz": {
+            "types": "./src/generate-quiz.ts",
+            "import": "./src/generate-quiz.ts",
+            "default": "./src/generate-quiz.ts"
+        },
+        "./unified-quiz": {
+            "types": "./src/unified-quiz.ts",
+            "import": "./src/unified-quiz.ts",
+            "default": "./src/unified-quiz.ts"
+        },
+        "./study-session": {
+            "types": "./src/study-session.ts",
+            "import": "./src/study-session.ts",
+            "default": "./src/study-session.ts"
+        },
+        "./review-session": {
+            "types": "./src/review-session.ts",
+            "import": "./src/review-session.ts",
+            "default": "./src/review-session.ts"
+        },
+        "./input": {
+            "types": "./src/input.ts",
+            "import": "./src/input.ts",
+            "default": "./src/input.ts"
+        },
+        "./quiz-setup": {
+            "types": "./src/quiz-setup.ts",
+            "import": "./src/quiz-setup.ts",
+            "default": "./src/quiz-setup.ts"
+        },
+        "./history": {
+            "types": "./src/history.ts",
+            "import": "./src/history.ts",
+            "default": "./src/history.ts"
+        },
+        "./resume": {
+            "types": "./src/resume.ts",
+            "import": "./src/resume.ts",
+            "default": "./src/resume.ts"
+        }
+    },
+    "scripts": {
+        "typecheck": "tsc -p tsconfig.json --noEmit"
+    },
+    "dependencies": {
+        "@matn-quiz/shared-types": "workspace:*"
+    }
+}

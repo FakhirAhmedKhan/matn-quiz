@@ -1,11 +1,6 @@
-import {
-  useEffect,
-} from "react";
+import { useEffect } from "react";
 import { router } from "expo-router";
-import {
-  StyleSheet,
-  View,
-} from "react-native";
+import { StyleSheet, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
 import {
@@ -13,10 +8,7 @@ import {
   HideCountSelector,
   QuizSetupSummary,
 } from "../../src/components/create";
-import {
-  AppHeader,
-  AppScreen,
-} from "../../src/components/layout";
+import { AppHeader, AppScreen } from "../../src/components/layout";
 import {
   AppButton,
   AppCard,
@@ -36,93 +28,40 @@ import {
   getMaximumHideCount,
   getMethodLabel,
 } from "../../src/utils/quizSetup";
-import {
-  colors,
-  iconSize,
-  radius,
-  spacing,
-} from "../../src/theme";
+import { colors, iconSize, radius, spacing } from "../../src/theme";
 
 export default function CreateCountScreen() {
-  const text =
-    useQuizStore(
-      (state) => state.text,
-    );
+  const text = useQuizStore((state) => state.text);
 
-  const method =
-    useQuizStore(
-      (state) => state.method,
-    );
+  const method = useQuizStore((state) => state.method);
 
-  const hideCount =
-    useQuizStore(
-      (state) => state.hideCount,
-    );
+  const hideCount = useQuizStore((state) => state.hideCount);
 
-  const setHideCount =
-    useQuizStore(
-      (state) => state.setHideCount,
-    );
+  const setHideCount = useQuizStore((state) => state.setHideCount);
 
-  const generateDemoQuiz =
-    useQuizStore(
-      (state) => state.generateDemoQuiz,
-    );
+  const generateDemoQuiz = useQuizStore((state) => state.generateDemoQuiz);
 
-  const stats =
-    getArabicInputStats(text);
+  const stats = getArabicInputStats(text);
 
-  const validation =
-    validateArabicInput(text);
+  const validation = validateArabicInput(text);
 
-  const maximum =
-    getMaximumHideCount(
-      method,
-      stats.words,
-      stats.lines,
-    );
+  const maximum = getMaximumHideCount(method, stats.words, stats.lines);
 
-  const presets =
-    getHideCountPresets(
-      maximum,
-    );
+  const presets = getHideCountPresets(maximum);
 
-  const safeCount =
-    clampHideCount(
-      hideCount,
-      maximum,
-    );
+  const safeCount = clampHideCount(hideCount, maximum);
 
   const canGenerate =
-    validation.valid &&
-    maximum >= 1 &&
-    safeCount >= 1 &&
-    safeCount <= maximum;
+    validation.valid && maximum >= 1 && safeCount >= 1 && safeCount <= maximum;
 
   useEffect(() => {
-    if (
-      maximum > 0 &&
-      hideCount !== safeCount
-    ) {
-      setHideCount(
-        safeCount,
-      );
+    if (maximum > 0 && hideCount !== safeCount) {
+      setHideCount(safeCount);
     }
-  }, [
-    hideCount,
-    maximum,
-    safeCount,
-    setHideCount,
-  ]);
+  }, [hideCount, maximum, safeCount, setHideCount]);
 
-  function updateCount(
-    value: number,
-  ) {
-    const next =
-      clampHideCount(
-        value,
-        maximum,
-      );
+  function updateCount(value: number) {
+    const next = clampHideCount(value, maximum);
 
     if (next > 0) {
       setHideCount(next);
@@ -134,32 +73,20 @@ export default function CreateCountScreen() {
       return;
     }
 
-    if (
-      hideCount !== safeCount
-    ) {
-      setHideCount(
-        safeCount,
-      );
+    if (hideCount !== safeCount) {
+      setHideCount(safeCount);
     }
 
-    const quiz =
-      generateDemoQuiz(
-        safeCount,
-      );
+    const quiz = generateDemoQuiz(safeCount);
 
     if (!quiz) {
       return;
     }
 
-    router.push(
-      "/study",
-    );
+    router.push("/study");
   }
 
-  if (
-    !validation.valid ||
-    maximum < 1
-  ) {
+  if (!validation.valid || maximum < 1) {
     return (
       <AppScreen>
         <View style={styles.page}>
@@ -167,9 +94,7 @@ export default function CreateCountScreen() {
             title="Hide Count"
             subtitle="Step 3 of 3"
             showBack
-            onBack={() =>
-              router.back()
-            }
+            onBack={() => router.back()}
           />
 
           <View style={styles.emptyState}>
@@ -181,29 +106,18 @@ export default function CreateCountScreen() {
               />
             </View>
 
-            <AppText
-              variant="title"
-              align="center"
-            >
+            <AppText variant="title" align="center">
               Quiz Setup Needs Attention
             </AppText>
 
-            <AppText
-              muted
-              align="center"
-            >
-              Your text or selected method does
-              not currently have enough items to
-              generate a quiz.
+            <AppText muted align="center">
+              Your text or selected method does not currently have enough items
+              to generate a quiz.
             </AppText>
 
             <AppButton
               label="Back to Quiz Method"
-              onPress={() =>
-                router.replace(
-                  "/create/method",
-                )
-              }
+              onPress={() => router.replace("/create/method")}
             />
           </View>
         </View>
@@ -218,9 +132,7 @@ export default function CreateCountScreen() {
           title="Hide Count"
           subtitle="Step 3 of 3"
           showBack
-          onBack={() =>
-            router.back()
-          }
+          onBack={() => router.back()}
         />
 
         <View style={styles.intro}>
@@ -233,24 +145,16 @@ export default function CreateCountScreen() {
           </View>
 
           <View style={styles.introText}>
-            <AppText variant="title">
-              How many should we hide?
-            </AppText>
+            <AppText variant="title">How many should we hide?</AppText>
 
             <AppText muted>
               Choose the difficulty for your
-              {method === "HIDE_WORD"
-                ? " word"
-                : " line"}{" "}
-              recall quiz.
+              {method === "HIDE_WORD" ? " word" : " line"} recall quiz.
             </AppText>
           </View>
         </View>
 
-        <StepIndicator
-          current={3}
-          total={3}
-        />
+        <StepIndicator current={3} total={3} />
 
         <AppCard style={styles.methodCard}>
           <View style={styles.methodRow}>
@@ -267,20 +171,10 @@ export default function CreateCountScreen() {
             </View>
 
             <View style={styles.methodContent}>
-              <AppText variant="subheading">
-                {getMethodLabel(method)}
-              </AppText>
+              <AppText variant="subheading">{getMethodLabel(method)}</AppText>
 
-              <AppText
-                variant="bodySmall"
-                muted
-              >
-                {maximum}{" "}
-                {getItemLabel(
-                  method,
-                  maximum,
-                )}{" "}
-                available
+              <AppText variant="bodySmall" muted>
+                {maximum} {getItemLabel(method, maximum)} available
               </AppText>
             </View>
 
@@ -288,18 +182,13 @@ export default function CreateCountScreen() {
               label="Change"
               variant="ghost"
               size="sm"
-              onPress={() =>
-                router.back()
-              }
+              onPress={() => router.back()}
             />
           </View>
         </AppCard>
 
         <View style={styles.selectorSection}>
-          <AppText
-            variant="subheading"
-            align="center"
-          >
+          <AppText variant="subheading" align="center">
             Hidden Items
           </AppText>
 
@@ -309,21 +198,13 @@ export default function CreateCountScreen() {
             onChange={updateCount}
           />
 
-          <AppText
-            variant="bodySmall"
-            muted
-            align="center"
-          >
+          <AppText variant="bodySmall" muted align="center">
             Minimum 1 · Maximum {maximum}
           </AppText>
         </View>
 
         <View style={styles.presetsSection}>
-          <AppText
-            variant="bodySmall"
-            muted
-            align="center"
-          >
+          <AppText variant="bodySmall" muted align="center">
             Quick presets
           </AppText>
 
@@ -343,24 +224,16 @@ export default function CreateCountScreen() {
             />
 
             <View style={styles.previewHeadingText}>
-              <AppText variant="subheading">
-                Source Preview
-              </AppText>
+              <AppText variant="subheading">Source Preview</AppText>
 
-              <AppText
-                variant="caption"
-                muted
-              >
+              <AppText variant="caption" muted>
                 {stats.words} words · {stats.lines} lines
               </AppText>
             </View>
           </View>
 
           <View style={styles.arabicPreview}>
-            <ArabicText
-              size="small"
-              numberOfLines={4}
-            >
+            <ArabicText size="small" numberOfLines={4}>
               {text}
             </ArabicText>
           </View>
@@ -381,17 +254,9 @@ export default function CreateCountScreen() {
             color={colors.success}
           />
 
-          <AppText
-            variant="bodySmall"
-            style={styles.readyText}
-          >
-            Ready to generate a{" "}
-            {getMethodLabel(method)} quiz with{" "}
-            {safeCount} hidden{" "}
-            {getItemLabel(
-              method,
-              safeCount,
-            )}.
+          <AppText variant="bodySmall" style={styles.readyText}>
+            Ready to generate a {getMethodLabel(method)} quiz with {safeCount}{" "}
+            hidden {getItemLabel(method, safeCount)}.
           </AppText>
         </View>
 
@@ -406,18 +271,12 @@ export default function CreateCountScreen() {
           <AppButton
             label="Back to Method"
             variant="ghost"
-            onPress={() =>
-              router.back()
-            }
+            onPress={() => router.back()}
           />
 
-          <AppText
-            variant="caption"
-            muted
-            align="center"
-          >
-            M8 will replace the placeholder study
-            destination with the real demo quiz engine.
+          <AppText variant="caption" muted align="center">
+            M8 will replace the placeholder study destination with the real demo
+            quiz engine.
           </AppText>
         </View>
       </View>

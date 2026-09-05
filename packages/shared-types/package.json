@@ -1,0 +1,67 @@
+{
+  "name": "@matn-quiz/shared-types",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "import": "./src/index.ts",
+      "default": "./src/index.ts"
+    },
+    "./quiz": {
+      "types": "./src/quiz.ts",
+      "import": "./src/quiz.ts",
+      "default": "./src/quiz.ts"
+    },
+    "./poem": {
+      "types": "./src/poem.ts",
+      "import": "./src/poem.ts",
+      "default": "./src/poem.ts"
+    },
+    "./book": {
+      "types": "./src/book.ts",
+      "import": "./src/book.ts",
+      "default": "./src/book.ts"
+    },
+    "./history": {
+      "types": "./src/history.ts",
+      "import": "./src/history.ts",
+      "default": "./src/history.ts"
+    },
+    "./resume": {
+      "types": "./src/resume.ts",
+      "import": "./src/resume.ts",
+      "default": "./src/resume.ts"
+    },
+    "./review": {
+      "types": "./src/review.ts",
+      "import": "./src/review.ts",
+      "default": "./src/review.ts"
+    },
+    "./transfer": {
+      "types": "./src/transfer.ts",
+      "import": "./src/transfer.ts",
+      "default": "./src/transfer.ts"
+    },
+    "./audio": {
+      "types": "./src/audio.ts",
+      "import": "./src/audio.ts",
+      "default": "./src/audio.ts"
+    },
+    "./tts": {
+      "types": "./src/tts.ts",
+      "import": "./src/tts.ts",
+      "default": "./src/tts.ts"
+    },
+    "./settings": {
+      "types": "./src/settings.ts",
+      "import": "./src/settings.ts",
+      "default": "./src/settings.ts"
+    }
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  }
+}

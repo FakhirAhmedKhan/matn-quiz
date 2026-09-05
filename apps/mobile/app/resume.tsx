@@ -1,77 +1,35 @@
-import {
-  router,
-} from "expo-router";
-import {
-  StyleSheet,
-  View,
-} from "react-native";
-import {
-  Ionicons,
-} from "@expo/vector-icons";
+import { router } from "expo-router";
+import { StyleSheet, View } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 
 import {
   ResumeProgressCard,
   ResumeSessionSummary,
 } from "../src/components/resume";
-import {
-  AppHeader,
-  AppScreen,
-} from "../src/components/layout";
-import {
-  AppButton,
-  AppText,
-} from "../src/components/ui";
-import {
-  useQuizStore,
-} from "../src/store/quizStore";
-import {
-  calculateResumeProgress,
-} from "../src/utils/resume";
-import {
-  colors,
-  iconSize,
-  radius,
-  spacing,
-} from "../src/theme";
+import { AppHeader, AppScreen } from "../src/components/layout";
+import { AppButton, AppText } from "../src/components/ui";
+import { useQuizStore } from "../src/store/quizStore";
+import { calculateResumeProgress } from "../src/utils/resume";
+import { colors, iconSize, radius, spacing } from "../src/theme";
 
 export default function ResumeScreen() {
-  const generatedQuiz =
-    useQuizStore(
-      (state) =>
-        state.generatedQuiz,
-    );
+  const generatedQuiz = useQuizStore((state) => state.generatedQuiz);
 
-  const activeStudySession =
-    useQuizStore(
-      (state) =>
-        state.activeStudySession,
-    );
+  const activeStudySession = useQuizStore((state) => state.activeStudySession);
 
-  const restartStudySession =
-    useQuizStore(
-      (state) =>
-        state.restartStudySession,
-    );
+  const restartStudySession = useQuizStore(
+    (state) => state.restartStudySession,
+  );
 
-  const clearGeneratedQuiz =
-    useQuizStore(
-      (state) =>
-        state.clearGeneratedQuiz,
-    );
+  const clearGeneratedQuiz = useQuizStore((state) => state.clearGeneratedQuiz);
 
-  const validSession =
-    Boolean(
-      generatedQuiz &&
-      activeStudySession &&
-      generatedQuiz.id ===
-        activeStudySession.quizId,
-    );
+  const validSession = Boolean(
+    generatedQuiz &&
+    activeStudySession &&
+    generatedQuiz.id === activeStudySession.quizId,
+  );
 
-  if (
-    !validSession ||
-    !activeStudySession ||
-    !generatedQuiz
-  ) {
+  if (!validSession || !activeStudySession || !generatedQuiz) {
     return (
       <AppScreen>
         <View style={styles.page}>
@@ -79,9 +37,7 @@ export default function ResumeScreen() {
             title="Resume Study"
             subtitle="In-progress quiz"
             showBack
-            onBack={() =>
-              router.back()
-            }
+            onBack={() => router.back()}
           />
 
           <View style={styles.emptyState}>
@@ -93,29 +49,18 @@ export default function ResumeScreen() {
               />
             </View>
 
-            <AppText
-              variant="title"
-              align="center"
-            >
+            <AppText variant="title" align="center">
               No Study Session to Resume
             </AppText>
 
-            <AppText
-              muted
-              align="center"
-            >
-              Start a quiz and your study
-              progress will appear here until
-              the quiz is completed or discarded.
+            <AppText muted align="center">
+              Start a quiz and your study progress will appear here until the
+              quiz is completed or discarded.
             </AppText>
 
             <AppButton
               label="Create New Quiz"
-              onPress={() =>
-                router.replace(
-                  "/create",
-                )
-              }
+              onPress={() => router.replace("/create")}
             />
           </View>
         </View>
@@ -123,36 +68,26 @@ export default function ResumeScreen() {
     );
   }
 
-  const progress =
-    calculateResumeProgress(
-      activeStudySession,
-    );
+  const progress = calculateResumeProgress(activeStudySession);
 
   function continueStudy() {
-    router.replace(
-      "/study",
-    );
+    router.replace("/study");
   }
 
   function restartSession() {
-    const session =
-      restartStudySession();
+    const session = restartStudySession();
 
     if (!session) {
       return;
     }
 
-    router.replace(
-      "/study",
-    );
+    router.replace("/study");
   }
 
   function discardSession() {
     clearGeneratedQuiz();
 
-    router.replace(
-      "/create",
-    );
+    router.replace("/create");
   }
 
   return (
@@ -162,9 +97,7 @@ export default function ResumeScreen() {
           title="Resume Study"
           subtitle="Continue where you left off"
           showBack
-          onBack={() =>
-            router.back()
-          }
+          onBack={() => router.back()}
         />
 
         <View style={styles.intro}>
@@ -177,26 +110,18 @@ export default function ResumeScreen() {
           </View>
 
           <View style={styles.introText}>
-            <AppText variant="title">
-              Continue Your Session
-            </AppText>
+            <AppText variant="title">Continue Your Session</AppText>
 
             <AppText muted>
-              Your revealed-answer progress is
-              still available in this app session.
+              Your revealed-answer progress is still available in this app
+              session.
             </AppText>
           </View>
         </View>
 
-        <ResumeProgressCard
-          progress={progress}
-        />
+        <ResumeProgressCard progress={progress} />
 
-        <ResumeSessionSummary
-          session={
-            activeStudySession
-          }
-        />
+        <ResumeSessionSummary session={activeStudySession} />
 
         <View style={styles.notice}>
           <Ionicons
@@ -205,14 +130,9 @@ export default function ResumeScreen() {
             color={colors.primary}
           />
 
-          <AppText
-            variant="bodySmall"
-            style={styles.noticeText}
-          >
-            Resume currently works while the app
-            remains running. Device-restart
-            persistence will be added in the
-            local persistence phase.
+          <AppText variant="bodySmall" style={styles.noticeText}>
+            Resume currently works while the app remains running. Device-restart
+            persistence will be added in the local persistence phase.
           </AppText>
         </View>
 
@@ -224,25 +144,19 @@ export default function ResumeScreen() {
                 : "Start Study"
             }
             size="lg"
-            onPress={
-              continueStudy
-            }
+            onPress={continueStudy}
           />
 
           <AppButton
             label="Restart This Session"
             variant="secondary"
-            onPress={
-              restartSession
-            }
+            onPress={restartSession}
           />
 
           <AppButton
             label="Discard and Create New"
             variant="ghost"
-            onPress={
-              discardSession
-            }
+            onPress={discardSession}
           />
         </View>
       </View>

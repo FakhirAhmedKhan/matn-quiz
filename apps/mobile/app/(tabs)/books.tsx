@@ -1,13 +1,6 @@
-import {
-  router,
-} from "expo-router";
-import {
-  StyleSheet,
-  View,
-} from "react-native";
-import {
-  Ionicons,
-} from "@expo/vector-icons";
+import { router } from "expo-router";
+import { StyleSheet, View } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 
 import {
   BookCard,
@@ -17,121 +10,54 @@ import {
   BooksEmptyState,
   RecentBooks,
 } from "../../src/components/books";
-import {
-  AppHeader,
-  AppScreen,
-} from "../../src/components/layout";
-import {
-  AppButton,
-  AppText,
-} from "../../src/components/ui";
-import {
-  useBookStore,
-} from "../../src/store/bookStore";
-import type {
-  Book,
-} from "../../src/types/book";
+import { AppHeader, AppScreen } from "../../src/components/layout";
+import { AppButton, AppText } from "../../src/components/ui";
+import { useBookStore } from "../../src/store/bookStore";
+import type { Book } from "../../src/types/book";
 import {
   filterBooks,
   getBookLibraryStats,
   getRecentBooks,
 } from "../../src/utils/books";
-import {
-  colors,
-  iconSize,
-  radius,
-  spacing,
-} from "../../src/theme";
+import { colors, iconSize, radius, spacing } from "../../src/theme";
 
 export default function BooksScreen() {
-  const books =
-    useBookStore(
-      (state) =>
-        state.books,
-    );
+  const books = useBookStore((state) => state.books);
 
-  const searchQuery =
-    useBookStore(
-      (state) =>
-        state.searchQuery,
-    );
+  const searchQuery = useBookStore((state) => state.searchQuery);
 
-  const categoryFilter =
-    useBookStore(
-      (state) =>
-        state.categoryFilter,
-    );
+  const categoryFilter = useBookStore((state) => state.categoryFilter);
 
-  const setSearchQuery =
-    useBookStore(
-      (state) =>
-        state.setSearchQuery,
-    );
+  const setSearchQuery = useBookStore((state) => state.setSearchQuery);
 
-  const setCategoryFilter =
-    useBookStore(
-      (state) =>
-        state.setCategoryFilter,
-    );
+  const setCategoryFilter = useBookStore((state) => state.setCategoryFilter);
 
-  const toggleFavorite =
-    useBookStore(
-      (state) =>
-        state.toggleFavorite,
-    );
+  const toggleFavorite = useBookStore((state) => state.toggleFavorite);
 
-  const markBookOpened =
-    useBookStore(
-      (state) =>
-        state.markBookOpened,
-    );
+  const markBookOpened = useBookStore((state) => state.markBookOpened);
 
-  const stats =
-    getBookLibraryStats(
-      books,
-    );
+  const stats = getBookLibraryStats(books);
 
-  const filteredBooks =
-    filterBooks(
-      books,
-      searchQuery,
-      categoryFilter,
-    );
+  const filteredBooks = filterBooks(books, searchQuery, categoryFilter);
 
-  const recentBooks =
-    getRecentBooks(
-      books,
-      3,
-    );
+  const recentBooks = getRecentBooks(books, 3);
 
-  const filtered =
-    Boolean(
-      searchQuery.trim() ||
-      categoryFilter !== "ALL",
-    );
+  const filtered = Boolean(searchQuery.trim() || categoryFilter !== "ALL");
 
-  function openBook(
-    book: Book,
-  ) {
-    markBookOpened(
-      book.id,
-    );
+  function openBook(book: Book) {
+    markBookOpened(book.id);
 
     router.push({
-      pathname:
-        "/books/[bookId]",
+      pathname: "/books/[bookId]",
       params: {
-        bookId:
-          book.id,
+        bookId: book.id,
       },
     });
   }
 
   function resetFilters() {
     setSearchQuery("");
-    setCategoryFilter(
-      "ALL",
-    );
+    setCategoryFilter("ALL");
   }
 
   return (
@@ -141,11 +67,7 @@ export default function BooksScreen() {
           title="Books"
           subtitle={`${books.length} books in your library`}
           rightIcon="add-circle-outline"
-          onRightPress={() =>
-            router.push(
-              "/books/upload",
-            )
-          }
+          onRightPress={() => router.push("/books/upload")}
         />
 
         <View style={styles.intro}>
@@ -158,47 +80,31 @@ export default function BooksScreen() {
           </View>
 
           <View style={styles.introText}>
-            <AppText variant="title">
-              Your Reading Library
-            </AppText>
+            <AppText variant="title">Your Reading Library</AppText>
 
             <AppText muted>
-              Read Arabic and Islamic books,
-              continue recent sessions and track
+              Read Arabic and Islamic books, continue recent sessions and track
               your progress.
             </AppText>
           </View>
         </View>
 
-        <BookLibraryStats
-          stats={stats}
-        />
+        <BookLibraryStats stats={stats} />
 
         <View style={styles.searchSection}>
-          <BookSearchBar
-            value={searchQuery}
-            onChangeText={
-              setSearchQuery
-            }
-          />
+          <BookSearchBar value={searchQuery} onChangeText={setSearchQuery} />
 
           <BookCategoryFilters
             value={categoryFilter}
-            onChange={
-              setCategoryFilter
-            }
+            onChange={setCategoryFilter}
           />
         </View>
 
         {!filtered ? (
           <RecentBooks
             books={recentBooks}
-            onOpenBook={
-              openBook
-            }
-            onToggleFavorite={
-              toggleFavorite
-            }
+            onOpenBook={openBook}
+            onToggleFavorite={toggleFavorite}
           />
         ) : null}
 
@@ -211,55 +117,32 @@ export default function BooksScreen() {
             />
 
             <AppText variant="subheading">
-              {filtered
-                ? "Search Results"
-                : "All Books"}
+              {filtered ? "Search Results" : "All Books"}
             </AppText>
           </View>
 
-          <AppText
-            variant="caption"
-            muted
-          >
+          <AppText variant="caption" muted>
             {filteredBooks.length}{" "}
-            {filteredBooks.length === 1
-              ? "book"
-              : "books"}
+            {filteredBooks.length === 1 ? "book" : "books"}
           </AppText>
         </View>
 
         {filteredBooks.length > 0 ? (
           <View style={styles.books}>
-            {filteredBooks.map(
-              (book) => (
-                <BookCard
-                  key={book.id}
-                  book={book}
-                  onPress={() =>
-                    openBook(
-                      book,
-                    )
-                  }
-                  onToggleFavorite={() =>
-                    toggleFavorite(
-                      book.id,
-                    )
-                  }
-                />
-              ),
-            )}
+            {filteredBooks.map((book) => (
+              <BookCard
+                key={book.id}
+                book={book}
+                onPress={() => openBook(book)}
+                onToggleFavorite={() => toggleFavorite(book.id)}
+              />
+            ))}
           </View>
         ) : (
           <BooksEmptyState
             filtered={filtered}
-            onResetFilters={
-              resetFilters
-            }
-            onUpload={() =>
-              router.push(
-                "/books/upload",
-              )
-            }
+            onResetFilters={resetFilters}
+            onUpload={() => router.push("/books/upload")}
           />
         )}
 
@@ -267,11 +150,7 @@ export default function BooksScreen() {
           <AppButton
             label="Add / Import Book"
             variant="secondary"
-            onPress={() =>
-              router.push(
-                "/books/upload",
-              )
-            }
+            onPress={() => router.push("/books/upload")}
           />
         </View>
 
@@ -282,13 +161,9 @@ export default function BooksScreen() {
             color={colors.primary}
           />
 
-          <AppText
-            variant="bodySmall"
-            style={styles.demoNoticeText}
-          >
-            M15 uses demo library data. The next
-            phases will build real book details,
-            reading mode and local book import.
+          <AppText variant="bodySmall" style={styles.demoNoticeText}>
+            M15 uses demo library data. The next phases will build real book
+            details, reading mode and local book import.
           </AppText>
         </View>
       </View>

@@ -1,20 +1,8 @@
 import { useSettingsStore } from "../../../src/store/settingsStore";
-import {
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
-import {
-  StyleSheet,
-  View,
-} from "react-native";
-import {
-  router,
-  useLocalSearchParams,
-} from "expo-router";
-import {
-  Ionicons,
-} from "@expo/vector-icons";
+import { useEffect, useMemo, useState } from "react";
+import { StyleSheet, View } from "react-native";
+import { router, useLocalSearchParams } from "expo-router";
+import { Ionicons } from "@expo/vector-icons";
 
 import {
   BookJumpToPage,
@@ -24,123 +12,76 @@ import {
   BookReaderModeToggle,
   BookReaderProgressCard,
 } from "../../../src/components/book-reader";
-import {
-  AppHeader,
-  AppScreen,
-} from "../../../src/components/layout";
+import { AppHeader, AppScreen } from "../../../src/components/layout";
 import {
   AppButton,
   AppCard,
   AppText,
   ArabicText,
 } from "../../../src/components/ui";
+import { useBookStore } from "../../../src/store/bookStore";
 import {
-  useBookStore,
-} from "../../../src/store/bookStore";
-import {
+  clampBookPage,
   createDemoBookPage,
   getBookPagePercentage,
+  getFirstBookPage,
   getInitialReaderPage,
+  getLastBookPage,
+  getNextBookPage,
+  getPreviousBookPage,
   type BookReaderFontSize,
   type BookReaderMode,
 } from "../../../src/utils/bookReader";
-import {
-  colors,
-  iconSize,
-  radius,
-  spacing,
-} from "../../../src/theme";
+import { colors, iconSize, radius, spacing } from "../../../src/theme";
 
 export default function BookReaderScreen() {
-  const params =
-    useLocalSearchParams();
+  const params = useLocalSearchParams();
 
-  const rawBookId =
-    params.bookId;
+  const rawBookId = params.bookId;
 
   const bookId =
-    typeof rawBookId ===
-    "string"
+    typeof rawBookId === "string"
       ? rawBookId
       : Array.isArray(rawBookId)
-        ? rawBookId[0] ?? ""
+        ? (rawBookId[0] ?? "")
         : "";
 
-  const books =
-    useBookStore(
-      (state) =>
-        state.books,
-    );
+  const books = useBookStore((state) => state.books);
 
-  const updateReadingProgress =
-    useBookStore(
-      (state) =>
-        state.updateReadingProgress,
-    );
+  const updateReadingProgress = useBookStore(
+    (state) => state.updateReadingProgress,
+  );
 
-  const markBookOpened =
-    useBookStore(
-      (state) =>
-        state.markBookOpened,
-    );
+  const markBookOpened = useBookStore((state) => state.markBookOpened);
 
-  const book =
-    books.find(
-      (item) =>
-        item.id === bookId,
-    );
+  const book = books.find((item) => item.id === bookId);
 
-  const [
-    currentPage,
-    setCurrentPage,
-  ] = useState(1);
+  const [currentPage, setCurrentPage] = useState(1);
 
-  const [
-    readerMode,
-    setReaderMode,
-  ] = useState<BookReaderMode>(() => useSettingsStore.getState().defaultBookReaderMode);
+  const [readerMode, setReaderMode] = useState<BookReaderMode>(
+    () => useSettingsStore.getState().defaultBookReaderMode,
+  );
 
-  const [
-    fontSize,
-    setFontSize,
-  ] = useState<BookReaderFontSize>(() => useSettingsStore.getState().readerFontSize);
+  const [fontSize, setFontSize] = useState<BookReaderFontSize>(
+    () => useSettingsStore.getState().readerFontSize,
+  );
 
   useEffect(() => {
     if (!book) {
       return;
     }
 
-    const initialPage =
-      getInitialReaderPage(
-        book,
-      );
+    const initialPage = getInitialReaderPage(book);
 
-    setCurrentPage(
-      initialPage,
-    );
+    setCurrentPage(initialPage);
 
-    markBookOpened(
-      book!.id,
-    );
-  }, [
-    book?.id,
-    markBookOpened,
-  ]);
+    markBookOpened(book!.id);
+  }, [book?.id, markBookOpened]);
 
-  const demoPage =
-    useMemo(
-      () =>
-        book
-          ? createDemoBookPage(
-              book,
-              currentPage,
-            )
-          : null,
-      [
-        book,
-        currentPage,
-      ],
-    );
+  const demoPage = useMemo(
+    () => (book ? createDemoBookPage(book, currentPage) : null),
+    [book, currentPage],
+  );
 
   if (!book) {
     return (
@@ -149,9 +90,7 @@ export default function BookReaderScreen() {
           <AppHeader
             title="Book Reader"
             showBack
-            onBack={() =>
-              router.back()
-            }
+            onBack={() => router.back()}
           />
 
           <View style={styles.emptyState}>
@@ -163,28 +102,17 @@ export default function BookReaderScreen() {
               />
             </View>
 
-            <AppText
-              variant="title"
-              align="center"
-            >
+            <AppText variant="title" align="center">
               Book Not Found
             </AppText>
 
-            <AppText
-              muted
-              align="center"
-            >
-              This book is not available in the
-              current library.
+            <AppText muted align="center">
+              This book is not available in the current library.
             </AppText>
 
             <AppButton
               label="Back to Library"
-              onPress={() =>
-                router.replace(
-                  "/books",
-                )
-              }
+              onPress={() => router.replace("/books")}
             />
           </View>
         </View>
@@ -193,31 +121,21 @@ export default function BookReaderScreen() {
   }
 
   const totalPages =
-    Math.max(
-      1,
+    getLastBookPage(
       book.totalPages,
     );
 
-  const percentage =
-    getBookPagePercentage(
-      currentPage,
-      totalPages,
-    );
+  const percentage = getBookPagePercentage(currentPage, totalPages);
 
-  const completed =
-    currentPage >=
-    totalPages;
+  const completed = currentPage >= totalPages;
 
   function goToPage(
     page: number,
   ) {
     const nextPage =
-      Math.min(
+      clampBookPage(
+        page,
         totalPages,
-        Math.max(
-          1,
-          Math.floor(page),
-        ),
       );
 
     setCurrentPage(
@@ -232,23 +150,33 @@ export default function BookReaderScreen() {
 
   function previousPage() {
     goToPage(
-      currentPage - 1,
+      getPreviousBookPage(
+        currentPage,
+        totalPages,
+      ),
     );
   }
 
   function nextPage() {
     goToPage(
-      currentPage + 1,
+      getNextBookPage(
+        currentPage,
+        totalPages,
+      ),
     );
   }
 
   function firstPage() {
-    goToPage(1);
+    goToPage(
+      getFirstBookPage(),
+    );
   }
 
   function lastPage() {
     goToPage(
-      totalPages,
+      getLastBookPage(
+        totalPages,
+      ),
     );
   }
 
@@ -260,11 +188,9 @@ export default function BookReaderScreen() {
 
   function backToDetails() {
     router.replace({
-      pathname:
-        "/books/[bookId]",
+      pathname: "/books/[bookId]",
       params: {
-        bookId:
-          book!.id,
+        bookId: book!.id,
       },
     });
   }
@@ -274,17 +200,12 @@ export default function BookReaderScreen() {
       <View style={styles.page}>
         <AppHeader
           title={book.title}
-          subtitle={
-            `Page ${currentPage} of ${totalPages}`
-          }
+          subtitle={`Page ${currentPage} of ${totalPages}`}
           showBack
-          onBack={
-            backToDetails
-          }
+          onBack={backToDetails}
         />
 
-        {readerMode ===
-        "READING" ? (
+        {readerMode === "READING" ? (
           <AppCard style={styles.bookHeader}>
             <View style={styles.bookIcon}>
               <Ionicons
@@ -296,25 +217,16 @@ export default function BookReaderScreen() {
 
             <View style={styles.bookInfo}>
               {book.arabicTitle ? (
-                <ArabicText
-                  size="small"
-                  numberOfLines={1}
-                >
+                <ArabicText size="small" numberOfLines={1}>
                   {book.arabicTitle}
                 </ArabicText>
               ) : null}
 
-              <AppText
-                variant="subheading"
-                numberOfLines={2}
-              >
+              <AppText variant="subheading" numberOfLines={2}>
                 {book.title}
               </AppText>
 
-              <AppText
-                variant="caption"
-                muted
-              >
+              <AppText variant="caption" muted>
                 {book.author}
               </AppText>
             </View>
@@ -327,88 +239,42 @@ export default function BookReaderScreen() {
               color={colors.primary}
             />
 
-            <AppText
-              variant="caption"
-              style={styles.focusText}
-            >
+            <AppText variant="caption" style={styles.focusText}>
               Focus Mode · Page {currentPage}
             </AppText>
           </View>
         )}
 
         <BookReaderProgressCard
-          currentPage={
-            currentPage
-          }
-          totalPages={
-            totalPages
-          }
+          currentPage={currentPage}
+          totalPages={totalPages}
         />
 
-        <BookReaderModeToggle
-          value={
-            readerMode
-          }
-          onChange={
-            setReaderMode
-          }
-        />
+        <BookReaderModeToggle value={readerMode} onChange={setReaderMode} />
 
-        <BookReaderFontControls
-          value={
-            fontSize
-          }
-          onChange={
-            setFontSize
-          }
-        />
+        <BookReaderFontControls value={fontSize} onChange={setFontSize} />
 
         {demoPage ? (
           <BookPageCard
-            page={
-              demoPage
-            }
-            fontSize={
-              fontSize
-            }
-            focusMode={
-              readerMode ===
-              "FOCUS"
-            }
+            page={demoPage}
+            fontSize={fontSize}
+            focusMode={readerMode === "FOCUS"}
           />
         ) : null}
 
         <BookPageNavigation
-          currentPage={
-            currentPage
-          }
-          totalPages={
-            totalPages
-          }
-          onPrevious={
-            previousPage
-          }
-          onNext={
-            nextPage
-          }
-          onFirst={
-            firstPage
-          }
-          onLast={
-            lastPage
-          }
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPrevious={previousPage}
+          onNext={nextPage}
+          onFirst={firstPage}
+          onLast={lastPage}
         />
 
         <BookJumpToPage
-          currentPage={
-            currentPage
-          }
-          totalPages={
-            totalPages
-          }
-          onJump={
-            goToPage
-          }
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onJump={goToPage}
         />
 
         {completed ? (
@@ -421,16 +287,10 @@ export default function BookReaderScreen() {
               />
 
               <View style={styles.completeText}>
-                <AppText variant="subheading">
-                  Book Completed
-                </AppText>
+                <AppText variant="subheading">Book Completed</AppText>
 
-                <AppText
-                  variant="bodySmall"
-                  muted
-                >
-                  You reached the final page of
-                  this demo reading session.
+                <AppText variant="bodySmall" muted>
+                  You reached the final page of this demo reading session.
                 </AppText>
               </View>
             </View>
@@ -438,9 +298,7 @@ export default function BookReaderScreen() {
             <AppButton
               label="Read Again from Page 1"
               variant="secondary"
-              onPress={
-                firstPage
-              }
+              onPress={firstPage}
             />
           </AppCard>
         ) : (
@@ -451,19 +309,14 @@ export default function BookReaderScreen() {
               color={colors.primary}
             />
 
-            <AppText
-              variant="bodySmall"
-              style={styles.resumeNoticeText}
-            >
-              Page {currentPage} is now your
-              current reading position. Opening
+            <AppText variant="bodySmall" style={styles.resumeNoticeText}>
+              Page {currentPage} is now your current reading position. Opening
               this book again will resume here.
             </AppText>
           </View>
         )}
 
-        {readerMode ===
-        "READING" ? (
+        {readerMode === "READING" ? (
           <AppCard style={styles.sessionCard}>
             <View style={styles.sessionHeader}>
               <Ionicons
@@ -472,60 +325,36 @@ export default function BookReaderScreen() {
                 color={colors.primary}
               />
 
-              <AppText variant="subheading">
-                Reading Session
-              </AppText>
+              <AppText variant="subheading">Reading Session</AppText>
             </View>
 
             <View style={styles.sessionRows}>
               <View style={styles.sessionRow}>
-                <AppText
-                  variant="bodySmall"
-                  muted
-                >
+                <AppText variant="bodySmall" muted>
                   Current page
                 </AppText>
 
-                <AppText
-                  variant="bodySmall"
-                  style={styles.sessionValue}
-                >
+                <AppText variant="bodySmall" style={styles.sessionValue}>
                   {currentPage}
                 </AppText>
               </View>
 
               <View style={styles.sessionRow}>
-                <AppText
-                  variant="bodySmall"
-                  muted
-                >
+                <AppText variant="bodySmall" muted>
                   Remaining pages
                 </AppText>
 
-                <AppText
-                  variant="bodySmall"
-                  style={styles.sessionValue}
-                >
-                  {Math.max(
-                    0,
-                    totalPages -
-                      currentPage,
-                  )}
+                <AppText variant="bodySmall" style={styles.sessionValue}>
+                  {Math.max(0, totalPages - currentPage)}
                 </AppText>
               </View>
 
               <View style={styles.sessionRow}>
-                <AppText
-                  variant="bodySmall"
-                  muted
-                >
+                <AppText variant="bodySmall" muted>
                   Progress
                 </AppText>
 
-                <AppText
-                  variant="bodySmall"
-                  style={styles.sessionValue}
-                >
+                <AppText variant="bodySmall" style={styles.sessionValue}>
                   {percentage}%
                 </AppText>
               </View>
@@ -537,17 +366,13 @@ export default function BookReaderScreen() {
           <AppButton
             label="Back to Book Details"
             variant="secondary"
-            onPress={
-              backToDetails
-            }
+            onPress={backToDetails}
           />
 
           <AppButton
             label="Reset Reader Controls"
             variant="ghost"
-            onPress={
-              resetControls
-            }
+            onPress={resetControls}
           />
         </View>
 
@@ -558,16 +383,10 @@ export default function BookReaderScreen() {
             color={colors.primary}
           />
 
-          <AppText
-            variant="bodySmall"
-            style={styles.demoNoticeText}
-          >
-            Reader pages currently contain
-            generated demo study text. They are
-            not presented as the original content
-            of this book. Real imported book
-            content will be connected in the book
-            import phase.
+          <AppText variant="bodySmall" style={styles.demoNoticeText}>
+            Reader pages currently contain generated demo study text. They are
+            not presented as the original content of this book. Real imported
+            book content will be connected in the book import phase.
           </AppText>
         </View>
       </View>

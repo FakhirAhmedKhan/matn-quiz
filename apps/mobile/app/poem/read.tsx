@@ -1,19 +1,8 @@
 import { useSettingsStore } from "../../src/store/settingsStore";
-import {
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
-import {
-  router,
-} from "expo-router";
-import {
-  StyleSheet,
-  View,
-} from "react-native";
-import {
-  Ionicons,
-} from "@expo/vector-icons";
+import { useEffect, useMemo, useState } from "react";
+import { router } from "expo-router";
+import { StyleSheet, View } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 
 import {
   AllVersesReader,
@@ -24,10 +13,7 @@ import {
   type PoemFontSize,
   type PoemReaderMode,
 } from "../../src/components/poem-reader";
-import {
-  AppHeader,
-  AppScreen,
-} from "../../src/components/layout";
+import { AppHeader, AppScreen } from "../../src/components/layout";
 import {
   AppButton,
   AppCard,
@@ -35,131 +21,104 @@ import {
   ArabicText,
   ProgressBar,
 } from "../../src/components/ui";
-import {
-  usePoemStore,
-} from "../../src/store/poemStore";
+import { usePoemStore } from "../../src/store/poemStore";
 import {
   getPoemStats,
   getPoemVerses,
   validatePoemDraft,
 } from "../../src/utils/poem";
+import { colors, iconSize, radius, spacing } from "../../src/theme";
+
 import {
-  colors,
-  iconSize,
-  radius,
-  spacing,
-} from "../../src/theme";
-
+  clampPoemReaderIndex,
+  getFirstPoemReaderIndex,
+  getLastPoemReaderIndex,
+  getNextPoemReaderIndex,
+  getPoemReaderPercentage,
+  getPoemReaderProgress,
+  getPreviousPoemReaderIndex,
+} from "../../src/utils/poemReader";
 export default function PoemReaderScreen() {
-  const title =
-    usePoemStore(
-      (state) =>
-        state.title,
-    );
+  const title = usePoemStore((state) => state.title);
 
-  const text =
-    usePoemStore(
-      (state) =>
-        state.text,
-    );
+  const text = usePoemStore((state) => state.text);
 
-  const validation =
-    validatePoemDraft(
-      title,
-      text,
-    );
+  const validation = validatePoemDraft(title, text);
 
-  const stats =
-    getPoemStats(
-      text,
-    );
+  const stats = getPoemStats(text);
 
-  const verses =
-    useMemo(
-      () =>
-        getPoemVerses(
-          text,
-        ),
-      [text],
-    );
+  const verses = useMemo(() => getPoemVerses(text), [text]);
 
-  const [
-    currentIndex,
-    setCurrentIndex,
-  ] = useState(0);
+  const [currentIndex, setCurrentIndex] = useState(0);
 
-  const [
-    mode,
-    setMode,
-  ] = useState<PoemReaderMode>(() => useSettingsStore.getState().defaultPoemReaderMode);
+  const [mode, setMode] = useState<PoemReaderMode>(
+    () => useSettingsStore.getState().defaultPoemReaderMode,
+  );
 
-  const [
-    fontSize,
-    setFontSize,
-  ] = useState<PoemFontSize>(() => useSettingsStore.getState().readerFontSize);
+  const [fontSize, setFontSize] = useState<PoemFontSize>(
+    () => useSettingsStore.getState().readerFontSize,
+  );
 
   useEffect(() => {
     setCurrentIndex(
-      (current) => {
-        if (
-          verses.length === 0
-        ) {
-          return 0;
-        }
-
-        return Math.min(
+      (
+        current,
+      ) =>
+        clampPoemReaderIndex(
           current,
-          verses.length - 1,
-        );
-      },
+          verses.length,
+        ),
     );
   }, [verses.length]);
 
-  const currentVerse =
-    verses[
-      currentIndex
-    ] ?? "";
+  const currentVerse = verses[currentIndex] ?? "";
 
   const progress =
-    verses.length <= 0
-      ? 0
-      : (currentIndex + 1) /
-        verses.length;
+    getPoemReaderProgress(
+      currentIndex,
+      verses.length,
+    );
 
   const percentage =
-    Math.round(
-      progress * 100,
+    getPoemReaderPercentage(
+      currentIndex,
+      verses.length,
     );
 
   function previousVerse() {
     setCurrentIndex(
-      (current) =>
-        Math.max(
-          0,
-          current - 1,
+      (
+        current,
+      ) =>
+        getPreviousPoemReaderIndex(
+          current,
+          verses.length,
         ),
     );
   }
 
   function nextVerse() {
     setCurrentIndex(
-      (current) =>
-        Math.min(
-          verses.length - 1,
-          current + 1,
+      (
+        current,
+      ) =>
+        getNextPoemReaderIndex(
+          current,
+          verses.length,
         ),
     );
   }
 
   function firstVerse() {
-    setCurrentIndex(0);
+    setCurrentIndex(
+      getFirstPoemReaderIndex(),
+    );
   }
 
   function lastVerse() {
     setCurrentIndex(
-      Math.max(
-        0,
-        verses.length - 1,
+      getLastPoemReaderIndex(
+        verses.length,
       ),
     );
   }
@@ -177,9 +136,7 @@ export default function PoemReaderScreen() {
           <AppHeader
             title="Poem Reader"
             showBack
-            onBack={() =>
-              router.back()
-            }
+            onBack={() => router.back()}
           />
 
           <View style={styles.emptyState}>
@@ -191,28 +148,17 @@ export default function PoemReaderScreen() {
               />
             </View>
 
-            <AppText
-              variant="title"
-              align="center"
-            >
+            <AppText variant="title" align="center">
               Add a Poem First
             </AppText>
 
-            <AppText
-              muted
-              align="center"
-            >
-              Create a valid Arabic poem before
-              opening focused reader mode.
+            <AppText muted align="center">
+              Create a valid Arabic poem before opening focused reader mode.
             </AppText>
 
             <AppButton
               label="Open Poem Editor"
-              onPress={() =>
-                router.replace(
-                  "/poem",
-                )
-              }
+              onPress={() => router.replace("/poem")}
             />
           </View>
         </View>
@@ -227,9 +173,7 @@ export default function PoemReaderScreen() {
           title="Poem Reader"
           subtitle={`${verses.length} verses`}
           showBack
-          onBack={() =>
-            router.back()
-          }
+          onBack={() => router.back()}
         />
 
         <AppCard style={styles.poemHeader}>
@@ -242,18 +186,11 @@ export default function PoemReaderScreen() {
           </View>
 
           <View style={styles.poemTitle}>
-            <ArabicText
-              size="large"
-              center
-            >
+            <ArabicText size="large" center>
               {title}
             </ArabicText>
 
-            <AppText
-              variant="caption"
-              muted
-              align="center"
-            >
+            <AppText variant="caption" muted align="center">
               {stats.words} words · {stats.stanzas} stanzas
             </AppText>
           </View>
@@ -268,84 +205,47 @@ export default function PoemReaderScreen() {
                 color={colors.primary}
               />
 
-              <AppText variant="subheading">
-                Reading Progress
-              </AppText>
+              <AppText variant="subheading">Reading Progress</AppText>
             </View>
 
-            <AppText
-              variant="subheading"
-              style={styles.progressValue}
-            >
+            <AppText variant="subheading" style={styles.progressValue}>
               {percentage}%
             </AppText>
           </View>
 
-          <ProgressBar
-            value={progress}
-          />
+          <ProgressBar value={progress} />
 
           <View style={styles.progressFooter}>
-            <AppText
-              variant="caption"
-              muted
-            >
+            <AppText variant="caption" muted>
               Verse {currentIndex + 1}
             </AppText>
 
-            <AppText
-              variant="caption"
-              muted
-            >
+            <AppText variant="caption" muted>
               {verses.length} total
             </AppText>
           </View>
         </AppCard>
 
-        <PoemReaderModeToggle
-          mode={mode}
-          onChange={setMode}
-        />
+        <PoemReaderModeToggle mode={mode} onChange={setMode} />
 
-        <PoemFontControls
-          value={fontSize}
-          onChange={setFontSize}
-        />
+        <PoemFontControls value={fontSize} onChange={setFontSize} />
 
         {mode === "FOCUS" ? (
           <>
             <FocusedVerseCard
               verse={currentVerse}
-              verseNumber={
-                currentIndex + 1
-              }
-              totalVerses={
-                verses.length
-              }
-              fontSize={
-                fontSize
-              }
+              verseNumber={currentIndex + 1}
+              totalVerses={verses.length}
+              fontSize={fontSize}
             />
 
             <PoemNavigationControls
-              currentIndex={
-                currentIndex
-              }
-              total={
-                verses.length
-              }
-              onPrevious={
-                previousVerse
-              }
-              onNext={
-                nextVerse
-              }
-              onFirst={
-                firstVerse
-              }
-              onLast={
-                lastVerse
-              }
+              currentIndex={currentIndex}
+              total={verses.length}
+              onPrevious={previousVerse}
+              onNext={nextVerse}
+              onFirst={firstVerse}
+              onLast={lastVerse}
             />
           </>
         ) : (
@@ -358,48 +258,27 @@ export default function PoemReaderScreen() {
                   color={colors.primary}
                 />
 
-                <AppText variant="subheading">
-                  Full Poem
-                </AppText>
+                <AppText variant="subheading">Full Poem</AppText>
               </View>
 
-              <AppText
-                variant="caption"
-                muted
-              >
+              <AppText variant="caption" muted>
                 Current verse highlighted
               </AppText>
             </View>
 
             <AllVersesReader
               verses={verses}
-              activeIndex={
-                currentIndex
-              }
-              fontSize={
-                fontSize
-              }
+              activeIndex={currentIndex}
+              fontSize={fontSize}
             />
 
             <PoemNavigationControls
-              currentIndex={
-                currentIndex
-              }
-              total={
-                verses.length
-              }
-              onPrevious={
-                previousVerse
-              }
-              onNext={
-                nextVerse
-              }
-              onFirst={
-                firstVerse
-              }
-              onLast={
-                lastVerse
-              }
+              currentIndex={currentIndex}
+              total={verses.length}
+              onPrevious={previousVerse}
+              onNext={nextVerse}
+              onFirst={firstVerse}
+              onLast={lastVerse}
             />
           </>
         )}
@@ -412,17 +291,11 @@ export default function PoemReaderScreen() {
           />
 
           <View style={styles.tipText}>
-            <AppText variant="subheading">
-              Memorization Tip
-            </AppText>
+            <AppText variant="subheading">Memorization Tip</AppText>
 
-            <AppText
-              variant="bodySmall"
-              muted
-            >
-              Read the current verse several times,
-              look away, recite it from memory, then
-              move to the next verse.
+            <AppText variant="bodySmall" muted>
+              Read the current verse several times, look away, recite it from
+              memory, then move to the next verse.
             </AppText>
           </View>
         </View>
@@ -431,29 +304,19 @@ export default function PoemReaderScreen() {
           <AppButton
             label="Edit Poem"
             variant="secondary"
-            onPress={() =>
-              router.push(
-                "/poem",
-              )
-            }
+            onPress={() => router.push("/poem")}
           />
 
           <AppButton
             label="Reset Reader"
             variant="ghost"
-            onPress={
-              resetReader
-            }
+            onPress={resetReader}
           />
         </View>
 
-        <AppText
-          variant="caption"
-          muted
-          align="center"
-        >
-          Reader controls affect only this reading
-          session and do not modify your poem text.
+        <AppText variant="caption" muted align="center">
+          Reader controls affect only this reading session and do not modify
+          your poem text.
         </AppText>
       </View>
     </AppScreen>

@@ -1,13 +1,6 @@
-import {
-  router,
-} from "expo-router";
-import {
-  StyleSheet,
-  View,
-} from "react-native";
-import {
-  Ionicons,
-} from "@expo/vector-icons";
+import { router } from "expo-router";
+import { StyleSheet, View } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 
 import {
   PoemInputStats,
@@ -15,94 +8,37 @@ import {
   PoemTipsCard,
   PoemValidationCard,
 } from "../../src/components/poem";
-import {
-  AppHeader,
-  AppScreen,
-} from "../../src/components/layout";
-import {
-  AppButton,
-  AppCard,
-  AppInput,
-  AppText,
-} from "../../src/components/ui";
-import {
-  usePoemStore,
-} from "../../src/store/poemStore";
-import {
-  getPoemStats,
-  validatePoemDraft,
-} from "../../src/utils/poem";
-import {
-  colors,
-  iconSize,
-  radius,
-  spacing,
-} from "../../src/theme";
+import { AppHeader, AppScreen } from "../../src/components/layout";
+import { AppButton, AppCard, AppInput, AppText } from "../../src/components/ui";
+import { usePoemStore } from "../../src/store/poemStore";
+import { getPoemStats, validatePoemDraft } from "../../src/utils/poem";
+import { colors, iconSize, radius, spacing } from "../../src/theme";
 
 export default function PoemInputScreen() {
-  const title =
-    usePoemStore(
-      (state) =>
-        state.title,
-    );
+  const title = usePoemStore((state) => state.title);
 
-  const text =
-    usePoemStore(
-      (state) =>
-        state.text,
-    );
+  const text = usePoemStore((state) => state.text);
 
-  const setTitle =
-    usePoemStore(
-      (state) =>
-        state.setTitle,
-    );
+  const setTitle = usePoemStore((state) => state.setTitle);
 
-  const setText =
-    usePoemStore(
-      (state) =>
-        state.setText,
-    );
+  const setText = usePoemStore((state) => state.setText);
 
-  const loadDemoPoem =
-    usePoemStore(
-      (state) =>
-        state.loadDemoPoem,
-    );
+  const loadDemoPoem = usePoemStore((state) => state.loadDemoPoem);
 
-  const clearPoem =
-    usePoemStore(
-      (state) =>
-        state.clearPoem,
-    );
+  const clearPoem = usePoemStore((state) => state.clearPoem);
 
-  const stats =
-    getPoemStats(
-      text,
-    );
+  const stats = getPoemStats(text);
 
-  const validation =
-    validatePoemDraft(
-      title,
-      text,
-    );
+  const validation = validatePoemDraft(title, text);
 
-  const hasDraft =
-    Boolean(
-      title.trim() ||
-      text.trim(),
-    );
+  const hasDraft = Boolean(title.trim() || text.trim());
 
   function openReader() {
-    if (
-      !validation.valid
-    ) {
+    if (!validation.valid) {
       return;
     }
 
-    router.push(
-      "/poem/read",
-    );
+    router.push("/poem/read");
   }
 
   return (
@@ -112,9 +48,7 @@ export default function PoemInputScreen() {
           title="Arabic Poem"
           subtitle="Create a poem reader draft"
           showBack
-          onBack={() =>
-            router.back()
-          }
+          onBack={() => router.back()}
         />
 
         <View style={styles.intro}>
@@ -127,13 +61,11 @@ export default function PoemInputScreen() {
           </View>
 
           <View style={styles.introText}>
-            <AppText variant="title">
-              Add Your Poem
-            </AppText>
+            <AppText variant="title">Add Your Poem</AppText>
 
             <AppText muted>
-              Enter an Arabic poem and prepare it
-              for focused reading and memorization.
+              Enter an Arabic poem and prepare it for focused reading and
+              memorization.
             </AppText>
           </View>
         </View>
@@ -146,16 +78,12 @@ export default function PoemInputScreen() {
               color={colors.primary}
             />
 
-            <AppText variant="subheading">
-              Poem Details
-            </AppText>
+            <AppText variant="subheading">Poem Details</AppText>
           </View>
 
           <AppInput
             value={title}
-            onChangeText={
-              setTitle
-            }
+            onChangeText={setTitle}
             arabic
             maxLength={120}
             label="Poem Title"
@@ -167,9 +95,7 @@ export default function PoemInputScreen() {
 
           <AppInput
             value={text}
-            onChangeText={
-              setText
-            }
+            onChangeText={setText}
             arabic
             multiline
             maxLength={12000}
@@ -188,42 +114,30 @@ export default function PoemInputScreen() {
             <AppButton
               label="Load Demo Poem"
               variant="secondary"
-              onPress={
-                loadDemoPoem
-              }
+              onPress={loadDemoPoem}
             />
           ) : (
             <>
               <AppButton
                 label="Replace with Demo Poem"
                 variant="secondary"
-                onPress={
-                  loadDemoPoem
-                }
+                onPress={loadDemoPoem}
               />
 
               <AppButton
                 label="Clear Poem"
                 variant="ghost"
-                onPress={
-                  clearPoem
-                }
+                onPress={clearPoem}
               />
             </>
           )}
         </View>
 
-        <PoemInputStats
-          stats={stats}
-        />
+        <PoemInputStats stats={stats} />
 
         <PoemValidationCard
-          valid={
-            validation.valid
-          }
-          message={
-            validation.message
-          }
+          valid={validation.valid}
+          message={validation.message}
         />
 
         <AppCard style={styles.detailsCard}>
@@ -234,82 +148,53 @@ export default function PoemInputScreen() {
               color={colors.primary}
             />
 
-            <AppText variant="subheading">
-              Text Details
-            </AppText>
+            <AppText variant="subheading">Text Details</AppText>
           </View>
 
           <View style={styles.detailsRows}>
             <View style={styles.detailsRow}>
-              <AppText
-                variant="bodySmall"
-                muted
-              >
+              <AppText variant="bodySmall" muted>
                 Characters
               </AppText>
 
-              <AppText
-                variant="bodySmall"
-                style={styles.detailsValue}
-              >
+              <AppText variant="bodySmall" style={styles.detailsValue}>
                 {stats.characters}
               </AppText>
             </View>
 
             <View style={styles.detailsRow}>
-              <AppText
-                variant="bodySmall"
-                muted
-              >
+              <AppText variant="bodySmall" muted>
                 Arabic characters
               </AppText>
 
-              <AppText
-                variant="bodySmall"
-                style={styles.detailsValue}
-              >
+              <AppText variant="bodySmall" style={styles.detailsValue}>
                 {stats.arabicCharacters}
               </AppText>
             </View>
 
             <View style={styles.detailsRow}>
-              <AppText
-                variant="bodySmall"
-                muted
-              >
+              <AppText variant="bodySmall" muted>
                 Non-empty verses
               </AppText>
 
-              <AppText
-                variant="bodySmall"
-                style={styles.detailsValue}
-              >
+              <AppText variant="bodySmall" style={styles.detailsValue}>
                 {stats.verses}
               </AppText>
             </View>
 
             <View style={styles.detailsRow}>
-              <AppText
-                variant="bodySmall"
-                muted
-              >
+              <AppText variant="bodySmall" muted>
                 Stanzas
               </AppText>
 
-              <AppText
-                variant="bodySmall"
-                style={styles.detailsValue}
-              >
+              <AppText variant="bodySmall" style={styles.detailsValue}>
                 {stats.stanzas}
               </AppText>
             </View>
           </View>
         </AppCard>
 
-        <PoemPreviewCard
-          title={title}
-          text={text}
-        />
+        <PoemPreviewCard title={title} text={text} />
 
         <PoemTipsCard />
 
@@ -317,21 +202,12 @@ export default function PoemInputScreen() {
           <AppButton
             label="Open Poem Reader"
             size="lg"
-            disabled={
-              !validation.valid
-            }
-            onPress={
-              openReader
-            }
+            disabled={!validation.valid}
+            onPress={openReader}
           />
 
-          <AppText
-            variant="caption"
-            muted
-            align="center"
-          >
-            Your poem draft stays available while
-            moving to reader mode.
+          <AppText variant="caption" muted align="center">
+            Your poem draft stays available while moving to reader mode.
           </AppText>
         </View>
       </View>

@@ -17,9 +17,13 @@ import {
   spacing,
 } from "../../theme";
 
-export type PoemReaderMode =
-  | "FOCUS"
-  | "ALL";
+import type {
+  PoemReaderMode,
+} from "../../utils/poemReader";
+
+export type {
+  PoemReaderMode,
+} from "../../utils/poemReader";
 
 type PoemReaderModeToggleProps = {
   mode: PoemReaderMode;
