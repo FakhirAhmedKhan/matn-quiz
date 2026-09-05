@@ -3,6 +3,7 @@ import {
   StyleSheet,
   View,
 } from "react-native";
+
 import {
   Ionicons,
 } from "@expo/vector-icons";
@@ -10,17 +11,20 @@ import {
 import type {
   Book,
 } from "../../types/book";
+
 import {
   BOOK_CATEGORY_LABELS,
   getBookProgress,
   getBookStatusLabel,
 } from "../../utils/books";
+
 import {
   AppCard,
   AppText,
   ArabicText,
   ProgressBar,
 } from "../ui";
+
 import {
   colors,
   iconSize,
@@ -30,8 +34,11 @@ import {
 
 type BookCardProps = {
   book: Book;
+
   compact?: boolean;
+
   onPress: () => void;
+
   onToggleFavorite: () => void;
 };
 
@@ -47,278 +54,332 @@ export function BookCard({
     );
 
   return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityLabel={`Open ${book.title}`}
-      onPress={onPress}
-      style={({ pressed }) => [
-        pressed &&
-          styles.pressed,
+    <AppCard
+      style={[
+        styles.card,
+
+        compact &&
+          styles.compactCard,
       ]}
     >
-      <AppCard
-        style={[
-          styles.card,
-          compact &&
-            styles.compactCard,
-        ]}
-      >
-        <View style={styles.header}>
-          <View style={styles.cover}>
-            <Ionicons
-              name="book"
-              size={
-                compact
-                  ? iconSize.md
-                  : iconSize.lg
-              }
-              color={colors.primary}
-            />
-          </View>
-
-          <View style={styles.heading}>
-            {book.arabicTitle ? (
-              <ArabicText
-                size="small"
-                numberOfLines={1}
-              >
-                {book.arabicTitle}
-              </ArabicText>
-            ) : null}
-
-            <AppText
-              variant="subheading"
-              numberOfLines={2}
-            >
-              {book.title}
-            </AppText>
-
-            <AppText
-              variant="caption"
-              muted
-              numberOfLines={1}
-            >
-              {book.author}
-            </AppText>
-          </View>
-
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={
-              book.isFavorite
-                ? "Remove from favorites"
-                : "Add to favorites"
+      <View style={styles.header}>
+        <View
+          accessible={false}
+          style={styles.cover}
+        >
+          <Ionicons
+            name="book"
+            size={
+              compact
+                ? iconSize.md
+                : iconSize.lg
             }
-            onPress={(event) => {
-              event.stopPropagation();
-              onToggleFavorite();
-            }}
-            hitSlop={8}
-            style={({ pressed }) => [
-              styles.favorite,
-              pressed &&
-                styles.favoritePressed,
-            ]}
-          >
-            <Ionicons
-              name={
-                book.isFavorite
-                  ? "heart"
-                  : "heart-outline"
-              }
-              size={iconSize.md}
-              color={
-                book.isFavorite
-                  ? colors.warning
-                  : colors.textMuted
-              }
-            />
-          </Pressable>
-        </View>
-
-        {!compact ? (
-          <AppText
-            variant="bodySmall"
-            muted
-            numberOfLines={2}
-          >
-            {book.description}
-          </AppText>
-        ) : null}
-
-        <View style={styles.categoryRow}>
-          <View style={styles.categoryBadge}>
-            <AppText
-              variant="caption"
-              style={styles.categoryText}
-            >
-              {BOOK_CATEGORY_LABELS[
-                book.category
-              ]}
-            </AppText>
-          </View>
-
-          <AppText
-            variant="caption"
-            muted
-          >
-            {progress.currentPage}/{progress.totalPages} pages
-          </AppText>
-        </View>
-
-        <View style={styles.progressArea}>
-          <View style={styles.progressHeader}>
-            <AppText
-              variant="caption"
-              style={styles.status}
-            >
-              {getBookStatusLabel(
-                book,
-              )}
-            </AppText>
-
-            <AppText
-              variant="caption"
-              muted
-            >
-              {progress.percentage}%
-            </AppText>
-          </View>
-
-          <ProgressBar
-            value={
-              progress.percentage /
-              100
-            }
+            color={colors.primary}
           />
         </View>
 
-        <View style={styles.footer}>
+        <View style={styles.heading}>
+          {book.arabicTitle ? (
+            <ArabicText
+              size="small"
+              numberOfLines={1}
+            >
+              {book.arabicTitle}
+            </ArabicText>
+          ) : null}
+
+          <AppText
+            variant="subheading"
+            numberOfLines={2}
+          >
+            {book.title}
+          </AppText>
+
+          <AppText
+            variant="caption"
+            muted
+            numberOfLines={1}
+          >
+            {book.author}
+          </AppText>
+        </View>
+
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={
+            book.isFavorite
+              ? `Remove ${book.title} from favorites`
+              : `Add ${book.title} to favorites`
+          }
+          accessibilityState={{
+            selected:
+              book.isFavorite,
+          }}
+          hitSlop={8}
+          onPress={
+            onToggleFavorite
+          }
+          style={({
+            pressed,
+          }) => [
+            styles.favorite,
+
+            pressed &&
+              styles.pressed,
+          ]}
+        >
+          <Ionicons
+            name={
+              book.isFavorite
+                ? "heart"
+                : "heart-outline"
+            }
+            size={iconSize.md}
+            color={
+              book.isFavorite
+                ? colors.warning
+                : colors.textMuted
+            }
+          />
+        </Pressable>
+      </View>
+
+      {!compact ? (
+        <AppText
+          variant="bodySmall"
+          muted
+          numberOfLines={2}
+        >
+          {book.description}
+        </AppText>
+      ) : null}
+
+      <View style={styles.categoryRow}>
+        <View style={styles.categoryBadge}>
+          <AppText
+            variant="caption"
+            style={styles.categoryText}
+          >
+            {
+              BOOK_CATEGORY_LABELS[
+                book.category
+              ]
+            }
+          </AppText>
+        </View>
+
+        <AppText
+          variant="caption"
+          muted
+        >
+          {progress.currentPage}/
+          {progress.totalPages} pages
+        </AppText>
+      </View>
+
+      <View style={styles.progressArea}>
+        <View style={styles.progressHeader}>
+          <AppText
+            variant="caption"
+            style={styles.status}
+          >
+            {getBookStatusLabel(
+              book,
+            )}
+          </AppText>
+
           <AppText
             variant="caption"
             muted
           >
-            {book.sourceLabel}
+            {progress.percentage}%
+          </AppText>
+        </View>
+
+        <ProgressBar
+          value={
+            progress.percentage /
+            100
+          }
+          accessibilityLabel={`${book.title} reading progress`}
+        />
+      </View>
+
+      <View style={styles.footer}>
+        <AppText
+          variant="caption"
+          muted
+          numberOfLines={1}
+          style={styles.source}
+        >
+          {book.sourceLabel}
+        </AppText>
+
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={
+            progress.started
+              ? `Continue reading ${book.title}`
+              : `Open ${book.title}`
+          }
+          accessibilityHint="Opens the book details screen."
+          onPress={onPress}
+          style={({
+            pressed,
+          }) => [
+            styles.openButton,
+
+            pressed &&
+              styles.pressed,
+          ]}
+        >
+          <AppText
+            variant="bodySmall"
+            style={styles.openText}
+          >
+            {progress.started
+              ? "Continue"
+              : "Open"}
           </AppText>
 
-          <View style={styles.open}>
-            <AppText
-              variant="bodySmall"
-              style={styles.openText}
-            >
-              {progress.started
-                ? "Continue"
-                : "Open"}
-            </AppText>
-
-            <Ionicons
-              name="chevron-forward"
-              size={iconSize.sm}
-              color={colors.primary}
-            />
-          </View>
-        </View>
-      </AppCard>
-    </Pressable>
+          <Ionicons
+            name="chevron-forward"
+            size={iconSize.sm}
+            color={colors.primary}
+          />
+        </Pressable>
+      </View>
+    </AppCard>
   );
 }
 
-const styles = StyleSheet.create({
-  card: {
-    gap: spacing.lg,
-  },
+const styles =
+  StyleSheet.create({
+    card: {
+      gap: spacing.lg,
+    },
 
-  compactCard: {
-    minWidth: 280,
-    maxWidth: 320,
-  },
+    compactCard: {
+      width: 300,
+      maxWidth: 320,
+    },
 
-  pressed: {
-    opacity: 0.8,
-  },
+    header: {
+      flexDirection: "row",
+      alignItems: "flex-start",
+      gap: spacing.md,
+    },
 
-  header: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    gap: spacing.md,
-  },
+    cover: {
+      width: 52,
+      height: 62,
+      flexShrink: 0,
+      alignItems: "center",
+      justifyContent: "center",
+      borderRadius: radius.md,
+      backgroundColor:
+        colors.primarySoft,
+    },
 
-  cover: {
-    width: 52,
-    height: 62,
-    flexShrink: 0,
-    alignItems: "center",
-    justifyContent: "center",
-    borderRadius: radius.md,
-    backgroundColor: colors.primarySoft,
-  },
+    heading: {
+      flex: 1,
+      minWidth: 0,
+      gap: spacing.xs,
+    },
 
-  heading: {
-    flex: 1,
-    gap: spacing.xs,
-  },
+    favorite: {
+      width: 44,
+      height: 44,
+      flexShrink: 0,
+      alignItems: "center",
+      justifyContent: "center",
+      borderRadius:
+        radius.pill,
+    },
 
-  favorite: {
-    width: 36,
-    height: 36,
-    alignItems: "center",
-    justifyContent: "center",
-  },
+    categoryRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      flexWrap: "wrap",
+      gap: spacing.sm,
+    },
 
-  favoritePressed: {
-    opacity: 0.55,
-  },
+    categoryBadge: {
+      paddingHorizontal:
+        spacing.sm,
 
-  categoryRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: spacing.sm,
-  },
+      paddingVertical:
+        spacing.xs,
 
-  categoryBadge: {
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs,
-    borderRadius: radius.pill,
-    backgroundColor: colors.primarySoft,
-  },
+      borderRadius:
+        radius.pill,
 
-  categoryText: {
-    color: colors.primaryDark,
-    fontWeight: "800",
-  },
+      backgroundColor:
+        colors.primarySoft,
+    },
 
-  progressArea: {
-    gap: spacing.sm,
-  },
+    categoryText: {
+      color:
+        colors.primaryDark,
 
-  progressHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: spacing.sm,
-  },
+      fontWeight: "800",
+    },
 
-  status: {
-    color: colors.primaryDark,
-    fontWeight: "700",
-  },
+    progressArea: {
+      gap: spacing.sm,
+    },
 
-  footer: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: spacing.md,
-  },
+    progressHeader: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      gap: spacing.sm,
+    },
 
-  open: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: spacing.xs,
-  },
+    status: {
+      color:
+        colors.primaryDark,
 
-  openText: {
-    color: colors.primary,
-    fontWeight: "800",
-  },
-});
+      fontWeight: "700",
+    },
+
+    footer: {
+      minHeight: 44,
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      gap: spacing.md,
+    },
+
+    source: {
+      flex: 1,
+      minWidth: 0,
+    },
+
+    openButton: {
+      minWidth: 100,
+      minHeight: 44,
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: spacing.xs,
+      paddingHorizontal:
+        spacing.md,
+      borderRadius:
+        radius.lg,
+      backgroundColor:
+        colors.primarySoft,
+    },
+
+    openText: {
+      color:
+        colors.primary,
+
+      fontWeight: "800",
+    },
+
+    pressed: {
+      opacity: 0.65,
+    },
+  });
