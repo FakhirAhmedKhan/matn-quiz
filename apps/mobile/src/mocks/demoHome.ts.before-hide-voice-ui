@@ -60,5 +60,17 @@ export const demoHome: HomeDemoData = {
       description: "Poem Reader",
       icon: "reader-outline",
     },
+    {
+      id: "audio",
+      title: "Listen",
+      description: "Arabic Audio",
+      icon: "headset-outline",
+    },
+    {
+      id: "voice",
+      title: "Voice Practice",
+      description: "Record & Review",
+      icon: "mic-outline",
+    },
   ],
 };

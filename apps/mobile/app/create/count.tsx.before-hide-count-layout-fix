@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { router } from "expo-router";
-import { Pressable, StyleSheet, View } from "react-native";
+import { StyleSheet, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
 import {
@@ -126,7 +126,7 @@ export default function CreateCountScreen() {
   }
 
   return (
-    <AppScreen scroll>
+    <AppScreen>
       <View style={styles.page}>
         <AppHeader
           title="Hide Count"
@@ -156,7 +156,7 @@ export default function CreateCountScreen() {
 
         <StepIndicator current={3} total={3} />
 
-        <View style={styles.methodCard}>
+        <AppCard style={styles.methodCard}>
           <View style={styles.methodRow}>
             <View style={styles.methodIcon}>
               <Ionicons
@@ -178,25 +178,14 @@ export default function CreateCountScreen() {
               </AppText>
             </View>
 
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Change quiz method"
-              hitSlop={8}
+            <AppButton
+              label="Change"
+              variant="ghost"
+              size="sm"
               onPress={() => router.back()}
-              style={({ pressed }) => [
-                styles.changeButton,
-                pressed && styles.changeButtonPressed,
-              ]}
-            >
-              <AppText
-                variant="bodySmall"
-                style={styles.changeButtonText}
-              >
-                Change
-              </AppText>
-            </Pressable>
+            />
           </View>
-        </View>
+        </AppCard>
 
         <View style={styles.selectorSection}>
           <AppText variant="subheading" align="center">
@@ -273,7 +262,7 @@ export default function CreateCountScreen() {
 
         <View style={styles.footer}>
           <AppButton
-            label="Generate Quiz"
+            label="Generate Demo Quiz"
             size="lg"
             disabled={!canGenerate}
             onPress={generateQuiz}
@@ -284,6 +273,11 @@ export default function CreateCountScreen() {
             variant="ghost"
             onPress={() => router.back()}
           />
+
+          <AppText variant="caption" muted align="center">
+            M8 will replace the placeholder study destination with the real demo
+            quiz engine.
+          </AppText>
         </View>
       </View>
     </AppScreen>
@@ -322,25 +316,10 @@ const styles = StyleSheet.create({
   },
 
   methodCard: {
-    width: "100%",
-    alignSelf: "stretch",
-    flexGrow: 0,
-    flexShrink: 1,
-    maxHeight: 112,
-    overflow: "hidden",
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: radius.lg,
-    backgroundColor: colors.surface,
+    paddingVertical: spacing.md,
   },
 
   methodRow: {
-    width: "100%",
-    minHeight: 56,
-    flexGrow: 0,
-    flexShrink: 0,
     flexDirection: "row",
     alignItems: "center",
     gap: spacing.md,
@@ -357,29 +336,7 @@ const styles = StyleSheet.create({
 
   methodContent: {
     flex: 1,
-    minWidth: 0,
     gap: spacing.xs,
-  },
-
-  changeButton: {
-    flexGrow: 0,
-    flexShrink: 0,
-    minWidth: 76,
-    minHeight: 40,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: spacing.sm,
-    borderRadius: radius.md,
-    backgroundColor: colors.primarySoft,
-  },
-
-  changeButtonPressed: {
-    opacity: 0.7,
-  },
-
-  changeButtonText: {
-    color: colors.primary,
-    fontWeight: "800",
   },
 
   selectorSection: {

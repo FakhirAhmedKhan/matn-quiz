@@ -33,11 +33,14 @@ export default function HomeScreen() {
     }
 
     if (id === "audio") {
-      router.push("/audio");
+      router.push("/cloud-audio" as never);
       return;
     }
 
-    router.push("/import-export");
+    if (id === "voice") {
+      router.push("/voice-practice" as never);
+      return;
+    }
   }
 
   return (

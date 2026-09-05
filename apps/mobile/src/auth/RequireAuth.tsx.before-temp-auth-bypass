@@ -36,10 +36,6 @@ const SKIP_AUTH =
 export function RequireAuth({
   children,
 }: PropsWithChildren) {
-  // TEMP_AUTH_BYPASS
-  // Authentication is intentionally disabled during current development.
-  return children;
-
   const status =
     useAuthStore(
       (

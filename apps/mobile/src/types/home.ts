@@ -28,14 +28,14 @@ export type HomeRecentQuiz = {
 };
 
 export type HomeQuickAction = {
-  id: "books" | "poem" | "audio" | "import-export";
+  id: "books" | "poem" | "audio" | "voice";
   title: string;
   description: string;
   icon:
     | "book-outline"
     | "reader-outline"
     | "headset-outline"
-    | "swap-horizontal-outline";
+    | "mic-outline";
 };
 
 export type HomeDemoData = {
